@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { useLogin } from '@/hooks/useAuth';
 
 // material-ui
 import Button from '@mui/material/Button';
@@ -15,6 +17,7 @@ import InputLabel from '@mui/material/InputLabel';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+
 // third party
 import * as Yup from 'yup';
 import { Formik } from 'formik';
@@ -26,12 +29,14 @@ import AnimateButton from '@components/@extended/AnimateButton';
 import EyeOutlined from '@ant-design/icons/EyeOutlined';
 import EyeInvisibleOutlined from '@ant-design/icons/EyeInvisibleOutlined';
 
-// ============================|| JWT - LOGIN ||============================ //
 
 export default function AuthLogin({ isDemo = false }) {
   const [checked, setChecked] = React.useState(false);
-
   const [showPassword, setShowPassword] = React.useState(false);
+  
+  const navigate = useNavigate();
+  const loginMutation = useLogin();
+
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
@@ -44,36 +49,52 @@ export default function AuthLogin({ isDemo = false }) {
     <>
       <Formik
         initialValues={{
-          email: '',
+          login: '',
           password: '',
           submit: null
         }}
         validationSchema={Yup.object().shape({
-          email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
-          password: Yup.string().max(255).required('Password is required')
+          login: Yup.string()
+            .max(255)
+            .required('Email or Username is required'),
+          password: Yup.string()
+            .max(255)
+            .required('Password is required')
         })}
+        onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+          try {
+            await loginMutation.mutateAsync(values);
+            setStatus({ success: true });
+            navigate('/app/product');
+          } catch (err) {
+            const message = err.response?.data?.message || 'Something went wrong';
+            setStatus({ success: false });
+            setErrors({ submit: message });
+            setSubmitting(false);
+          }
+        }}
       >
         {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values }) => (
           <form noValidate onSubmit={handleSubmit}>
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <Stack spacing={1}>
-                  <InputLabel htmlFor="email-login">Email Address</InputLabel>
+                  <InputLabel htmlFor="login-field">Email or Username</InputLabel>
                   <OutlinedInput
-                    id="email-login"
-                    type="email"
-                    value={values.email}
-                    name="email"
+                    id="login-field"
+                    type="text"
+                    value={values.login}
+                    name="login"
                     onBlur={handleBlur}
                     onChange={handleChange}
-                    placeholder="Enter email address"
+                    placeholder="Enter email or username"
                     fullWidth
-                    error={Boolean(touched.email && errors.email)}
+                    error={Boolean(touched.login && errors.login)}
                   />
                 </Stack>
-                {touched.email && errors.email && (
-                  <FormHelperText error id="standard-weight-helper-text-email-login">
-                    {errors.email}
+                {touched.login && errors.login && (
+                  <FormHelperText error id="standard-weight-helper-text-login-field">
+                    {errors.login}
                   </FormHelperText>
                 )}
               </Grid>
@@ -83,7 +104,7 @@ export default function AuthLogin({ isDemo = false }) {
                   <OutlinedInput
                     fullWidth
                     error={Boolean(touched.password && errors.password)}
-                    id="-password-login"
+                    id="password-login"
                     type={showPassword ? 'text' : 'password'}
                     value={values.password}
                     name="password"
@@ -126,7 +147,7 @@ export default function AuthLogin({ isDemo = false }) {
                     }
                     label={<Typography variant="h6">Keep me sign in</Typography>}
                   />
-                  <Link variant="h6" component={RouterLink} color="text.primary">
+                  <Link variant="h6" component={RouterLink} to="/forgot-password" color="text.primary">
                     Forgot Password?
                   </Link>
                 </Stack>
@@ -139,8 +160,6 @@ export default function AuthLogin({ isDemo = false }) {
               <Grid item xs={12}>
                 <AnimateButton>
                   <Button
-                    component={RouterLink} // Add this line to make the button a Link
-                    to="/app/dashboard"
                     disableElevation
                     disabled={isSubmitting}
                     fullWidth
@@ -149,7 +168,7 @@ export default function AuthLogin({ isDemo = false }) {
                     variant="contained"
                     color="error"
                   >
-                    Login
+                    {isSubmitting ? 'Logging in...' : 'Login'}
                   </Button>
                 </AnimateButton>
               </Grid>
@@ -161,4 +180,6 @@ export default function AuthLogin({ isDemo = false }) {
   );
 }
 
-AuthLogin.propTypes = { isDemo: PropTypes.bool };
+AuthLogin.propTypes = {
+  isDemo: PropTypes.bool
+};
