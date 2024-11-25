@@ -5,8 +5,8 @@ import {
   InputAdornment, Box, CircularProgress
 } from '@mui/material';
 import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
-import AddCategoryModal from './AddCategoryModal';
-import AddProductModal from './AddProductModal';
+import AddCategoryModal from './addCategoryModal';
+import AddProductModal from './addProductModal';
 import AddAttributeModal from './AddAttributeModal';
 import { useProducts, useCategories } from '@/hooks/useProducts';
 
