@@ -41,7 +41,7 @@ const AddProductModal = ({ open, handleClose, categories }) => {
           product_name: '',
           product_category_id: '',
           reorder_level: 0,
-          product_type: 'finished',
+          product_type: 'raw',
           attributes: []
         }}
         validationSchema={validationSchema}
