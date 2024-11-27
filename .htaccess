@@ -2,29 +2,43 @@
 RewriteEngine On
 RewriteBase /
 
-# Handle SPA routing
+# Handle client routing
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.html [QSA,L]
+RewriteRule ^ index.html [QSA,L]
 
 # Set correct MIME types
-AddType application/javascript .js
-AddType application/javascript .mjs
-AddType application/javascript .jsx
-AddType text/javascript .js
-AddType text/css .css
+<IfModule mod_mime.c>
+    AddType application/javascript .js
+    AddType application/javascript .mjs
+    AddType application/javascript .jsx
+    AddType text/javascript .js
+    AddType text/javascript .jsx
+    AddType text/css .css
+    AddType application/json .json
+</IfModule>
 
-# Handle json files
-AddType application/json .json
-
-# Enable CORS
+# Handle CORS
 <IfModule mod_headers.c>
     Header set Access-Control-Allow-Origin "*"
+    Header add Access-Control-Allow-Headers "origin, x-requested-with, content-type"
+    Header add Access-Control-Allow-Methods "PUT, GET, POST, DELETE, OPTIONS"
     Header set X-Content-Type-Options "nosniff"
+</IfModule>
+
+# Cache control
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType text/javascript "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
 </IfModule>
 
 # Disable directory listing
 Options -Indexes
 
-# Handle errors
-ErrorDocument 404 /index.html
+# Force HTTPS (optional)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

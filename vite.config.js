@@ -14,31 +14,12 @@ export default defineConfig({
       '@config': path.resolve(__dirname, './src/config'),
       '@menu-items': path.resolve(__dirname, './src/menu-items'),
       '@assets': path.resolve(__dirname, './src/assets'),
-    }
+    },
+    extensions: ['.mjs', '.js', '.jsx', '.json']
   },
+  assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg'],
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    // Ensures proper chunking and asset loading
-    rollupOptions: {
-      output: {
-        manualChunks: undefined,
-        assetFileNames: 'assets/[name].[ext]',
-        chunkFileNames: 'js/[name].[hash].js',
-        entryFileNames: 'js/[name].[hash].js',
-      },
-    },
-    // Generates sourcemaps for debugging
-    sourcemap: true,
-    // Ensures proper asset handling
-    assetsInlineLimit: 4096,
-  },
-  assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg'],
-  // Add base URL if you're not deploying to root
-  // base: '/',
-  server: {
-    port: 3000,
-    host: true,
-    strictPort: true,
-  },
+  }
 })
