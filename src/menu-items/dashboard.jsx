@@ -51,14 +51,14 @@ const dashboard = {
     //   icon: ShoppingCartOutlined ,
     //   breadcrumbs: false
     // },
-    // {
-    //   id: 'supplier',
-    //   title: 'Supplier',
-    //   type: 'item',
-    //   url: '/app/supplier',
-    //   icon: AreaChartOutlined ,
-    //   breadcrumbs: false
-    // },
+    {
+      id: 'supplier',
+      title: 'Supplier',
+      type: 'item',
+      url: '/app/supplier',
+      icon: AreaChartOutlined ,
+      breadcrumbs: false
+    },
  
    
 
