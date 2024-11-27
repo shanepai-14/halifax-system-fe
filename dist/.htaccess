@@ -2,14 +2,10 @@
 RewriteEngine On
 RewriteBase /
 
-# Redirect all requests to the dist folder
-RewriteCond %{REQUEST_URI} !^/dist/
-RewriteRule ^(.*)$ dist/$1 [L]
-
-# If the file doesn't exist in dist, redirect to dist/index.html
+# Handle client routing - redirect everything to index.html
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ dist/index.html [L]
+RewriteRule ^ index.html [QSA,L]
 
 # Set correct MIME types
 AddType application/javascript .js
