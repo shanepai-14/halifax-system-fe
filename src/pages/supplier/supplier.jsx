@@ -21,7 +21,7 @@ const HalifaxSupplierPage = () => {
   const deleteSupplierMutation = useDeleteSupplier();
 
   // Filter suppliers based on search term
-  const filteredData = suppliers.filter(supplier => 
+  const filteredData = suppliers?.filter(supplier => 
     supplier.supplier_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     supplier.contact_person.toLowerCase().includes(searchTerm.toLowerCase()) ||
     supplier.email.toLowerCase().includes(searchTerm.toLowerCase())
