@@ -1,0 +1,30 @@
+# Enable rewrite engine
+RewriteEngine On
+RewriteBase /
+
+# Handle SPA routing
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.html [QSA,L]
+
+# Set correct MIME types
+AddType application/javascript .js
+AddType application/javascript .mjs
+AddType application/javascript .jsx
+AddType text/javascript .js
+AddType text/css .css
+
+# Handle json files
+AddType application/json .json
+
+# Enable CORS
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>
+
+# Disable directory listing
+Options -Indexes
+
+# Handle errors
+ErrorDocument 404 /index.html
