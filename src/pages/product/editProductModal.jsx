@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -11,15 +11,14 @@ import {
   Box,
   Typography,
   Divider,
-  Grid,
   Paper,
 } from "@mui/material";
 import { FileUploader } from "react-drag-drop-files";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { Formik, Form, Field, FieldArray } from "formik";
+import { getFileUrl } from '@/utils/fileHelper';
 import * as Yup from "yup";
 import {
-  useCreateProduct,
   useAttributes,
   useUploadProductImage,
   useProducts
@@ -41,7 +40,7 @@ const validationSchema = Yup.object().shape({
     "fileSize",
     "File is too large",
     (value) => !value || value.size <= 5000000
-  ), // 5MB limit
+  ),
   attributes: Yup.array().of(
     Yup.object().shape({
       attribute_id: Yup.number().required("Required"),
@@ -52,13 +51,21 @@ const validationSchema = Yup.object().shape({
 
 const fileTypes = ["JPG", "JPEG", "PNG", "GIF"];
 
-const AddProductModal = ({ open, handleClose, categories }) => {
-  const createProduct = useCreateProduct();
+const EditProductModal = ({ open, handleClose, categories, product }) => {
+//   const updateProduct = useUpdateProduct();
   const uploadImage = useUploadProductImage();
   const { data: attributes = [] } = useAttributes();
   const [imagePreview, setImagePreview] = useState(null);
   const { refetch: refetchProducts } = useProducts();
-  
+
+
+
+  useEffect(() => {
+    if (product?.product_image) {
+      setImagePreview(product.product_image);
+    }
+  }, [product]);
+
   const handleImageChange = (file, setFieldValue) => {
     if (file) {
       setFieldValue("product_image", file);
@@ -66,35 +73,47 @@ const AddProductModal = ({ open, handleClose, categories }) => {
     }
   };
 
+  const isAttributeSelected = (attributeId, currentIndex, attributes) => {
+    return attributes.some(
+      (attr, idx) => attr.attribute_id === attributeId && idx !== currentIndex
+    );
+  };
+
+  if (!product) return null;
+
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>Add New Product</DialogTitle>
+      <DialogTitle>Edit Product</DialogTitle>
       <Formik
-        initialValues={{
-          product_name: "",
-          product_category_id: "",
-          reorder_level: 0,
-          product_type: "raw",
+      initialValues={{
+          product_name: product.product_name || "",
+          product_category_id: product.product_category_id || "",
+          reorder_level: product.reorder_level || 0,
+          product_type: product.product_type || "raw",
           product_image: null,
-          attributes: [],
+          attributes: product.attributes.map(attr => ({
+            attribute_id: attr.id,
+            value: parseFloat(attr.pivot.value)
+          })) || [],
         }}
         validationSchema={validationSchema}
-        onSubmit={async (values, { setSubmitting, resetForm }) => {
+        onSubmit={async (values, { setSubmitting }) => {
           try {
-            const product = await createProduct.mutateAsync(values);
+            // await updateProduct.mutateAsync({
+            //   id: product.id,
+            //   data: values,
+            // });
 
             if (values.product_image) {
               await uploadImage.mutateAsync({
-                id: product.data.id,
+                id: product.id,
                 image: values.product_image,
               });
             }
             refetchProducts();
-            setImagePreview(null);
-            resetForm();
             handleClose();
           } catch (error) {
-            console.error("Error creating product:", error);
+            console.error("Error updating product:", error);
           } finally {
             setSubmitting(false);
           }
@@ -119,14 +138,11 @@ const AddProductModal = ({ open, handleClose, categories }) => {
                 >
                   <Box sx={{ textAlign: "center" }}>
                     <FileUploader
-                      handleChange={(file) =>
-                        handleImageChange(file, setFieldValue)
-                      }
+                      handleChange={(file) => handleImageChange(file, setFieldValue)}
                       name="product_image"
                       label="Upload or drop a Product Image"
                       types={fileTypes}
                       multiple={false}
-                      required
                     />
                     {touched.product_image && errors.product_image && (
                       <Typography
@@ -165,7 +181,7 @@ const AddProductModal = ({ open, handleClose, categories }) => {
                           }}
                         >
                           <img
-                            src={imagePreview}
+                            src={getFileUrl(imagePreview)}
                             alt="Preview"
                             style={{
                               maxWidth: "100%",
@@ -195,12 +211,8 @@ const AddProductModal = ({ open, handleClose, categories }) => {
                 label="Category"
                 fullWidth
                 margin="normal"
-                error={
-                  touched.product_category_id && errors.product_category_id
-                }
-                helperText={
-                  touched.product_category_id && errors.product_category_id
-                }
+                error={touched.product_category_id && errors.product_category_id}
+                helperText={touched.product_category_id && errors.product_category_id}
               >
                 {categories.map((category) => (
                   <MenuItem key={category.id} value={category.id}>
@@ -240,63 +252,74 @@ const AddProductModal = ({ open, handleClose, categories }) => {
               </Typography>
 
               <FieldArray name="attributes">
-                {({ push, remove }) => (
-                  <Box>
-                    {values.attributes.map((attr, index) => (
-                      <Box key={index} sx={{ display: "flex", gap: 2, mb: 2 }}>
-                        <Field
-                          as={TextField}
-                          select
-                          name={`attributes.${index}.attribute_id`}
-                          label="Attribute"
-                          fullWidth
-                          error={
-                            touched.attributes?.[index]?.attribute_id &&
-                            errors.attributes?.[index]?.attribute_id
-                          }
-                          helperText={
-                            touched.attributes?.[index]?.attribute_id &&
-                            errors.attributes?.[index]?.attribute_id
-                          }
-                        >
-                          {attributes.map((attr) => (
-                            <MenuItem key={attr.id} value={attr.id}>
-                              {attr.attribute_name} ({attr.unit_of_measurement})
-                            </MenuItem>
-                          ))}
-                        </Field>
-                        <Field
-                          as={TextField}
-                          name={`attributes.${index}.value`}
-                          label="Value"
-                          type="number"
-                          fullWidth
-                          error={
-                            touched.attributes?.[index]?.value &&
-                            errors.attributes?.[index]?.value
-                          }
-                          helperText={
-                            touched.attributes?.[index]?.value &&
-                            errors.attributes?.[index]?.value
-                          }
-                        />
-                        <IconButton onClick={() => remove(index)} color="error">
-                          <DeleteOutlined />
-                        </IconButton>
-                      </Box>
-                    ))}
-                    <Button
-                      type="button"
-                      onClick={() => push({ attribute_id: "", value: "" })}
-                      startIcon={<PlusOutlined />}
-                      variant="outlined"
-                      fullWidth
-                    >
-                      Add Attribute
-                    </Button>
-                  </Box>
-                )}
-              </FieldArray>
+              {({ push, remove }) => (
+                <Box>
+                  {values.attributes.map((attr, index) => (
+                    <Box key={index} sx={{ display: "flex", gap: 2, mb: 2 }}>
+                      <Field
+                        as={TextField}
+                        select
+                        name={`attributes.${index}.attribute_id`}
+                        label="Attribute"
+                        fullWidth
+                        error={
+                          touched.attributes?.[index]?.attribute_id &&
+                          errors.attributes?.[index]?.attribute_id
+                        }
+                        helperText={
+                          touched.attributes?.[index]?.attribute_id &&
+                          errors.attributes?.[index]?.attribute_id
+                        }
+                      >
+                        {attributes.map((attrOption) => (
+                          <MenuItem
+                            key={attrOption.id}
+                            value={attrOption.id}
+                            disabled={isAttributeSelected(
+                              attrOption.id,
+                              index,
+                              values.attributes
+                            )}
+                          >
+                            {attrOption.attribute_name} ({attrOption.unit_of_measurement})
+                          </MenuItem>
+                        ))}
+                      </Field>
+                      <Field
+                        as={TextField}
+                        name={`attributes.${index}.value`}
+                        label={`Value ${
+                          attributes.find(a => a.id === attr.attribute_id)?.unit_of_measurement || ''
+                        }`}
+                        type="number"
+                        fullWidth
+                        error={
+                          touched.attributes?.[index]?.value &&
+                          errors.attributes?.[index]?.value
+                        }
+                        helperText={
+                          touched.attributes?.[index]?.value &&
+                          errors.attributes?.[index]?.value
+                        }
+                      />
+                      <IconButton onClick={() => remove(index)} color="error">
+                        <DeleteOutlined />
+                      </IconButton>
+                    </Box>
+                  ))}
+                  <Button
+                    type="button"
+                    onClick={() => push({ attribute_id: "", value: "" })}
+                    startIcon={<PlusOutlined />}
+                    variant="outlined"
+                    fullWidth
+                    disabled={values.attributes.length >= attributes.length}
+                  >
+                    Add Attribute
+                  </Button>
+                </Box>
+              )}
+            </FieldArray>
             </DialogContent>
             <DialogActions>
               <Button onClick={handleClose}>Cancel</Button>
@@ -306,7 +329,7 @@ const AddProductModal = ({ open, handleClose, categories }) => {
                 variant="contained"
                 color="primary"
               >
-                {isSubmitting ? "Adding..." : "Add Product"}
+                {isSubmitting ? "Updating..." : "Update Product"}
               </Button>
             </DialogActions>
           </Form>
@@ -316,4 +339,4 @@ const AddProductModal = ({ open, handleClose, categories }) => {
   );
 };
 
-export default AddProductModal;
+export default EditProductModal;

@@ -15,7 +15,7 @@ const HalifaxSupplierPage = () => {
   const [openAddSupplierModal, setOpenAddSupplierModal] = useState(false);
 
   // Query hooks
-  const { data: suppliers , isLoading, error } = useSuppliers();
+  const { data: suppliers , isLoading, error ,refetch : refetchSuppliers  } = useSuppliers();
   const createSupplierMutation = useCreateSupplier();
   const updateSupplierMutation = useUpdateSupplier();
   const deleteSupplierMutation = useDeleteSupplier();
@@ -66,6 +66,7 @@ const HalifaxSupplierPage = () => {
   const handleAddSupplier = async (newSupplier) => {
     try {
       await createSupplierMutation.mutateAsync(newSupplier);
+      refetchSuppliers();
       handleCloseAddSupplierModal();
     } catch (error) {
       console.error('Error creating supplier:', error);
