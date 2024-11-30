@@ -9,6 +9,7 @@ export const useSuppliers = () => {
       const response = await api.get('/suppliers');
       return response.data.data;
     },
+    enabled: false // Prevent automatic fetching
   });
 };
 
@@ -19,10 +20,7 @@ export const useCreateSupplier = () => {
     mutationFn: async (supplierData) => {
       const response = await api.post('/suppliers', supplierData);
       return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['suppliers']);
-    },
+    }
   });
 };
 
@@ -33,10 +31,7 @@ export const useUpdateSupplier = () => {
     mutationFn: async ({ id, data }) => {
       const response = await api.put(`/suppliers/${id}`, data);
       return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['suppliers']);
-    },
+    }
   });
 };
 
@@ -47,9 +42,6 @@ export const useDeleteSupplier = () => {
     mutationFn: async (id) => {
       const response = await api.delete(`/suppliers/${id}`);
       return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['suppliers']);
-    },
+    }
   });
 };
