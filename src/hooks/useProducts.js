@@ -9,6 +9,7 @@ export const useProducts = () => {
       const response = await api.get('/products');
       return response.data.data;
     },
+    enabled: false // This prevents automatic fetching
   });
 };
 
@@ -19,9 +20,7 @@ export const useCreateProduct = () => {
       const response = await api.post('/products', productData);
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries('products');
-    },
+ 
   });
 };
 
@@ -33,6 +32,7 @@ export const useCategories = () => {
       const response = await api.get('/product-categories');
       return response.data.data;
     },
+    enabled: false
   });
 };
 
@@ -43,9 +43,7 @@ export const useCreateCategory = () => {
       const response = await api.post('/product-categories', categoryData);
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries('categories');
-    },
+
   });
 };
 
@@ -57,6 +55,7 @@ export const useAttributes = () => {
       const response = await api.get('/attributes');
       return response.data.data;
     },
+    enabled: false
   });
 };
 
@@ -67,8 +66,24 @@ export const useCreateAttribute = () => {
       const response = await api.post('/attributes', attributeData);
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries('attributes');
+    
+  });
+};
+
+export const useUploadProductImage = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, image }) => {
+      const formData = new FormData();
+      formData.append('product_image', image);
+      
+      const response = await api.post(`/products/${id}/image`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
     },
+    
   });
 };

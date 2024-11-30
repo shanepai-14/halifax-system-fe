@@ -12,18 +12,55 @@ import Header from './Header';
 import navigation from '@menu-items';
 import Loader from '@components/Loader';
 import Breadcrumbs from '@components/@extended/Breadcrumbs';
+import {  useSelector , useDispatch } from 'react-redux';
+import {
+  setProducts,
+  setCategories,
+  setAttributes,
+  setSuppliers
+} from '@/store/slices/productsSlice';
+import { useProducts, useCategories , useAttributes } from '@/hooks/useProducts';
+import { useSuppliers } from '@/hooks/useSuppliers';
 
 import { handlerDrawerOpen, useGetMenuMaster } from '@api/menu';
 
 // ==============================|| MAIN LAYOUT ||============================== //
 
 export default function DashboardLayout() {
+  const dispatch = useDispatch(); 
   const { menuMasterLoading } = useGetMenuMaster();
   const downXL = useMediaQuery((theme) => theme.breakpoints.down('xl'));
+  const { data: products, refetch: refetchProducts } = useProducts();
+  const { data: categories, refetch: refetchCategories } = useCategories();
+  const { data: attributes, refetch: refetchAttributes } = useAttributes();
+  const { data: suppliers, refetch: refetchSuppliers } = useSuppliers();
+  
+  useEffect(() => {
+    // Initial data fetch
+    const fetchData = async () => {
+      await Promise.all([
+        refetchProducts(),
+        refetchCategories(),
+        refetchAttributes(),
+        refetchSuppliers()
+      ]);
+    };
+  
+    fetchData();
+  }, []); // Empty dependency array since we only want to fetch once on mount
+  
+  // Separate effect for updating store
+  useEffect(() => {
+    if (products) dispatch(setProducts(products));
+    if (categories) dispatch(setCategories(categories));
+    if (attributes) dispatch(setAttributes(attributes));
+    if (suppliers) dispatch(setSuppliers(suppliers));
+  }, [products, categories, attributes, suppliers]);
+
 
   useEffect(() => {
     handlerDrawerOpen(!downXL);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [downXL]);
 
   if (menuMasterLoading) return <Loader />;

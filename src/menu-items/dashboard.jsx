@@ -59,6 +59,14 @@ const dashboard = {
       icon: AreaChartOutlined ,
       breadcrumbs: false
     },
+    {
+      id: 'purchase',
+      title: 'Purchase Order',
+      type: 'item',
+      url: '/app/purchase',
+      icon: AreaChartOutlined ,
+      breadcrumbs: false
+    },
  
    
 
