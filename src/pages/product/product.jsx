@@ -50,7 +50,7 @@ const [sortConfig, setSortConfig] = useState({
     setOpenEditProductModal(false);
   }
 
-  const { data: products, isLoading: isLoadingProducts } = useProducts();
+  const { data: products, isLoading: isLoadingProducts , refetch : refetchProducts } = useProducts();
   const { data: categories, isLoading: isLoadingCategories } = useCategories();
   const deleteProduct = useDeleteProduct();
 
