@@ -21,7 +21,7 @@ import {
 } from '@/store/slices/productsSlice';
 import { useProducts, useCategories , useAttributes } from '@/hooks/useProducts';
 import { useSuppliers } from '@/hooks/useSuppliers';
-
+import { Toaster } from 'sonner'
 import { handlerDrawerOpen, useGetMenuMaster } from '@api/menu';
 
 // ==============================|| MAIN LAYOUT ||============================== //
@@ -67,6 +67,7 @@ export default function DashboardLayout() {
 
   return (
     <Box sx={{ display: 'flex', width: '100%' }}>
+      <Toaster richColors position="top-right" closeButton/>
       <Header />
       <Drawer />
       <Box component="main" sx={{ width: 'calc(100% - 260px)', flexGrow: 1, p: { xs: 2, sm: 3 } }}>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {  useSelector } from 'react-redux';
+import { toast } from 'sonner';
 import {
   Container,
   Typography,
@@ -55,15 +56,52 @@ const CreatePurchaseOrder = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrors({});
-
+    const newErrors = {};
+  
+    // Validate supplier
+    if (!formData.supplier_id) {
+      newErrors.supplier_id = 'Supplier is required';
+    }
+  
+    // Validate items
+    formData.items.forEach((item, index) => {
+      // Check if product is selected
+      if (!item.product_id) {
+        newErrors[`items.${index}.product_id`] = 'Product is required';
+      }
+  
+      // Check quantity
+      if (!item.requested_quantity || item.requested_quantity <= 0) {
+        newErrors[`items.${index}.requested_quantity`] = 'Quantity must be greater than 0';
+      }
+  
+      // Check price
+      if (!item.price || item.price <= 0) {
+        newErrors[`items.${index}.price`] = 'Price must be greater than 0';
+      }
+  
+      // Check for duplicate products
+      const productOccurrences = formData.items.filter(i => i.product_id === item.product_id).length;
+      if (item.product_id && productOccurrences > 1) {
+        newErrors[`items.${index}.product_id`] = 'Duplicate product is not allowed';
+      }
+    });
+  
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error('Please fill in all required fields correctly');
+      return;
+    }
+  
     try {
       await createPOMutation.mutateAsync(formData);
       navigate('/app/purchase');
+      toast.success('Successfully Created Purchase Order');
     } catch (error) {
       if (error.response?.data?.errors) {
         setErrors(error.response.data.errors);
       }
+      toast.error('Something went wrong please try again');
     }
   };
 
@@ -92,12 +130,36 @@ const CreatePurchaseOrder = () => {
   };
 
   const handleItemChange = (index, field, value) => {
+    if (field === 'product_id' && value) {
+      // Check for duplicate product
+      const isDuplicate = formData.items.some(
+        (item, i) => i !== index && item.product_id === value
+      );
+      
+      if (isDuplicate) {
+        setErrors(prev => ({
+          ...prev,
+          [`items.${index}.product_id`]: 'This product is already added'
+        }));
+        return;
+      }
+    }
+  
     const updatedItems = [...formData.items];
     updatedItems[index] = {
       ...updatedItems[index],
       [field]: value
     };
     setFormData(prev => ({ ...prev, items: updatedItems }));
+    
+    // Clear error for this field if it exists
+    if (errors[`items.${index}.${field}`]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[`items.${index}.${field}`];
+        return newErrors;
+      });
+    }
   };
 
   const addItem = () => {
@@ -195,51 +257,55 @@ const CreatePurchaseOrder = () => {
                 <TableBody>
                   {formData.items.map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell>
-                        <Autocomplete
-                          value={products?.find(product => product.id === item.product_id) || null}
-                          onChange={(e, newValue) => handleItemChange(index, 'product_id', newValue ? newValue.id : '')}
-                          options={products || []}
-                          getOptionLabel={(option) => option.product_name || ''}
-                          isOptionEqualToValue={(option, value) => option.id === value}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              fullWidth
-                              sx={{
-                                '& .MuiInputBase-root': {
-                                  padding: '4px 8px',
-                                },
-                                '& .MuiFormLabel-root': {
-                                  fontSize: '0.875rem',
-                                }
-                              }}
-                              error={!!errors[`items.${index}.product_id`]}
-                              helperText={errors[`items.${index}.product_id`] && 'Please select a product'}
-                            />
-                          )}
-                        />
-                      </TableCell>
-                      <TableCell>
+                    <TableCell>
+                    <Autocomplete
+                        value={products?.find(product => product.id === item.product_id) || null}
+                        onChange={(e, newValue) => handleItemChange(index, 'product_id', newValue ? newValue.id : '')}
+                        options={products?.filter(product => 
+                        !formData.items.some((item, i) => i !== index && item.product_id === product.id)
+                        ) || []}
+                        getOptionLabel={(option) => option.product_name || ''}
+                        isOptionEqualToValue={(option, value) => option.id === value}
+                        renderInput={(params) => (
                         <TextField
-                          type="number"
-                          value={item.requested_quantity}
-                          onChange={(e) => handleItemChange(index, 'requested_quantity', e.target.value)}
-                          error={!!errors[`items.${index}.requested_quantity`]}
-                          inputProps={{ min: 1 }}
-                          required
+                            {...params}
+                            fullWidth
+                            sx={{
+                            '& .MuiInputBase-root': {
+                                padding: '4px 8px',
+                            },
+                            '& .MuiFormLabel-root': {
+                                fontSize: '0.875rem',
+                            }
+                            }}
+                            error={!!errors[`items.${index}.product_id`]}
+                            helperText={errors[`items.${index}.product_id`] || 'Required'}
                         />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          type="number"
-                          value={item.price}
-                          onChange={(e) => handleItemChange(index, 'price', e.target.value)}
-                          error={!!errors[`items.${index}.price`]}
-                          inputProps={{ min: 0, step: 0.01 }}
-                          required
-                        />
-                      </TableCell>
+                        )}
+                    />
+                    </TableCell>
+                    <TableCell>
+                    <TextField
+                        type="number"
+                        value={item.requested_quantity}
+                        onChange={(e) => handleItemChange(index, 'requested_quantity', e.target.value)}
+                        error={!!errors[`items.${index}.requested_quantity`]}
+                        helperText={errors[`items.${index}.requested_quantity`] || 'Required'}
+                        inputProps={{ min: 1 }}
+
+                    />
+                    </TableCell>
+                    <TableCell>
+                    <TextField
+                        type="number"
+                        value={item.price}
+                        onChange={(e) => handleItemChange(index, 'price', e.target.value)}
+                        error={!!errors[`items.${index}.price`]}
+                        helperText={errors[`items.${index}.price`] || 'Required'}
+                        inputProps={{ min: 0, step: 0.01 }}
+     
+                    />
+                    </TableCell>
                       <TableCell>
                         ₱{(item.price * item.requested_quantity).toFixed(2)}
                       </TableCell>

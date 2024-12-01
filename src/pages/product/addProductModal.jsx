@@ -17,6 +17,7 @@ import {
 import { FileUploader } from "react-drag-drop-files";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { Formik, Form, Field, FieldArray } from "formik";
+import { toast } from 'sonner'
 import * as Yup from "yup";
 import {
   useCreateProduct,
@@ -66,8 +67,21 @@ const AddProductModal = ({ open, handleClose, categories }) => {
     }
   };
 
+  const handleCloseModal = () => { 
+    handleClose();
+    setImagePreview(null);
+  }
+
+
+  const isAttributeSelected = (attributeId, currentIndex, attributes) => {
+    return attributes.some(
+      (attr, idx) => attr.attribute_id === attributeId && idx !== currentIndex
+    );
+  };
+
+
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={handleCloseModal} maxWidth="md" fullWidth>
       <DialogTitle>Add New Product</DialogTitle>
       <Formik
         initialValues={{
@@ -92,8 +106,10 @@ const AddProductModal = ({ open, handleClose, categories }) => {
             refetchProducts();
             setImagePreview(null);
             resetForm();
-            handleClose();
+            handleCloseModal();
+            toast.success('Successfully Created Product')
           } catch (error) {
+            toast.error('Something went wrong please try again')
             console.error("Error creating product:", error);
           } finally {
             setSubmitting(false);
@@ -260,7 +276,13 @@ const AddProductModal = ({ open, handleClose, categories }) => {
                           }
                         >
                           {attributes.map((attr) => (
-                            <MenuItem key={attr.id} value={attr.id}>
+                            <MenuItem key={attr.id}
+                            disabled={isAttributeSelected(
+                              attr.id,
+                              index,
+                              values.attributes
+                            )}
+                            value={attr.id}>
                               {attr.attribute_name} ({attr.unit_of_measurement})
                             </MenuItem>
                           ))}
@@ -299,7 +321,7 @@ const AddProductModal = ({ open, handleClose, categories }) => {
               </FieldArray>
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleClose}>Cancel</Button>
+              <Button onClick={handleCloseModal}>Cancel</Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}

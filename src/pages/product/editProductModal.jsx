@@ -17,11 +17,13 @@ import { FileUploader } from "react-drag-drop-files";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { Formik, Form, Field, FieldArray } from "formik";
 import { getFileUrl } from '@/utils/fileHelper';
+import { toast } from 'sonner'
 import * as Yup from "yup";
 import {
   useAttributes,
   useUploadProductImage,
-  useProducts
+  useProducts,
+  useUpdateProduct
 } from "@/hooks/useProducts";
 
 const validationSchema = Yup.object().shape({
@@ -52,7 +54,7 @@ const validationSchema = Yup.object().shape({
 const fileTypes = ["JPG", "JPEG", "PNG", "GIF"];
 
 const EditProductModal = ({ open, handleClose, categories, product }) => {
-//   const updateProduct = useUpdateProduct();
+  const updateProduct = useUpdateProduct();
   const uploadImage = useUploadProductImage();
   const { data: attributes = [] } = useAttributes();
   const [imagePreview, setImagePreview] = useState(null);
@@ -62,7 +64,7 @@ const EditProductModal = ({ open, handleClose, categories, product }) => {
 
   useEffect(() => {
     if (product?.product_image) {
-      setImagePreview(product.product_image);
+      setImagePreview(getFileUrl(product.product_image));
     }
   }, [product]);
 
@@ -73,6 +75,12 @@ const EditProductModal = ({ open, handleClose, categories, product }) => {
     }
   };
 
+  const handleCloseModal = () => { 
+    handleClose();
+    setImagePreview(null);
+  }
+
+
   const isAttributeSelected = (attributeId, currentIndex, attributes) => {
     return attributes.some(
       (attr, idx) => attr.attribute_id === attributeId && idx !== currentIndex
@@ -82,7 +90,7 @@ const EditProductModal = ({ open, handleClose, categories, product }) => {
   if (!product) return null;
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={handleCloseModal} maxWidth="md" fullWidth>
       <DialogTitle>Edit Product</DialogTitle>
       <Formik
       initialValues={{
@@ -90,7 +98,6 @@ const EditProductModal = ({ open, handleClose, categories, product }) => {
           product_category_id: product.product_category_id || "",
           reorder_level: product.reorder_level || 0,
           product_type: product.product_type || "raw",
-          product_image: null,
           attributes: product.attributes.map(attr => ({
             attribute_id: attr.id,
             value: parseFloat(attr.pivot.value)
@@ -99,10 +106,10 @@ const EditProductModal = ({ open, handleClose, categories, product }) => {
         validationSchema={validationSchema}
         onSubmit={async (values, { setSubmitting }) => {
           try {
-            // await updateProduct.mutateAsync({
-            //   id: product.id,
-            //   data: values,
-            // });
+            await updateProduct.mutateAsync({
+              id: product.id,
+              data: values,
+            });
 
             if (values.product_image) {
               await uploadImage.mutateAsync({
@@ -111,8 +118,10 @@ const EditProductModal = ({ open, handleClose, categories, product }) => {
               });
             }
             refetchProducts();
-            handleClose();
+            handleCloseModal();
+            toast.success('Successfully Edited Product')
           } catch (error) {
+            toast.error('Something went wrong please try again')
             console.error("Error updating product:", error);
           } finally {
             setSubmitting(false);
@@ -144,16 +153,6 @@ const EditProductModal = ({ open, handleClose, categories, product }) => {
                       types={fileTypes}
                       multiple={false}
                     />
-                    {touched.product_image && errors.product_image && (
-                      <Typography
-                        color="error"
-                        variant="caption"
-                        display="block"
-                        sx={{ mt: 1 }}
-                      >
-                        {errors.product_image}
-                      </Typography>
-                    )}
 
                     {imagePreview && (
                       <Paper
@@ -181,7 +180,7 @@ const EditProductModal = ({ open, handleClose, categories, product }) => {
                           }}
                         >
                           <img
-                            src={getFileUrl(imagePreview)}
+                            src={imagePreview}
                             alt="Preview"
                             style={{
                               maxWidth: "100%",
@@ -322,7 +321,7 @@ const EditProductModal = ({ open, handleClose, categories, product }) => {
             </FieldArray>
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleClose}>Cancel</Button>
+              <Button onClick={handleCloseModal}>Cancel</Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
