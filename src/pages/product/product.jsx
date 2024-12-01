@@ -3,7 +3,12 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
   Typography, Container, TablePagination, Button, TextField,
   InputAdornment, Box, CircularProgress, Card, CardContent, 
-  CardMedia, Grid, ToggleButton, ToggleButtonGroup, Tooltip, IconButton
+  CardMedia, Grid, ToggleButton, ToggleButtonGroup, Tooltip, IconButton,
+  Select, 
+  MenuItem, 
+  FormControl, 
+  InputLabel, 
+  TableSortLabel
 } from '@mui/material';
 import { SearchOutlined, PlusOutlined ,DeleteOutlined, EditOutlined, } from '@ant-design/icons';
 import ViewListIcon from '@mui/icons-material/ViewList';
@@ -13,9 +18,11 @@ import AddCategoryModal from './addCategoryModal';
 import AddProductModal from './addProductModal';
 import AddAttributeModal from './AddAttributeModal';
 import EditProductModal from './editProductModal';
-import { useProducts, useCategories } from '@/hooks/useProducts';
+import { useProducts, useCategories ,useDeleteProduct } from '@/hooks/useProducts';
 import { getFileUrl } from '@/utils/fileHelper';
-
+import CardSkeleton from '@/components/CardSkeleton';
+import TableRowSkeleton from '@/components/TableRowSkeleton';
+import Swal from 'sweetalert2';
 
 
 const ProductPage = () => {
@@ -28,6 +35,11 @@ const ProductPage = () => {
   const [openAddAttributeModal, setOpenAddAttributeModal] = useState(false);
   const [openEditProductModal, setOpenEditProductModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+const [sortConfig, setSortConfig] = useState({
+  field: 'product_name',
+  direction: 'asc'
+});
 
   const handleOpenEditProductModal = (product) => {
     setSelectedProduct(product);
@@ -40,16 +52,105 @@ const ProductPage = () => {
 
   const { data: products, isLoading: isLoadingProducts } = useProducts();
   const { data: categories, isLoading: isLoadingCategories } = useCategories();
+  const deleteProduct = useDeleteProduct();
 
-  const filteredData = products?.filter(item => 
-    item.product_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.product_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.category?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredData = products?.filter(item => {
+    const matchesSearch = 
+      item.product_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.product_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.category?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      // Add attribute search
+      item.attributes?.some(attr => 
+        attr.attribute_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        attr.pivot?.value?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    
+    const matchesCategory = 
+      selectedCategory === 'all' || 
+      item.category?.id === selectedCategory;
+  
+    return matchesSearch && matchesCategory;
+  }) || [];
+  
+  
+  const handleSort = (field) => {
+    setSortConfig({
+      field,
+      direction: 
+        sortConfig.field === field && sortConfig.direction === 'asc' 
+          ? 'desc' 
+          : 'asc'
+    });
+  };
+
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (sortConfig.field === 'attributes') {
+      // Get the first attribute value for comparison, or empty string if no attributes
+      const aValue = a.attributes?.[0]?.pivot?.value || '';
+      const bValue = b.attributes?.[0]?.pivot?.value || '';
+      
+      if (sortConfig.direction === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    }
+    
+    const aValue = a[sortConfig.field];
+    const bValue = b[sortConfig.field];
+  
+    if (sortConfig.direction === 'asc') {
+      return aValue > bValue ? 1 : -1;
+    } else {
+      return aValue < bValue ? 1 : -1;
+    }
+  });
+
+
+  const renderAttributes = (attributes) => {
+    if (!attributes || attributes.length === 0) return 'No attributes';
+    return attributes.map(attr => 
+      `${attr.attribute_name}: ${attr.pivot.value}${attr.unit_of_measurement}`
+    ).join(', ');
+  };
 
   const handleViewChange = (event, newView) => {
     if (newView !== null) {
       setViewMode(newView);
+    }
+  };
+
+  const handleDelete = async (productId) => {
+    try {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: 'You will not be able to recover this product!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'No, keep it',
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+      });
+  
+      if (result.isConfirmed) {
+        await deleteProduct.mutateAsync(productId);
+        await Swal.fire({
+          title: 'Deleted!',
+          text: 'Product has been deleted successfully.',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        refetchProducts();
+      }
+    } catch (error) {
+      await Swal.fire({
+        title: 'Error!',
+        text: error.response?.data?.message || 'Failed to delete product.',
+        icon: 'error'
+      });
+      console.error('Failed to delete product:', error);
     }
   };
 
@@ -62,27 +163,63 @@ const ProductPage = () => {
     setPage(0);
   };
 
-  const handleDelete = async (row) => {
  
-  };
 
   const TableView = () => (
     <TableContainer component={Paper}>
       <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Image</TableCell>
-            <TableCell>Code</TableCell>
-            <TableCell>Name</TableCell>
-            <TableCell>Category</TableCell>
-            <TableCell align="right">Reorder Level</TableCell>
-            <TableCell align="right">Actions</TableCell>
-          </TableRow>
-        </TableHead>
+      <TableHead>
+        <TableRow>
+          <TableCell>Image</TableCell>
+          <TableCell>
+            <TableSortLabel
+              active={sortConfig.field === 'product_code'}
+              direction={sortConfig.field === 'product_code' ? sortConfig.direction : 'asc'}
+              onClick={() => handleSort('product_code')}
+            >
+              Code
+            </TableSortLabel>
+          </TableCell>
+          <TableCell>
+            <TableSortLabel
+              active={sortConfig.field === 'product_name'}
+              direction={sortConfig.field === 'product_name' ? sortConfig.direction : 'asc'}
+              onClick={() => handleSort('product_name')}
+            >
+              Name
+            </TableSortLabel>
+          </TableCell>
+          <TableCell>Category</TableCell>
+          <TableCell>
+          <TableSortLabel
+            active={sortConfig.field === 'attributes'}
+            direction={sortConfig.field === 'attributes' ? sortConfig.direction : 'asc'}
+            onClick={() => handleSort('attributes')}
+          >
+            Attributes
+          </TableSortLabel>
+        </TableCell>
+          <TableCell align="right">
+            <TableSortLabel
+              active={sortConfig.field === 'reorder_level'}
+              direction={sortConfig.field === 'reorder_level' ? sortConfig.direction : 'asc'}
+              onClick={() => handleSort('reorder_level')}
+            >
+              Reorder Level
+            </TableSortLabel>
+          </TableCell>
+          <TableCell align="right">Actions</TableCell>
+        </TableRow>
+      </TableHead>
         <TableBody>
-          {filteredData
-            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-            .map((row) => (
+        {isLoadingProducts ? (
+          Array(rowsPerPage).fill(0).map((_, index) => (
+            <TableRowSkeleton key={index} />
+          ))
+        ) : (
+          sortedData
+          .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+          .map((row) => (
               <TableRow key={row.id}>
                 <TableCell>
                   {row.product_image ? (
@@ -109,17 +246,19 @@ const ProductPage = () => {
                 <TableCell>{row.product_code}</TableCell>
                 <TableCell>{row.product_name}</TableCell>
                 <TableCell>{row.category?.name}</TableCell>
+                <TableCell>{renderAttributes(row.attributes)}</TableCell>
                 <TableCell align="right">{row.reorder_level}</TableCell>
                   <TableCell align="right">
                     <IconButton onClick={ () => handleOpenEditProductModal(row)}>
                       <EditOutlined style={{ fontSize: 20 }} />
                     </IconButton>
-                    <IconButton onClick={() => handleDelete(row)}>
+                    <IconButton onClick={() => handleDelete(row.id)}>
                       <DeleteOutlined style={{ fontSize: 20 }} />
                     </IconButton>
                   </TableCell>
               </TableRow>
-            ))}
+                ))
+              )}
         </TableBody>
       </Table>
     </TableContainer>
@@ -127,7 +266,12 @@ const ProductPage = () => {
 
   const CardView = () => (
     <Grid container spacing={2}>
-      {filteredData
+          {isLoadingProducts ? (
+      Array(rowsPerPage).fill(0).map((_, index) => (
+        <CardSkeleton key={index} />
+      ))
+    ) : (
+      sortedData
         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
         .map((product) => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
@@ -164,16 +308,17 @@ const ProductPage = () => {
                 <Typography variant="body2" color="text.secondary">
                   Reorder Level: {product.reorder_level}
                 </Typography>
+                <Typography variant="body2" color="text.secondary">
+                Attributes: {renderAttributes(product.attributes)}
+              </Typography>
               </CardContent>
             </Card>
           </Grid>
-        ))}
+              ))
+            )}
     </Grid>
   );
 
-  if (isLoadingProducts || isLoadingCategories) {
-    return <CircularProgress />;
-  }
 
   return (
     <Container maxWidth="xxl" sx={{ mt: 0, p: "0!important" }}>
@@ -193,6 +338,21 @@ const ProductPage = () => {
               ),
             }}
           />
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+            <InputLabel>Category</InputLabel>
+            <Select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              label="Category"
+            >
+              <MenuItem value="all">All Categories</MenuItem>
+              {categories?.map((category) => (
+                <MenuItem key={category.id} value={category.id}>
+                  {category.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <ToggleButtonGroup
             value={viewMode}
             exclusive
@@ -242,16 +402,16 @@ const ProductPage = () => {
       </Box>
 
       {viewMode === 'table' ? <TableView /> : <CardView />}
-
+      
       <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
-        component="div"
-        count={filteredData.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-      />
+      rowsPerPageOptions={[5, 10, 25]}
+      component="div"
+      count={sortedData.length}
+      rowsPerPage={rowsPerPage}
+      page={page}
+      onPageChange={handleChangePage}
+      onRowsPerPageChange={handleChangeRowsPerPage}
+    />
 
       <AddCategoryModal
         open={openAddCategoryModal}

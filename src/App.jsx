@@ -6,7 +6,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { store } from '@/store/store';
 import ScrollTop from '@components/ScrollTop';
 import router from './router';
-
+import "./index.css";
 // Create browser router with your routes
 const browserRouter = createBrowserRouter(router);
 

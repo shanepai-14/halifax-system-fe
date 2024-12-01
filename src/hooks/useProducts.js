@@ -24,6 +24,23 @@ export const useCreateProduct = () => {
   });
 };
 
+export const useUpdateProduct = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id,  data }) => {
+      const response = await api.put(`/products/${id}`,  data); // Use PUT or PATCH based on your API design
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['products']);
+    },
+    onError: (error) => {
+      console.error('Error updating product:', error);
+    },
+  });
+};
+
 // Product Categories hooks
 export const useCategories = () => {
   return useQuery({
@@ -85,5 +102,14 @@ export const useUploadProductImage = () => {
       return response.data;
     },
     
+  });
+};
+
+export const useDeleteProduct = () => {
+  return useMutation({
+    mutationFn: async (productId) => {
+      const response = await api.delete(`/products/${productId}`);
+      return response.data;
+    }
   });
 };
