@@ -21,7 +21,8 @@ import {
 import { DeleteOutlined, PlusOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import {  useCreateSupplier } from '@/hooks/useSuppliers';
 import { useCreatePurchaseOrder } from '@/hooks/usePurchaseOrders';
-import AddSupplierModal from '../supplier/addSupplierModal';
+import AddSupplierModal from '../supplier/SupplierModal';
+
 import {
     selectProducts,
     selectSuppliers,
