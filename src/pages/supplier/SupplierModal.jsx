@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   Box,
   Typography,
   TextField,
   Button,
-  Grid
+  Grid,
+  IconButton
 } from '@mui/material';
+import { CloseOutlined } from '@ant-design/icons';
 
 const style = {
   position: 'absolute',
@@ -15,12 +17,20 @@ const style = {
   transform: 'translate(-50%, -50%)',
   width: 600,
   bgcolor: 'background.paper',
+  borderRadius: 1,
   boxShadow: 24,
   p: 4,
 };
 
-const AddSupplierModal = ({ open, handleClose, handleAddSupplier }) => {
-  const [newSupplier, setNewSupplier] = useState({
+const SupplierModal = ({ 
+  open, 
+  handleClose, 
+  handleAddSupplier,
+  handleUpdateSupplier,
+  mode = 'create',
+  initialData = null
+}) => {
+  const [formData, setFormData] = useState({
     supplier_name: '',
     contact_person: '',
     email: '',
@@ -28,9 +38,23 @@ const AddSupplierModal = ({ open, handleClose, handleAddSupplier }) => {
     address: ''
   });
 
+  useEffect(() => {
+    if (initialData && (mode === 'edit' || mode === 'view')) {
+      setFormData(initialData);
+    } else {
+      setFormData({
+        supplier_name: '',
+        contact_person: '',
+        email: '',
+        phone: '',
+        address: ''
+      });
+    }
+  }, [initialData, mode]);
+
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setNewSupplier(prevState => ({
+    setFormData(prevState => ({
       ...prevState,
       [name]: value
     }));
@@ -38,27 +62,45 @@ const AddSupplierModal = ({ open, handleClose, handleAddSupplier }) => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    handleAddSupplier(newSupplier);
+    if (mode === 'edit') {
+      handleUpdateSupplier({
+        supplier_id: formData.supplier_id,  // Make sure to include the ID
+        ...formData
+      });
+    } else {
+      handleAddSupplier(formData);
+    }
     handleClose();
-    setNewSupplier({
-      supplier_name: '',
-      contact_person: '',
-      email: '',
-      phone: '',
-      address: ''
-    });
+  }
+  const getModalTitle = () => {
+    switch (mode) {
+      case 'create':
+        return 'Add New Supplier';
+      case 'edit':
+        return 'Edit Supplier';
+      case 'view':
+        return 'Supplier Details';
+      default:
+        return 'Supplier';
+    }
   };
 
   return (
     <Modal
       open={open}
       onClose={handleClose}
-      aria-labelledby="add-supplier-modal-title"
+      aria-labelledby="supplier-modal-title"
     >
       <Box sx={style}>
-        <Typography id="add-supplier-modal-title" variant="h6" component="h2" gutterBottom>
-          Add New Supplier
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography id="supplier-modal-title" variant="h6" component="h2">
+            {getModalTitle()}
+          </Typography>
+          <IconButton onClick={handleClose} size="small">
+            <CloseOutlined />
+          </IconButton>
+        </Box>
+
         <form onSubmit={handleSubmit}>
           <Grid container spacing={2}>
             <Grid item xs={12}>
@@ -66,9 +108,10 @@ const AddSupplierModal = ({ open, handleClose, handleAddSupplier }) => {
                 fullWidth
                 label="Supplier Name"
                 name="supplier_name"
-                value={newSupplier.supplier_name}
+                value={formData.supplier_name}
                 onChange={handleChange}
                 required
+                disabled={mode === 'view'}
               />
             </Grid>
             <Grid item xs={12}>
@@ -76,9 +119,10 @@ const AddSupplierModal = ({ open, handleClose, handleAddSupplier }) => {
                 fullWidth
                 label="Contact Person"
                 name="contact_person"
-                value={newSupplier.contact_person}
+                value={formData.contact_person}
                 onChange={handleChange}
                 required
+                disabled={mode === 'view'}
               />
             </Grid>
             <Grid item xs={12}>
@@ -87,9 +131,10 @@ const AddSupplierModal = ({ open, handleClose, handleAddSupplier }) => {
                 label="Email"
                 name="email"
                 type="email"
-                value={newSupplier.email}
+                value={formData.email}
                 onChange={handleChange}
                 required
+                disabled={mode === 'view'}
               />
             </Grid>
             <Grid item xs={12}>
@@ -97,9 +142,10 @@ const AddSupplierModal = ({ open, handleClose, handleAddSupplier }) => {
                 fullWidth
                 label="Phone"
                 name="phone"
-                value={newSupplier.phone}
+                value={formData.phone}
                 onChange={handleChange}
                 required
+                disabled={mode === 'view'}
               />
             </Grid>
             <Grid item xs={12}>
@@ -107,21 +153,28 @@ const AddSupplierModal = ({ open, handleClose, handleAddSupplier }) => {
                 fullWidth
                 label="Address"
                 name="address"
-                value={newSupplier.address}
+                value={formData.address}
                 onChange={handleChange}
                 required
                 multiline
                 rows={3}
+                disabled={mode === 'view'}
               />
             </Grid>
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
                 <Button onClick={handleClose} variant="outlined">
-                  Cancel
+                  {mode === 'view' ? 'Close' : 'Cancel'}
                 </Button>
-                <Button type="submit" variant="contained" color="primary">
-                  Add Supplier
-                </Button>
+                {mode !== 'view' && (
+                  <Button 
+                    type="submit" 
+                    variant="contained" 
+                    color="primary"
+                  >
+                    {mode === 'edit' ? 'Update Supplier' : 'Add Supplier'}
+                  </Button>
+                )}
               </Box>
             </Grid>
           </Grid>
@@ -131,4 +184,4 @@ const AddSupplierModal = ({ open, handleClose, handleAddSupplier }) => {
   );
 };
 
-export default AddSupplierModal;
+export default SupplierModal;

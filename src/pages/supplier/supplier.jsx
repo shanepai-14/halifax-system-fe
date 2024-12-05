@@ -5,14 +5,16 @@ import {
   InputAdornment, Box
 } from '@mui/material';
 import { DeleteOutlined, EditOutlined, PlusOutlined, EyeOutlined, SearchOutlined, ClearOutlined } from '@ant-design/icons';
-import AddSupplierModal from './addSupplierModal';
+import SupplierModal from './SupplierModal';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '@/hooks/useSuppliers';
-
+import Swal from 'sweetalert2';
 const HalifaxSupplierPage = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const [openAddSupplierModal, setOpenAddSupplierModal] = useState(false);
+  const [modalMode, setModalMode] = useState('create');
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
 
   // Query hooks
   const { data: suppliers , isLoading, error ,refetch : refetchSuppliers  } = useSuppliers();
@@ -37,30 +39,70 @@ const HalifaxSupplierPage = () => {
   };
 
   const handleDelete = async (id) => {
-    try {
-      await deleteSupplierMutation.mutateAsync(id);
-    } catch (error) {
-      console.error('Error deleting supplier:', error);
-      // Handle error (show notification, etc.)
-    }
-  };
-
-  const handleEdit = (id) => {
-    console.log('Edit supplier', id);
-    // Implement edit functionality with updateSupplierMutation
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteSupplierMutation.mutateAsync(id);
+          Swal.fire(
+            'Deleted!',
+            'Supplier has been deleted.',
+            'success'
+          );
+          refetchSuppliers();
+        } catch (error) {
+          Swal.fire(
+            'Error!',
+            'Failed to delete supplier. Please try again.',
+            'error'
+          );
+          console.error('Error deleting supplier:', error);
+        }
+      }
+    });
   };
 
   const handleView = (id) => {
-    console.log('View supplier', id);
-    // Implement view functionality
+    const supplier = suppliers.find(s => s.supplier_id === id);
+    handleOpenModal('view', supplier);
+  };
+  
+  const handleEdit = (id) => {
+    const supplier = suppliers.find(s => s.supplier_id === id);
+    handleOpenModal('edit', supplier);
   };
 
-  const handleOpenAddSupplierModal = () => {
+  const handleOpenModal = (mode, supplier = null) => {
+    setModalMode(mode);
+    setSelectedSupplier(supplier);
     setOpenAddSupplierModal(true);
   };
-
-  const handleCloseAddSupplierModal = () => {
-    setOpenAddSupplierModal(false);
+  
+  const handleUpdateSupplier = async (updatedSupplier) => {
+    try {
+      await updateSupplierMutation.mutateAsync({
+        id: updatedSupplier.supplier_id,  // Pass id separately
+        data: {  // Pass data object with the updated fields
+          supplier_name: updatedSupplier.supplier_name,
+          contact_person: updatedSupplier.contact_person,
+          email: updatedSupplier.email,
+          phone: updatedSupplier.phone,
+          address: updatedSupplier.address
+        }
+      });
+      refetchSuppliers();
+      handleCloseAddSupplierModal();
+    } catch (error) {
+      console.error('Error updating supplier:', error);
+    }
   };
 
   const handleAddSupplier = async (newSupplier) => {
@@ -73,6 +115,15 @@ const HalifaxSupplierPage = () => {
       // Handle error (show notification, etc.)
     }
   };
+
+  const handleOpenAddSupplierModal = () => {
+    setOpenAddSupplierModal(true);
+  };
+
+  const handleCloseAddSupplierModal = () => {
+    setOpenAddSupplierModal(false);
+  };
+  
 
   const handleClearFilter = () => {
     setSearchTerm('');
@@ -116,7 +167,7 @@ const HalifaxSupplierPage = () => {
             variant="contained" 
             color="error" 
             startIcon={<PlusOutlined />}
-            onClick={handleOpenAddSupplierModal}
+            onClick={() => handleOpenModal('create')}
           >
             Add Supplier
           </Button>
@@ -169,10 +220,13 @@ const HalifaxSupplierPage = () => {
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
-      <AddSupplierModal
+      <SupplierModal
         open={openAddSupplierModal}
         handleClose={handleCloseAddSupplierModal}
         handleAddSupplier={handleAddSupplier}
+        handleUpdateSupplier={handleUpdateSupplier}
+        mode={modalMode}
+        initialData={selectedSupplier}
       />
     </Container>
   );
