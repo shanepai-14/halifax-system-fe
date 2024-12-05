@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect , useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Container,
@@ -26,20 +26,26 @@ import {
   Skeleton,
   Link,
   Alert,
-  CircularProgress 
+  CircularProgress,
+  Tooltip
 } from "@mui/material";
+import Swal from 'sweetalert2';
 import {
   ArrowBackOutlined,
   FileDownloadOutlined,
   UploadOutlined,
+  CancelOutlined,
 } from "@mui/icons-material";
 import {
   usePurchaseOrder,
   useUpdatePurchaseOrder,
   useUploadAttachment,
 } from "@/hooks/usePurchaseOrders";
+import PrintIcon from '@mui/icons-material/Print';
 import { getFileUrl } from "@/utils/fileHelper";
 import { toast } from "sonner";
+import PrintablePO from './PrintablePO';
+import { useReactToPrint } from 'react-to-print';
 const LoadingSkeleton = () => (
   <Box>
     <Skeleton variant="rectangular" width={40} height={40} sx={{ mb: 2 }} />
@@ -61,6 +67,7 @@ const steps = [
   { label: "Pending", value: "pending" },
   { label: "Partially Received", value: "partially_received" },
   { label: "Completed", value: "completed" },
+  { label: "Cancelled", value: "cancelled" }, // Add cancelled status
 ];
 
 const UpdatePurchaseOrder = () => {
@@ -71,6 +78,14 @@ const UpdatePurchaseOrder = () => {
     invoice: "",
     attachment: "",
   });
+
+  const contentRef = useRef();
+
+  const handlePrint = useReactToPrint({
+     contentRef
+  });
+
+
   const [errors, setErrors] = useState({});
   const [activeStep, setActiveStep] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -225,6 +240,47 @@ const UpdatePurchaseOrder = () => {
     return "";
   };
 
+  const handleCancel = () => {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You want to cancel this purchase order? This action cannot be undone!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, cancel it!',
+      cancelButtonText: 'No, keep it'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setIsUpdating(true);
+          await updatePOMutation.mutateAsync({
+            id,
+            data: {
+              ...formData,
+              status: 'cancelled'
+            }
+          });
+          
+          Swal.fire(
+            'Cancelled!',
+            'The purchase order has been cancelled.',
+            'success'
+          );
+          refetch();
+        } catch (error) {
+          Swal.fire(
+            'Error!',
+            'Failed to cancel the purchase order.',
+            'error'
+          );
+        } finally {
+          setIsUpdating(false);
+        }
+      }
+    });
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "pending":
@@ -233,6 +289,8 @@ const UpdatePurchaseOrder = () => {
         return "info";
       case "completed":
         return "success";
+      case "cancelled":
+        return "error";
       default:
         return "default";
     }
@@ -241,16 +299,23 @@ const UpdatePurchaseOrder = () => {
   if (isLoading) return <LoadingSkeleton />;
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 0, mb: 4 }}>
+    <Container maxWidth="xxl" sx={{ mt: 0, mb: 4 }}>
       <Box sx={{ mb: 4 }}>
-        <IconButton
+       <Box sx={{ display:"flex", justifyContent:"space-between"}}>
+       <IconButton
           onClick={() => navigate("/app/purchase")}
           sx={{ mb: 2 }}
           color="primary"
         >
           <ArrowBackOutlined />
         </IconButton>
-
+        <Tooltip title="Print Purchase Order">
+        <IconButton onClick={handlePrint} color="primary">
+          <PrintIcon />
+        </IconButton>
+      </Tooltip>
+         <PrintablePO purchaseOrder={purchaseOrder} contentRef={contentRef} />
+       </Box>
         <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
           {steps.map((step) => (
             <Step key={step.value}>
@@ -504,8 +569,20 @@ const UpdatePurchaseOrder = () => {
             </Table>
           </TableContainer>
           <Grid item xs={12} md={4}>
-            <Box sx={{ display: "flex", mt: 4, justifyContent: "flex-end" }}>
-              {(isPending || isPartiallyReceived) && (
+            <Box sx={{ display: 'flex', mt: 4, justifyContent: 'flex-end', gap: 2 }}>
+              {isPartiallyReceived && (
+                <Button
+                  variant="contained"
+                  onClick={handleCancel}
+                  disabled={isUpdating}
+                  color="error"
+                  startIcon={<CancelOutlined />}
+                  sx={{ minWidth: 200 }}
+                >
+                  Cancel Order
+                </Button>
+              )}
+              {(isPending || isPartiallyReceived) && !isUpdating && (
                 <Button
                   variant="contained"
                   onClick={handleStatusUpdate}

@@ -1,5 +1,5 @@
 // assets
-import { DashboardOutlined ,ShoppingCartOutlined ,DropboxOutlined ,AreaChartOutlined ,UserOutlined ,ProductOutlined} from '@ant-design/icons';
+import { DashboardOutlined ,ShoppingCartOutlined ,DropboxOutlined ,AreaChartOutlined ,UserOutlined ,ProductOutlined ,ShoppingOutlined } from '@ant-design/icons';
 
 
 
@@ -64,7 +64,7 @@ const dashboard = {
       title: 'Purchase Order',
       type: 'item',
       url: '/app/purchase',
-      icon: AreaChartOutlined ,
+      icon: ShoppingOutlined ,
       breadcrumbs: false
     },
  
