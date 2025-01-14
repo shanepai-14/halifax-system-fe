@@ -56,8 +56,8 @@ export const useUpdatePurchaseOrder = () => {
     const queryClient = useQueryClient();
     
     return useMutation({
-      mutationFn: async ({ poNumber, status }) => {
-        const response = await api.put(`/purchase-orders/${poNumber}/status`, { status });
+      mutationFn: async ({ id, status }) => {
+        const response = await api.put(`/purchase-orders/${id}/status`, { status });
         return response.data;
       },
       onSuccess: () => {
