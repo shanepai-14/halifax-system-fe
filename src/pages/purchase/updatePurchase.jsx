@@ -116,20 +116,6 @@ const UpdatePurchaseOrder = () => {
   const [openCostTypeModal, setOpenCostTypeModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const [receivedItems, setReceivedItems] = useState([
-    {
-      product_id: "",
-      attribute_id: "",
-      received_quantity: 0,
-      cost_price: 0,
-      walk_in_price: 0,
-      term_price: 0,
-      wholesale_price: 0,
-      regular_price: 0,
-      remarks: "",
-    },
-  ]);
-
   // Queries and Mutations
   const { data: purchaseOrder, isLoading, refetch } = usePurchaseOrder(id);
   const updatePOMutation = useUpdatePurchaseOrder();
@@ -138,52 +124,32 @@ const UpdatePurchaseOrder = () => {
 
   useEffect(() => {
     if (purchaseOrder) {
+      // Set form data
       setFormData({
         ...purchaseOrder,
         items: purchaseOrder.items.map((item) => ({
           ...item,
           received_quantity: item.received_quantity || 0,
         })),
+        received_items: purchaseOrder.status === 'partially_received' && purchaseOrder.received_items?.length === 0
+        ? [
+            {
+              product_id: '',
+              attribute_id: '',
+              received_quantity: 0,
+              cost_price: 0,
+              walk_in_price: 0,
+              term_price: 0,
+              wholesale_price: 0,
+              regular_price: 0,
+              remarks: '',
+            }
+          ]
+        : purchaseOrder.received_items || []
       });
-
-      if (
-        purchaseOrder.received_items &&
-        purchaseOrder.received_items.length > 0
-      ) {
-        setReceivedItems(
-          purchaseOrder.received_items.map((item) => ({
-            received_item_id: item.received_item_id,
-            po_id: item.po_id,
-            product_id: item.product_id,
-            attribute_id: item.attribute_id,
-            received_quantity: item.received_quantity,
-            cost_price: item.cost_price,
-            walk_in_price: item.walk_in_price,
-            term_price: item.term_price,
-            wholesale_price: item.wholesale_price,
-            regular_price: item.regular_price,
-            remarks: item.remarks || "",
-            product: item.product,
-            attribute: item.attribute,
-          }))
-        );
-      } else {
-        // Set default empty item if no received items exist
-        setReceivedItems([
-          {
-            product_id: "",
-            attribute_id: "",
-            received_quantity: 0,
-            cost_price: 0,
-            walk_in_price: 0,
-            term_price: 0,
-            wholesale_price: 0,
-            regular_price: 0,
-            remarks: "",
-          },
-        ]);
-      }
-
+  
+  
+      // Set active step
       const statusIndex = steps.findIndex(
         (step) => step.value === purchaseOrder.status
       );
@@ -306,9 +272,6 @@ const UpdatePurchaseOrder = () => {
     }
 
     if (isPartiallyReceived) {
-      if (!formData.received_items || formData.received_items.length === 0) {
-        newErrors.received_items = "At least one received item is required";
-      } else {
         formData.received_items.forEach((item, index) => {
           if (!item.product_id) {
             newErrors[`received_items.${index}.product_id`] =
@@ -336,7 +299,7 @@ const UpdatePurchaseOrder = () => {
             }
           });
         });
-      }
+      
     }
 
     // Validate additional costs
@@ -434,8 +397,30 @@ const UpdatePurchaseOrder = () => {
     let hasErrors = false;
     const newErrors = {};
 
+    if (isPending) {
+      formData.items.forEach((item, index) => {
+        if (!item.product_id) {
+          newErrors[`items.${index}.product_id`] = "Product is required";
+          hasErrors = true;
+        }
+        if (!item.attribute_id) {
+          newErrors[`items.${index}.attribute_id`] = "Measurement is required";
+          hasErrors = true;
+        }
+        if (!item.requested_quantity || item.requested_quantity <= 0) {
+          newErrors[`items.${index}.requested_quantity`] =
+            "Quantity must be greater than 0";
+            hasErrors = true;
+        }
+        if (!item.price || item.price <= 0) {
+          newErrors[`items.${index}.price`] = "Price must be greater than 0";
+          hasErrors = true;
+        }
+      });
+    }
+
     if (nextStatus === "completed") {
-      // Check required fields
+      // Validate invoice and attachment
       if (!formData.invoice) {
         newErrors.invoice = "Invoice is required";
         hasErrors = true;
@@ -445,13 +430,57 @@ const UpdatePurchaseOrder = () => {
         hasErrors = true;
       }
 
-      if (hasErrors) {
-        setErrors(newErrors);
-        setDialogOpen(false);
-        toast.error("Please fill in all required fields correctly");
-        return;
-      }
     }
+
+    console.log(formData.received_items);
+    console.log(formData);
+    formData.received_items.forEach((item, index) => {
+      console.log(item, index);
+      if (!item.product_id) {
+        newErrors[`received_items.${index}.product_id`] = "Product is required";
+        hasErrors = true;
+      }
+
+      // Received quantity validation
+      if (!item.received_quantity || Number(item.received_quantity) <= 0) {
+        newErrors[`received_items.${index}.received_quantity`] = "Received quantity must be greater than 0";
+        hasErrors = true;
+      }
+
+      // Validate all price fields
+      const priceFields = {
+        cost_price: "Cost price",
+        walk_in_price: "Walk-in price",
+        wholesale_price: "Wholesale price",
+        regular_price: "Regular price"
+      };
+
+      Object.entries(priceFields).forEach(([field, label]) => {
+        if (!item[field] || Number(item[field]) <= 0) {
+          newErrors[`received_items.${index}.${field}`] = `${label} must be greater than 0`;
+          hasErrors = true;
+        }
+      });
+    });
+
+    formData.additional_costs.forEach((cost, index) => {
+      if (!cost.cost_type_id) {
+        newErrors[`additional_costs.${index}.cost_type_id`] = "Cost type is required";
+        hasErrors = true;
+      }
+      if (!cost.amount || Number(cost.amount) <= 0) {
+        newErrors[`additional_costs.${index}.amount`] = "Amount must be greater than 0";
+        hasErrors = true;
+      }
+    });
+  
+    if (hasErrors) {
+      setErrors(newErrors);
+      setDialogOpen(false);
+      toast.error("Please fill in all required fields correctly");
+      return;
+    }
+
 
     try {
       setIsUpdating(true);
@@ -519,12 +548,11 @@ const UpdatePurchaseOrder = () => {
   };
 
   const handleReceivedItemChange = (index, field, value) => {
-    const updatedItems = [...receivedItems];
+    const updatedItems = [...formData.received_items];
     updatedItems[index] = {
       ...updatedItems[index],
       [field]: value,
     };
-    setReceivedItems(updatedItems);
     setFormData((prev) => ({
       ...prev,
       received_items: updatedItems,
@@ -552,7 +580,6 @@ const UpdatePurchaseOrder = () => {
       remarks: "",
     };
 
-    setReceivedItems((prev) => [...prev, newItem]);
     setFormData((prev) => ({
       ...prev,
       received_items: [...prev.received_items, newItem],
@@ -560,9 +587,8 @@ const UpdatePurchaseOrder = () => {
   };
 
   const handleReceivedRemoveItem = (index) => {
-    if (receivedItems.length > 1) {
-      const updatedItems = receivedItems.filter((_, i) => i !== index);
-      setReceivedItems(updatedItems);
+    if (formData.received_items.length > 1) {
+      const updatedItems = formData.received_items.filter((_, i) => i !== index);
       setFormData((prev) => ({
         ...prev,
         received_items: updatedItems,
@@ -582,6 +608,7 @@ const UpdatePurchaseOrder = () => {
   const isPending = formData.status === "pending";
   const isPartiallyReceived = formData.status === "partially_received";
   const isCompleted = formData.status === "completed";
+  const isCancelled = formData.status === "cancelled";
 
   const getStatusUpdateButtonText = () => {
     if (isPending) return "Mark as Partially Received";
@@ -613,12 +640,10 @@ const UpdatePurchaseOrder = () => {
       if (result.isConfirmed) {
         try {
           setIsUpdating(true);
-          await updatePOMutation.mutateAsync({
+          await updateStatus.mutateAsync({
             id,
-            data: {
-              ...formData,
-              status: "cancelled",
-            },
+            status: "cancelled",
+         
           });
 
           Swal.fire(
@@ -656,13 +681,28 @@ const UpdatePurchaseOrder = () => {
   return (
     <Container maxWidth="xxl" sx={{ mt: 0, mb: 4 }}>
       <Box sx={{ mb: 4 }}>
-        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-          {steps.map((step) => (
-            <Step key={step.value}>
-              <StepLabel>{step.label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+      <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+  {steps.map((step, index) => (
+    <Step key={step.value}>
+      <StepLabel
+        sx={{
+          '& .MuiStepLabel-label': {
+            color: activeStep === 3 && step.value === 'cancelled' ? 'error.main' : (
+              index === steps.length - 1 ? 'grey.400' : 'primary.primary'
+            )
+          },
+          '& .MuiStepIcon-root': {
+            color: activeStep === 3 && step.value === 'cancelled' ? 'error.main' : (
+              index === steps.length - 1 ? 'grey.400' : 'primary.primary'
+            )
+          },
+        }}
+      >
+        {step.label}
+      </StepLabel>
+    </Step>
+  ))}
+</Stepper>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 4 }}>
           <IconButton
             onClick={() => navigate("/app/purchase")}
@@ -735,11 +775,11 @@ const UpdatePurchaseOrder = () => {
           </Grid>
         </Paper>
 
-        {(isPartiallyReceived || isCompleted) && (
+        {(isPartiallyReceived || isCompleted || isCancelled) && (
           <Paper elevation={0} sx={{ p: 0, mb: 3 }}>
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
-                {!isCompleted ? (
+                {!isCompleted && !isCancelled ? (
                   <TextField
                     fullWidth
                     label="Invoice Number"
@@ -861,7 +901,7 @@ const UpdatePurchaseOrder = () => {
                   {formData.items.map((item, index) => (
                     <TableRow key={index}>
                       <TableCell sx={{ verticalAlign: "top" }}>
-                        {isPending ? (
+                        {isPending  ? (
                           <Autocomplete
                             size="small"
                             sx={{ width: 300 }}
@@ -1068,7 +1108,7 @@ const UpdatePurchaseOrder = () => {
               <PurchaseOrderReceivedItems
                 products={products}
                 attributes={attributes}
-                receivedItems={receivedItems}
+                receivedItems={formData.received_items}
                 onItemChange={handleReceivedItemChange}
                 onAddItem={handleReceivedAddItem}
                 onRemoveItem={handleReceivedRemoveItem}
@@ -1083,7 +1123,7 @@ const UpdatePurchaseOrder = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell colSpan={isCompleted ? 3 : 4}>
+                    <TableCell colSpan={isCompleted || isCancelled  ? 3 : 4}>
                       {" "}
                       <Typography variant="h5" sx={{ mt: 4, mb: 1 }} >
                         Additional Costs
@@ -1100,14 +1140,14 @@ const UpdatePurchaseOrder = () => {
                     <TableCell>Cost Type</TableCell>
                     <TableCell>Amount</TableCell>
                     <TableCell>Remarks</TableCell>
-                    {!isCompleted && <TableCell width={50} />}
+                    {!isCompleted && !isCancelled  && <TableCell width={50} />}
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {formData.additional_costs.map((cost, index) => (
                     <TableRow key={index}>
                       <TableCell>
-                        {!isCompleted ? (
+                        {!isCompleted && !isCancelled ? (
                           <Autocomplete
                             size="small"
                             value={
@@ -1171,7 +1211,7 @@ const UpdatePurchaseOrder = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        {!isCompleted ? (
+                        {!isCompleted && !isCancelled  ? (
                           <TextField
                             size="small"
                             type="number"
@@ -1192,7 +1232,7 @@ const UpdatePurchaseOrder = () => {
                         )}
                       </TableCell>
                       <TableCell sx={{ verticalAlign: "top" }}>
-                        {!isCompleted ? (
+                        {!isCompleted && !isCancelled  ? (
                           <TextField
                             size="small"
                             value={cost.remarks || ""}
@@ -1206,7 +1246,7 @@ const UpdatePurchaseOrder = () => {
                           cost.remarks || ""
                         )}
                       </TableCell>
-                      {!isCompleted && (
+                      {!isCompleted && !isCancelled  && (
                         <TableCell sx={{verticalAlign:"top"}}>
                           <IconButton
                             size="large"
@@ -1220,12 +1260,11 @@ const UpdatePurchaseOrder = () => {
                     </TableRow>
                   ))}
                   <TableRow>
-                  <TableCell  sx={{border:"none"}} colSpan={ !isCompleted ? 2 : 1}>
+                  <TableCell  sx={{border:"none"}} colSpan={ !isCompleted && !isCancelled  ? 2 : 1}>
                       <Button
                         startIcon={<PlusOutlined />}
                         onClick={handleAddCost}
-                        disabled={!isPending && !isPartiallyReceived}
-                        sx={{ visibility: !isCompleted ? "visible" : "hidden" }}
+                        sx={{ visibility: !isCompleted && !isCancelled ? "visible" : "hidden" }}
                       >
                         Add Additional Cost
                       </Button>
@@ -1243,7 +1282,7 @@ const UpdatePurchaseOrder = () => {
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell sx={{border:"none"}} colSpan={ !isCompleted ? 2 : 1}>
+                    <TableCell sx={{border:"none"}} colSpan={ !isCompleted && !isCancelled ? 2 : 1}>
 
                     </TableCell>
                 
@@ -1259,7 +1298,7 @@ const UpdatePurchaseOrder = () => {
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell sx={{border:"none"}} colSpan={ !isCompleted ? 2 : 1}>
+                    <TableCell sx={{border:"none"}} colSpan={ !isCompleted && !isCancelled ? 2 : 1}>
 
                     </TableCell>
                     <TableCell sx={{ verticalAlign: "right" }} >
