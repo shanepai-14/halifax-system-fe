@@ -28,7 +28,8 @@ const PurchaseOrderReceivedItems = ({
 }) => {
 
   const isCompleted = status === 'completed';
-  console.log(isCompleted);
+  const isCancelled = status === 'cancelled';
+  console.log('errors : ', errors);
 
   const calculateTotal = () => {
     return receivedItems.reduce((sum, item) => 
@@ -61,7 +62,7 @@ const PurchaseOrderReceivedItems = ({
             {receivedItems.map((item, index) => (
               <TableRow key={index}>
                 <TableCell sx={{ verticalAlign: "top" }}>
-                  {!isCompleted ? (
+                  {!isCompleted && !isCancelled ? (
                     <Autocomplete
                       value={
                         products?.find(
@@ -117,7 +118,7 @@ const PurchaseOrderReceivedItems = ({
                   )}
                 </TableCell>
                 <TableCell sx={{ verticalAlign: "top" }}>
-                  {!isCompleted ? (
+                  {!isCompleted  && !isCancelled ? (
                     <TextField
                       type="number"
                       value={item.received_quantity}
@@ -140,7 +141,7 @@ const PurchaseOrderReceivedItems = ({
                   )}
                 </TableCell>
                 <TableCell sx={{ verticalAlign: "top" }}>
-                  {!isCompleted ? (
+                  {!isCompleted  && !isCancelled ? (
                     <TextField
                       type="number"
                       value={item.cost_price}
@@ -161,7 +162,7 @@ const PurchaseOrderReceivedItems = ({
                   )}
                 </TableCell>
                 <TableCell sx={{ verticalAlign: "top" }}>
-                  {!isCompleted ? (
+                  {!isCompleted && !isCancelled ? (
                     <TextField
                       type="number"
                       value={item.walk_in_price}
@@ -181,8 +182,8 @@ const PurchaseOrderReceivedItems = ({
                     `₱${item.walk_in_price}`
                   )}
                 </TableCell>
-                <TableCell>
-                  {!isCompleted ? (
+                <TableCell sx={{ verticalAlign: "top" }}>
+                  {!isCompleted && !isCancelled ? (
                     <TextField
                       type="number"
                       value={item.wholesale_price}
@@ -205,7 +206,7 @@ const PurchaseOrderReceivedItems = ({
                   )}
                 </TableCell>
                 <TableCell sx={{ verticalAlign: "top" }}>
-                  {!isCompleted ? (
+                  {!isCompleted && !isCancelled ? (
                     <TextField
                       type="number"
                       value={item.regular_price}
@@ -228,7 +229,7 @@ const PurchaseOrderReceivedItems = ({
                 <TableCell sx={{ verticalAlign: "top" }}>
                   ₱{(item.cost_price * item.received_quantity).toFixed(2)}
                 </TableCell>
-                {!disabled && !isCompleted && (
+                {!disabled && !isCompleted && !isCancelled && (
                   <TableCell sx={{ verticalAlign: "top" }}>
                     <IconButton
                       size="large"
@@ -248,7 +249,7 @@ const PurchaseOrderReceivedItems = ({
                   onClick={onAddItem}
                   sx={{
                     visibility:
-                      !disabled && !isCompleted ? "visible" : "hidden",
+                      !disabled && !isCompleted && !isCancelled ? "visible" : "hidden",
                   }}
                 >
                   Add Received Item
