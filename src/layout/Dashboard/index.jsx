@@ -17,9 +17,11 @@ import {
   setProducts,
   setCategories,
   setAttributes,
-  setSuppliers
+  setSuppliers,
+  setCostTypes
 } from '@/store/slices/productsSlice';
 import { useProducts, useCategories , useAttributes } from '@/hooks/useProducts';
+import { useCostTypes } from '@/hooks/useCostTypes';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { Toaster } from 'sonner'
 import { handlerDrawerOpen, useGetMenuMaster } from '@api/menu';
@@ -34,6 +36,7 @@ export default function DashboardLayout() {
   const { data: categories, refetch: refetchCategories } = useCategories();
   const { data: attributes, refetch: refetchAttributes } = useAttributes();
   const { data: suppliers, refetch: refetchSuppliers } = useSuppliers();
+  const { data: costTypes, refetch: refetchCostTypes } = useCostTypes();
   
   useEffect(() => {
     // Initial data fetch
@@ -42,7 +45,8 @@ export default function DashboardLayout() {
         refetchProducts(),
         refetchCategories(),
         refetchAttributes(),
-        refetchSuppliers()
+        refetchSuppliers(),
+        refetchCostTypes()
       ]);
     };
   
@@ -55,7 +59,8 @@ export default function DashboardLayout() {
     if (categories) dispatch(setCategories(categories));
     if (attributes) dispatch(setAttributes(attributes));
     if (suppliers) dispatch(setSuppliers(suppliers));
-  }, [products, categories, attributes, suppliers]);
+    if (costTypes) dispatch(setCostTypes(costTypes));
+  }, [products, categories, attributes, suppliers, costTypes]);
 
 
   useEffect(() => {
