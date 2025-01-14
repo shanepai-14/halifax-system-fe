@@ -1,4 +1,4 @@
-import React, { useState, useEffect , useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Container,
@@ -27,25 +27,42 @@ import {
   Link,
   Alert,
   CircularProgress,
-  Tooltip
+  Tooltip,
+  Autocomplete,
 } from "@mui/material";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 import {
   ArrowBackOutlined,
   FileDownloadOutlined,
   UploadOutlined,
   CancelOutlined,
+  Save,
 } from "@mui/icons-material";
 import {
   usePurchaseOrder,
   useUpdatePurchaseOrder,
   useUploadAttachment,
+  useUpdatePurchaseOrderStatus,
 } from "@/hooks/usePurchaseOrders";
-import PrintIcon from '@mui/icons-material/Print';
+import {
+  DeleteOutlined,
+  PlusOutlined,
+  ArrowLeftOutlined,
+} from "@ant-design/icons";
+import PrintIcon from "@mui/icons-material/Print";
 import { getFileUrl } from "@/utils/fileHelper";
 import { toast } from "sonner";
-import PrintablePO from './PrintablePO';
-import { useReactToPrint } from 'react-to-print';
+import PrintablePO from "./PrintablePO";
+import { useReactToPrint } from "react-to-print";
+import { useSelector } from "react-redux";
+import {
+  selectAttributes,
+  selectCostTypes,
+  selectProducts,
+} from "@/store/slices/productsSlice";
+import AddCostTypeModal from "../product/AddCostTypeModal";
+import PurchaseOrderReceivedItems from "./PurchaseOrderReceivedItems";
+
 const LoadingSkeleton = () => (
   <Box>
     <Skeleton variant="rectangular" width={40} height={40} sx={{ mb: 2 }} />
@@ -77,14 +94,15 @@ const UpdatePurchaseOrder = () => {
     items: [],
     invoice: "",
     attachment: "",
+    additional_costs: [],
+    received_items: [],
   });
 
   const contentRef = useRef();
 
   const handlePrint = useReactToPrint({
-     contentRef
+    contentRef,
   });
-
 
   const [errors, setErrors] = useState({});
   const [activeStep, setActiveStep] = useState(0);
@@ -92,9 +110,30 @@ const UpdatePurchaseOrder = () => {
   const [nextStatus, setNextStatus] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
+  const products = useSelector(selectProducts);
+  const attributes = useSelector(selectAttributes);
+  const costTypes = useSelector(selectCostTypes);
+  const [openCostTypeModal, setOpenCostTypeModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [receivedItems, setReceivedItems] = useState([
+    {
+      product_id: "",
+      attribute_id: "",
+      received_quantity: 0,
+      cost_price: 0,
+      walk_in_price: 0,
+      term_price: 0,
+      wholesale_price: 0,
+      regular_price: 0,
+      remarks: "",
+    },
+  ]);
+
   // Queries and Mutations
   const { data: purchaseOrder, isLoading, refetch } = usePurchaseOrder(id);
   const updatePOMutation = useUpdatePurchaseOrder();
+  const updateStatus = useUpdatePurchaseOrderStatus();
   const uploadAttachmentMutation = useUploadAttachment();
 
   useEffect(() => {
@@ -106,6 +145,44 @@ const UpdatePurchaseOrder = () => {
           received_quantity: item.received_quantity || 0,
         })),
       });
+
+      if (
+        purchaseOrder.received_items &&
+        purchaseOrder.received_items.length > 0
+      ) {
+        setReceivedItems(
+          purchaseOrder.received_items.map((item) => ({
+            received_item_id: item.received_item_id,
+            po_id: item.po_id,
+            product_id: item.product_id,
+            attribute_id: item.attribute_id,
+            received_quantity: item.received_quantity,
+            cost_price: item.cost_price,
+            walk_in_price: item.walk_in_price,
+            term_price: item.term_price,
+            wholesale_price: item.wholesale_price,
+            regular_price: item.regular_price,
+            remarks: item.remarks || "",
+            product: item.product,
+            attribute: item.attribute,
+          }))
+        );
+      } else {
+        // Set default empty item if no received items exist
+        setReceivedItems([
+          {
+            product_id: "",
+            attribute_id: "",
+            received_quantity: 0,
+            cost_price: 0,
+            walk_in_price: 0,
+            term_price: 0,
+            wholesale_price: 0,
+            regular_price: 0,
+            remarks: "",
+          },
+        ]);
+      }
 
       const statusIndex = steps.findIndex(
         (step) => step.value === purchaseOrder.status
@@ -125,6 +202,180 @@ const UpdatePurchaseOrder = () => {
     document.body.removeChild(a);
   };
 
+  const handleAddCost = () => {
+    setFormData((prev) => ({
+      ...prev,
+      additional_costs: [
+        ...prev.additional_costs,
+        { cost_type_id: "", amount: "", remarks: "" },
+      ],
+    }));
+  };
+
+  const handleCostChange = (index, field, value) => {
+    if (field === "cost_type_id" && value) {
+      const isDuplicate = formData.additional_costs.some(
+        (cost, i) => i !== index && cost.cost_type_id === value
+      );
+
+      if (isDuplicate) {
+        setErrors((prev) => ({
+          ...prev,
+          [`additional_costs.${index}.cost_type_id`]:
+            "This cost type is already added",
+        }));
+        return;
+      }
+    }
+
+    const updatedCosts = [...formData.additional_costs];
+    updatedCosts[index] = {
+      ...updatedCosts[index],
+      [field]: value,
+    };
+    setFormData((prev) => ({ ...prev, additional_costs: updatedCosts }));
+
+    if (errors[`additional_costs.${index}.${field}`]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[`additional_costs.${index}.${field}`];
+        return newErrors;
+      });
+    }
+  };
+
+  const removeCost = (index) => {
+    const updatedCosts = formData.additional_costs.filter(
+      (_, i) => i !== index
+    );
+    setFormData((prev) => ({ ...prev, additional_costs: updatedCosts }));
+  };
+
+  const addItem = () => {
+    setFormData((prev) => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        {
+          product_id: "",
+          attribute_id: "",
+          requested_quantity: 1,
+          price: 0,
+        },
+      ],
+    }));
+  };
+
+  const removeItem = (index) => {
+    if (formData.items.length > 1) {
+      const updatedItems = formData.items.filter((_, i) => i !== index);
+      setFormData((prev) => ({ ...prev, items: updatedItems }));
+
+      // Clear any errors for the removed item
+      const newErrors = { ...errors };
+      Object.keys(newErrors).forEach((key) => {
+        if (key.startsWith(`items.${index}`)) {
+          delete newErrors[key];
+        }
+      });
+      setErrors(newErrors);
+    }
+  };
+
+  // Add this function for saving PO details
+  const handleSave = async () => {
+    const newErrors = {};
+
+    // Validate items if status is pending
+    if (isPending) {
+      formData.items.forEach((item, index) => {
+        if (!item.product_id) {
+          newErrors[`items.${index}.product_id`] = "Product is required";
+        }
+        if (!item.attribute_id) {
+          newErrors[`items.${index}.attribute_id`] = "Measurement is required";
+        }
+        if (!item.requested_quantity || item.requested_quantity <= 0) {
+          newErrors[`items.${index}.requested_quantity`] =
+            "Quantity must be greater than 0";
+        }
+        if (!item.price || item.price <= 0) {
+          newErrors[`items.${index}.price`] = "Price must be greater than 0";
+        }
+      });
+    }
+
+    if (isPartiallyReceived) {
+      if (!formData.received_items || formData.received_items.length === 0) {
+        newErrors.received_items = "At least one received item is required";
+      } else {
+        formData.received_items.forEach((item, index) => {
+          if (!item.product_id) {
+            newErrors[`received_items.${index}.product_id`] =
+              "Product is required";
+          }
+
+          if (!item.received_quantity || Number(item.received_quantity) <= 0) {
+            newErrors[`received_items.${index}.received_quantity`] =
+              "Received quantity must be greater than 0";
+          }
+
+          // Validate all price fields
+          const priceFields = {
+            cost_price: "Cost price",
+            walk_in_price: "Walk-in price",
+            wholesale_price: "Wholesale price",
+            regular_price: "Regular price",
+          };
+
+          Object.entries(priceFields).forEach(([field, label]) => {
+            if (!item[field] || Number(item[field]) <= 0) {
+              newErrors[
+                `received_items.${index}.${field}`
+              ] = `${label} must be greater than 0`;
+            }
+          });
+        });
+      }
+    }
+
+    // Validate additional costs
+    formData.additional_costs.forEach((cost, index) => {
+      if (!cost.cost_type_id) {
+        newErrors[`additional_costs.${index}.cost_type_id`] =
+          "Cost type is required";
+      }
+      if (!cost.amount || Number(cost.amount) <= 0) {
+        newErrors[`additional_costs.${index}.amount`] =
+          "Amount must be greater than 0";
+      }
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      console.log(newErrors);
+      toast.error("Please fill in all required fields correctly");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      await updatePOMutation.mutateAsync({
+        id,
+        data: formData,
+      });
+      toast.success("Purchase Order updated successfully");
+      refetch();
+    } catch (error) {
+      if (error.response?.data?.errors) {
+        setErrors(error.response.data.errors);
+      }
+      toast.error("Something went wrong please try again");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleStatusUpdate = () => {
     let newStatus = "";
     if (formData.status === "pending") {
@@ -134,6 +385,48 @@ const UpdatePurchaseOrder = () => {
     }
     setNextStatus(newStatus);
     setDialogOpen(true);
+  };
+
+  const calculateTotal = () => {
+    return formData.items.reduce(
+      (sum, item) => sum + item.price * item.requested_quantity,
+      0
+    );
+  };
+
+  const calculateRequestedTotalWithCosts = () => {
+    const itemsTotal = formData.items.reduce(
+      (sum, item) => sum + item.price * item.requested_quantity,
+      0
+    );
+    const costsTotal = formData.additional_costs.reduce(
+      (sum, cost) => sum + (Number(cost.amount) || 0),
+      0
+    );
+    return itemsTotal + costsTotal;
+  };
+
+  const calculateTotalCosts= () => {
+
+    const costsTotal = formData.additional_costs.reduce(
+      (sum, cost) => sum + (Number(cost.amount) || 0),
+      0
+    );
+    return costsTotal;
+  };
+  
+  
+
+  const calculateReceivedTotalWithCosts = () => {
+    const itemsTotal = formData.received_items.reduce(
+      (sum, item) => sum + item.cost_price * item.received_quantity,
+      0
+    );
+    const costsTotal = formData.additional_costs.reduce(
+      (sum, cost) => sum + (Number(cost.amount) || 0),
+      0
+    );
+    return itemsTotal + costsTotal;
   };
 
   const handleConfirmStatusUpdate = async () => {
@@ -152,35 +445,16 @@ const UpdatePurchaseOrder = () => {
         hasErrors = true;
       }
 
-      // Check items array for received_quantity and retail_price
-      formData.items.forEach((item, index) => {
-        // Check received_quantity
-        if (!item.received_quantity || item.received_quantity <= 0) {
-          newErrors[`items.${index}.received_quantity`] =
-            "Received quantity is required";
-          hasErrors = true;
-        } else if (item.received_quantity > item.requested_quantity) {
-          newErrors[`items.${index}.received_quantity`] =
-            "Cannot exceed requested quantity";
-          hasErrors = true;
-        }
-
-        // Check retail_price
-        if (!item.retail_price || item.retail_price <= 0) {
-          newErrors[`items.${index}.retail_price`] = "Retail price is required";
-          hasErrors = true;
-        }
-      });
-
       if (hasErrors) {
         setErrors(newErrors);
         setDialogOpen(false);
+        toast.error("Please fill in all required fields correctly");
         return;
       }
     }
 
     try {
-        setIsUpdating(true);
+      setIsUpdating(true);
       await updatePOMutation.mutateAsync({
         id,
         data: {
@@ -204,20 +478,105 @@ const UpdatePurchaseOrder = () => {
         setErrors(error.response.data.errors);
         toast.error("Something went wrong please try again");
       }
-      setIsUpdating(false)
+      setIsUpdating(false);
       setDialogOpen(false);
     } finally {
-        setIsUpdating(false);
-      }
+      setIsUpdating(false);
+    }
   };
 
   const handleItemChange = (index, field, value) => {
+    if (field === "product_id" && value) {
+      // Check for duplicate product
+      const isDuplicate = formData.items.some(
+        (item, i) => i !== index && item.product_id === value
+      );
+
+      if (isDuplicate) {
+        setErrors((prev) => ({
+          ...prev,
+          [`items.${index}.product_id`]: "This product is already added",
+        }));
+        return;
+      }
+    }
+
     const updatedItems = [...formData.items];
     updatedItems[index] = {
       ...updatedItems[index],
       [field]: value,
     };
     setFormData((prev) => ({ ...prev, items: updatedItems }));
+
+    // Clear error for this field if it exists
+    if (errors[`items.${index}.${field}`]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[`items.${index}.${field}`];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleReceivedItemChange = (index, field, value) => {
+    const updatedItems = [...receivedItems];
+    updatedItems[index] = {
+      ...updatedItems[index],
+      [field]: value,
+    };
+    setReceivedItems(updatedItems);
+    setFormData((prev) => ({
+      ...prev,
+      received_items: updatedItems,
+    }));
+
+    if (errors[`received_items.${index}.${field}`]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[`received_items.${index}.${field}`];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleReceivedAddItem = () => {
+    const newItem = {
+      product_id: "",
+      attribute_id: "",
+      received_quantity: 0,
+      cost_price: 0,
+      walk_in_price: 0,
+      term_price: 0,
+      wholesale_price: 0,
+      regular_price: 0,
+      remarks: "",
+    };
+
+    setReceivedItems((prev) => [...prev, newItem]);
+    setFormData((prev) => ({
+      ...prev,
+      received_items: [...prev.received_items, newItem],
+    }));
+  };
+
+  const handleReceivedRemoveItem = (index) => {
+    if (receivedItems.length > 1) {
+      const updatedItems = receivedItems.filter((_, i) => i !== index);
+      setReceivedItems(updatedItems);
+      setFormData((prev) => ({
+        ...prev,
+        received_items: updatedItems,
+      }));
+
+      // Clear any errors for the removed item
+      const newErrors = { ...errors };
+      Object.keys(newErrors).forEach((key) => {
+        if (key.startsWith(`received_items.${index}`)) {
+          delete newErrors[key];
+        }
+      });
+      setErrors(newErrors);
+    }
   };
 
   const isPending = formData.status === "pending";
@@ -242,14 +601,14 @@ const UpdatePurchaseOrder = () => {
 
   const handleCancel = () => {
     Swal.fire({
-      title: 'Are you sure?',
+      title: "Are you sure?",
       text: "You want to cancel this purchase order? This action cannot be undone!",
-      icon: 'warning',
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, cancel it!',
-      cancelButtonText: 'No, keep it'
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, cancel it!",
+      cancelButtonText: "No, keep it",
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
@@ -258,22 +617,18 @@ const UpdatePurchaseOrder = () => {
             id,
             data: {
               ...formData,
-              status: 'cancelled'
-            }
+              status: "cancelled",
+            },
           });
-          
+
           Swal.fire(
-            'Cancelled!',
-            'The purchase order has been cancelled.',
-            'success'
+            "Cancelled!",
+            "The purchase order has been cancelled.",
+            "success"
           );
           refetch();
         } catch (error) {
-          Swal.fire(
-            'Error!',
-            'Failed to cancel the purchase order.',
-            'error'
-          );
+          Swal.fire("Error!", "Failed to cancel the purchase order.", "error");
         } finally {
           setIsUpdating(false);
         }
@@ -301,21 +656,6 @@ const UpdatePurchaseOrder = () => {
   return (
     <Container maxWidth="xxl" sx={{ mt: 0, mb: 4 }}>
       <Box sx={{ mb: 4 }}>
-       <Box sx={{ display:"flex", justifyContent:"space-between"}}>
-       <IconButton
-          onClick={() => navigate("/app/purchase")}
-          sx={{ mb: 2 }}
-          color="primary"
-        >
-          <ArrowBackOutlined />
-        </IconButton>
-        <Tooltip title="Print Purchase Order">
-        <IconButton onClick={handlePrint} color="primary">
-          <PrintIcon />
-        </IconButton>
-      </Tooltip>
-         <PrintablePO purchaseOrder={purchaseOrder} contentRef={contentRef} />
-       </Box>
         <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
           {steps.map((step) => (
             <Step key={step.value}>
@@ -323,6 +663,36 @@ const UpdatePurchaseOrder = () => {
             </Step>
           ))}
         </Stepper>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 4 }}>
+          <IconButton
+            onClick={() => navigate("/app/purchase")}
+            sx={{ mb: 2 }}
+            color="primary"
+          >
+            <ArrowBackOutlined />
+          </IconButton>
+          <Box
+            sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 2 }}
+          >
+          <Tooltip title="Save Purchase Order">
+            <IconButton
+              variant="contained"
+              color="primary"
+              onClick={handleSave}
+              disabled={isSaving || (!isPending && !isPartiallyReceived)}
+            >
+              {isSaving ? <Box><CircularProgress size="30px"/></Box> : <Save />}
+            </IconButton>
+            </Tooltip>
+            <Tooltip title="Print Purchase Order">
+              <IconButton onClick={handlePrint} color="primary">
+                <PrintIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+
+          <PrintablePO purchaseOrder={purchaseOrder} contentRef={contentRef} />
+        </Box>
 
         <Paper elevation={0} sx={{ p: 0, mb: 0 }}>
           <Grid container spacing={2} alignItems="center">
@@ -331,7 +701,7 @@ const UpdatePurchaseOrder = () => {
                 Purchase Order: {purchaseOrder?.po_number}
               </Typography>
             </Grid>
-            <Grid item xs={12} md={4}>
+            {/* <Grid item xs={12} md={4}>
               <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
                 <Alert
                   severity={getStatusColor(formData.status)}
@@ -341,7 +711,7 @@ const UpdatePurchaseOrder = () => {
                   {steps.find((s) => s.value === formData.status)?.label}
                 </Alert>
               </Box>
-            </Grid>
+            </Grid> */}
           </Grid>
         </Paper>
 
@@ -369,23 +739,29 @@ const UpdatePurchaseOrder = () => {
           <Paper elevation={0} sx={{ p: 0, mb: 3 }}>
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Invoice Number"
-                  name="invoice"
-                  value={formData.invoice}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      invoice: e.target.value,
-                    }))
-                  }
-                  error={!!errors.invoice}
-                  helperText={errors.invoice}
-                  required
-                  disabled={isCompleted}
-                  sx={{ mb: 2 }}
-                />
+                {!isCompleted ? (
+                  <TextField
+                    fullWidth
+                    label="Invoice Number"
+                    name="invoice"
+                    value={formData.invoice}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        invoice: e.target.value,
+                      }))
+                    }
+                    error={!!errors.invoice}
+                    helperText={errors.invoice}
+                    required
+                    disabled={isCompleted}
+                    sx={{ mb: 2 }}
+                  />
+                ) : (
+                  <Typography>
+                    Invoice Number: {formData.invoice || ""}
+                  </Typography>
+                )}
               </Grid>
               <Grid item xs={12} md={6}>
                 {formData.attachment &&
@@ -463,113 +839,454 @@ const UpdatePurchaseOrder = () => {
         )}
 
         <Paper elevation={0} sx={{ p: 0 }}>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Product</TableCell>
-                  <TableCell>Requested Quantity</TableCell>
-                  {(isPartiallyReceived || isCompleted) && (
-                    <>
-                      <TableCell>Received Quantity</TableCell>
-                      <TableCell>Retail Price</TableCell>
-                    </>
-                  )}
-                  <TableCell>Price</TableCell>
-                  <TableCell>Total</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {formData.items.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell sx={{ verticalAlign: "top" }}>
-                      {item.product?.product_name}
-                    </TableCell>
-                    <TableCell sx={{ verticalAlign: "top" }}>
-                      <TextField
-                        sx={{ width: 215 }}
-                        type="number"
-                        value={item.requested_quantity}
-                        onChange={(e) =>
-                          handleItemChange(
-                            index,
-                            "requested_quantity",
-                            e.target.value
-                          )
-                        }
-                        disabled={!isPending}
-                        size="small"
-                        inputProps={{ min: 1 }}
-                      />
-                    </TableCell>
-                    {(isPartiallyReceived || isCompleted) && (
-                      <>
-                        <TableCell sx={{ verticalAlign: "top" }}>
+          <Grid item xs={12}>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                <TableRow >
+                <TableCell colSpan={ isPending ? 6 : 5}>
+                  <Typography variant="h5">Requested Items</Typography>
+                </TableCell>
+              </TableRow>
+                  <TableRow>
+                    <TableCell>Product</TableCell>
+                    <TableCell>Measurement</TableCell>
+                    <TableCell>Request Quantity</TableCell>
+                    <TableCell>Price</TableCell>
+                    <TableCell>Total</TableCell>
+                    {isPending && <TableCell width={50} />}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {formData.items.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell sx={{ verticalAlign: "top" }}>
+                        {isPending ? (
+                          <Autocomplete
+                            size="small"
+                            sx={{ width: 300 }}
+                            value={
+                              products?.find(
+                                (product) => product.id === item.product_id
+                              ) || null
+                            }
+                            onChange={(e, newValue) =>
+                              handleItemChange(
+                                index,
+                                "product_id",
+                                newValue ? newValue.id : ""
+                              )
+                            }
+                            options={
+                              products?.filter(
+                                (product) =>
+                                  !formData.items.some(
+                                    (item, i) =>
+                                      i !== index &&
+                                      item.product_id === product.id
+                                  )
+                              ) || []
+                            }
+                            getOptionLabel={(option) =>
+                              option.product_name || ""
+                            }
+                            isOptionEqualToValue={(option, value) =>
+                              option.id === value
+                            }
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                sx={{
+                                  "& .MuiInputBase-root": {
+                                    padding: "4px 8px",
+                                  },
+                                  "& .MuiFormLabel-root": {
+                                    fontSize: "0.875rem",
+                                  },
+                                }}
+                                error={!!errors[`items.${index}.product_id`]}
+                                helperText={
+                                  errors[`items.${index}.product_id`] ||
+                                  "Required"
+                                }
+                              />
+                            )}
+                          />
+                        ) : (
+                          item.product?.product_name
+                        )}
+                      </TableCell>
+                      <TableCell sx={{ verticalAlign: "top" }}>
+                        {isPending ? (
+                          <Autocomplete
+                            size="small"
+                            sx={{ width: 300 }}
+                            value={
+                              attributes?.find(
+                                (attribute) =>
+                                  attribute.id === item.attribute_id
+                              ) || null
+                            }
+                            onChange={(e, newValue) =>
+                              handleItemChange(
+                                index,
+                                "attribute_id",
+                                newValue ? newValue.id : ""
+                              )
+                            }
+                            options={
+                              attributes?.filter(
+                                (attribute) =>
+                                  !formData.items.some(
+                                    (item, i) =>
+                                      i !== index &&
+                                      item.attribute_id === attribute.id
+                                  )
+                              ) || []
+                            }
+                            getOptionLabel={(option) =>
+                              `${option.attribute_name} (${option.unit_of_measurement})` ||
+                              ""
+                            }
+                            isOptionEqualToValue={(option, value) =>
+                              option.id === value
+                            }
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                sx={{
+                                  "& .MuiInputBase-root": {
+                                    padding: "4px 8px",
+                                  },
+                                  "& .MuiFormLabel-root": {
+                                    fontSize: "0.875rem",
+                                  },
+                                }}
+                                error={!!errors[`items.${index}.attribute_id`]}
+                                helperText={
+                                  errors[`items.${index}.attribute_id`] ||
+                                  "Required"
+                                }
+                              />
+                            )}
+                          />
+                        ) : (
+                          `${item.attribute?.attribute_name} (${item.attribute?.unit_of_measurement})`
+                        )}
+                      </TableCell>
+                      <TableCell sx={{ verticalAlign: "top" }}>
+                        {isPending ? (
                           <TextField
-                            sx={{ width: 215 }}
                             type="number"
-                            value={item.received_quantity}
+                            value={item.requested_quantity}
                             onChange={(e) =>
                               handleItemChange(
                                 index,
-                                "received_quantity",
+                                "requested_quantity",
                                 e.target.value
                               )
                             }
-                            disabled={isCompleted}
-                            size="small"
-                            required
-                            error={!!errors[`items.${index}.received_quantity`]}
+                            error={
+                              !!errors[`items.${index}.requested_quantity`]
+                            }
                             helperText={
-                              errors[`items.${index}.received_quantity`]
+                              errors[`items.${index}.requested_quantity`] ||
+                              "Required"
                             }
-                            inputProps={{
-                              min: 0,
-                              max: item.requested_quantity,
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell sx={{ verticalAlign: "top" }}>
-                          <TextField
-                            sx={{ width: 215 }}
-                            type="number"
-                            value={item.retail_price}
-                            onChange={(e) =>
-                              handleItemChange(
-                                index,
-                                "retail_price",
-                                e.target.value
-                              )
-                            }
-                            error={!!errors[`items.${index}.retail_price`]}
-                            disabled={isCompleted}
+                            inputProps={{ min: 1 }}
+                            disabled={!isPending}
                             size="small"
-                            required
-                            helperText={errors[`items.${index}.retail_price`]}
-                            inputProps={{ min: 0, step: 0.01 }}
                           />
+                        ) : (
+                          item.requested_quantity
+                        )}
+                      </TableCell>
+                      <TableCell sx={{ verticalAlign: "top" }}>
+                        {isPending ? (
+                          <TextField
+                            type="number"
+                            value={item.price}
+                            onChange={(e) =>
+                              handleItemChange(index, "price", e.target.value)
+                            }
+                            error={!!errors[`items.${index}.price`]}
+                            helperText={
+                              errors[`items.${index}.price`] || "Required"
+                            }
+                            inputProps={{ min: 0, step: 0.01 }}
+                            disabled={!isPending}
+                            size="small"
+                          />
+                        ) : (
+                          `₱${item.price}`
+                        )}
+                      </TableCell>
+                      <TableCell sx={{ verticalAlign: "top" }}>
+                        ₱{(item.price * item.requested_quantity).toFixed(2)}
+                      </TableCell>
+                      {isPending && (
+                        <TableCell sx={{ verticalAlign: "top" }}>
+                          <IconButton
+                            onClick={() => removeItem(index)}
+                            disabled={formData.items.length === 1}
+                          >
+                            <DeleteOutlined />
+                          </IconButton>
                         </TableCell>
-                      </>
-                    )}
-                    <TableCell sx={{ verticalAlign: "top" }}>
-                      ₱{item.price}
+                      )}
+                    </TableRow>
+                  ))}
+                  <TableRow>
+                    <TableCell colSpan={3}>
+                      <Button
+                        sx={{ visibility: isPending ? "visible" : "hidden" }}
+                        startIcon={<PlusOutlined />}
+                        onClick={addItem}
+                      >
+                        Add Item
+                      </Button>
                     </TableCell>
-                    <TableCell sx={{ verticalAlign: "top" }}>
-                      ₱
-                      {(
-                        item.price *
-                        (isPartiallyReceived || isCompleted
-                          ? item.received_quantity || 0
-                          : item.requested_quantity)
-                      ).toFixed(2)}
+                    <TableCell  verticalAlign="left">
+                      <Typography variant="h5" textAlign="left">Total Requested: </Typography>
+                    </TableCell>
+                    <TableCell >
+                    <Typography variant="h5" >
+                    ₱{calculateTotal().toFixed(2)}
+                      </Typography>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <Box
+              sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}
+            ></Box>
+            {!isPending && (
+              <PurchaseOrderReceivedItems
+                products={products}
+                attributes={attributes}
+                receivedItems={receivedItems}
+                onItemChange={handleReceivedItemChange}
+                onAddItem={handleReceivedAddItem}
+                onRemoveItem={handleReceivedRemoveItem}
+                errors={errors}
+                disabled={isCompleted}
+                status={formData.status}
+              />
+            )}
+          </Grid>
+          <Grid item xs={12}>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell colSpan={isCompleted ? 3 : 4}>
+                      {" "}
+                      <Typography variant="h5" sx={{ mt: 4, mb: 1 }} >
+                        Additional Costs
+                        <IconButton
+                          sx={{ marginLeft: "0px !important" }}
+                          onClick={() => setOpenCostTypeModal(true)}
+                        >
+                          <PlusOutlined />
+                        </IconButton>
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Cost Type</TableCell>
+                    <TableCell>Amount</TableCell>
+                    <TableCell>Remarks</TableCell>
+                    {!isCompleted && <TableCell width={50} />}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {formData.additional_costs.map((cost, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        {!isCompleted ? (
+                          <Autocomplete
+                            size="small"
+                            value={
+                              costTypes?.find(
+                                (type) =>
+                                  type.cost_type_id === cost.cost_type_id
+                              ) || null
+                            }
+                            onChange={(e, newValue) =>
+                              handleCostChange(
+                                index,
+                                "cost_type_id",
+                                newValue ? newValue.cost_type_id : ""
+                              )
+                            }
+                            options={
+                              costTypes?.filter(
+                                (type) =>
+                                  type.is_active &&
+                                  !formData.additional_costs.some(
+                                    (c, i) =>
+                                      i !== index &&
+                                      c.cost_type_id === type.cost_type_id
+                                  )
+                              ) || []
+                            }
+                            getOptionLabel={(option) => option.name || ""}
+                            isOptionEqualToValue={(option, value) =>
+                              option.cost_type_id === value
+                            }
+                            disabled={!isPending && !isPartiallyReceived}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                sx={{
+                                  "& .MuiInputBase-root": {
+                                    padding: "4px 8px",
+                                  },
+                                  "& .MuiFormLabel-root": {
+                                    fontSize: "0.875rem",
+                                  },
+                                }}
+                                error={
+                                  !!errors[
+                                    `additional_costs.${index}.cost_type_id`
+                                  ]
+                                }
+                                helperText={
+                                  errors[
+                                    `additional_costs.${index}.cost_type_id`
+                                  ] || "Required"
+                                }
+                              />
+                            )}
+                          />
+                        ) : (
+                          costTypes?.find(
+                            (type) => type.cost_type_id === cost.cost_type_id
+                          )?.name || ""
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {!isCompleted ? (
+                          <TextField
+                            size="small"
+                            type="number"
+                            value={cost.amount}
+                            onChange={(e) =>
+                              handleCostChange(index, "amount", e.target.value)
+                            }
+                            error={!!errors[`additional_costs.${index}.amount`]}
+                            helperText={
+                              errors[`additional_costs.${index}.amount`] ||
+                              "Required"
+                            }
+                            inputProps={{ min: 0, step: 0.01 }}
+                            disabled={!isPending && !isPartiallyReceived}
+                          />
+                        ) : (
+                          cost.amount
+                        )}
+                      </TableCell>
+                      <TableCell sx={{ verticalAlign: "top" }}>
+                        {!isCompleted ? (
+                          <TextField
+                            size="small"
+                            value={cost.remarks || ""}
+                            onChange={(e) =>
+                              handleCostChange(index, "remarks", e.target.value)
+                            }
+                            fullWidth
+                            disabled={!isPending && !isPartiallyReceived}
+                          />
+                        ) : (
+                          cost.remarks || ""
+                        )}
+                      </TableCell>
+                      {!isCompleted && (
+                        <TableCell sx={{verticalAlign:"top"}}>
+                          <IconButton
+                            size="large"
+                            onClick={() => removeCost(index)}
+                            disabled={!isPending && !isPartiallyReceived}
+                          >
+                            <DeleteOutlined />
+                          </IconButton>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                  <TableRow>
+                  <TableCell  sx={{border:"none"}} colSpan={ !isCompleted ? 2 : 1}>
+                      <Button
+                        startIcon={<PlusOutlined />}
+                        onClick={handleAddCost}
+                        disabled={!isPending && !isPartiallyReceived}
+                        sx={{ visibility: !isCompleted ? "visible" : "hidden" }}
+                      >
+                        Add Additional Cost
+                      </Button>
+                    </TableCell >
+
+                    <TableCell >
+                      <Typography variant="h5" textAlign="right">
+                        Total Cost:
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="h5">
+                        ₱{calculateTotalCosts().toFixed(2)}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{border:"none"}} colSpan={ !isCompleted ? 2 : 1}>
+
+                    </TableCell>
+                
+                    <TableCell  sx={{ verticalAlign: "right" }}>
+                      <Typography variant="h5" textAlign="right">
+                        Total Requested with Costs:
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="h5">
+                        ₱{calculateRequestedTotalWithCosts().toFixed(2)}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{border:"none"}} colSpan={ !isCompleted ? 2 : 1}>
+
+                    </TableCell>
+                    <TableCell sx={{ verticalAlign: "right" }} >
+                      <Typography variant="h5" textAlign="right">
+                        Total Received with Costs:
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="h5">
+                        ₱{calculateReceivedTotalWithCosts().toFixed(2)}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Grid>
+
           <Grid item xs={12} md={4}>
-            <Box sx={{ display: 'flex', mt: 4, justifyContent: 'flex-end', gap: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                mt: 4,
+                justifyContent: "flex-end",
+                gap: 2,
+              }}
+            >
               {isPartiallyReceived && (
                 <Button
                   variant="contained"
@@ -671,6 +1388,10 @@ const UpdatePurchaseOrder = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <AddCostTypeModal
+        open={openCostTypeModal}
+        handleClose={() => setOpenCostTypeModal(false)}
+      />
     </Container>
   );
 };

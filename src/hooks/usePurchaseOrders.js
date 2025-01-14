@@ -52,6 +52,20 @@ export const useUpdatePurchaseOrder = () => {
     });
   };
 
+  export const useUpdatePurchaseOrderStatus = () => {
+    const queryClient = useQueryClient();
+    
+    return useMutation({
+      mutationFn: async ({ poNumber, status }) => {
+        const response = await api.put(`/purchase-orders/${poNumber}/status`, { status });
+        return response.data;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries(['purchase-orders']);
+      },
+    });
+  };
+
   export const useUploadAttachment = () => {
     return useMutation({
       mutationFn: async ({ id, file }) => {
