@@ -62,6 +62,7 @@ import {
 } from "@/store/slices/productsSlice";
 import AddCostTypeModal from "../product/AddCostTypeModal";
 import PurchaseOrderReceivedItems from "./PurchaseOrderReceivedItems";
+import MultipleFileUploader from './MultipleFileUploader';
 
 const LoadingSkeleton = () => (
   <Box>
@@ -93,7 +94,6 @@ const UpdatePurchaseOrder = () => {
   const [formData, setFormData] = useState({
     items: [],
     invoice: "",
-    attachment: "",
     additional_costs: [],
     received_items: [],
   });
@@ -121,6 +121,21 @@ const UpdatePurchaseOrder = () => {
   const updatePOMutation = useUpdatePurchaseOrder();
   const updateStatus = useUpdatePurchaseOrderStatus();
   const uploadAttachmentMutation = useUploadAttachment();
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+
+  const handleFilesChange = (files, action = 'append') => {
+    if (action === 'append') {
+      setUploadedFiles(prevFiles => {
+        // Filter out any duplicates before appending
+        const newFiles = files.filter(newFile => 
+          !prevFiles.some(prevFile => prevFile.id === newFile.id)
+        );
+        return [...prevFiles, ...newFiles];
+      });
+    } else {
+      setUploadedFiles(files);
+    }
+  };
 
   useEffect(() => {
     if (purchaseOrder) {
@@ -147,7 +162,18 @@ const UpdatePurchaseOrder = () => {
           ]
         : purchaseOrder.received_items || []
       });
-  
+
+      if (purchaseOrder?.attachments) {
+        const transformedFiles = purchaseOrder.attachments.map(attachment => ({
+          id: attachment.id,
+          file_size: attachment.file_size,
+          file_name: attachment.file_name,
+          file_path: attachment.file_path,
+          file_type: attachment.file_type
+        }));
+        setUploadedFiles(transformedFiles);
+      }
+    
   
       // Set active step
       const statusIndex = steps.findIndex(
@@ -419,21 +445,6 @@ const UpdatePurchaseOrder = () => {
       });
     }
 
-    if (nextStatus === "completed") {
-      // Validate invoice and attachment
-      if (!formData.invoice) {
-        newErrors.invoice = "Invoice is required";
-        hasErrors = true;
-      }
-      if (!formData.attachment) {
-        newErrors.attachment = "Attachment is required";
-        hasErrors = true;
-      }
-
-    }
-
-    console.log(formData.received_items);
-    console.log(formData);
     formData.received_items.forEach((item, index) => {
       console.log(item, index);
       if (!item.product_id) {
@@ -734,54 +745,24 @@ const UpdatePurchaseOrder = () => {
           <PrintablePO purchaseOrder={purchaseOrder} contentRef={contentRef} />
         </Box>
 
-        <Paper elevation={0} sx={{ p: 0, mb: 0 }}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={8}>
-              <Typography variant="h5" sx={{ mb: 1 }}>
-                Purchase Order: {purchaseOrder?.po_number}
-              </Typography>
-            </Grid>
-            {/* <Grid item xs={12} md={4}>
-              <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-                <Alert
-                  severity={getStatusColor(formData.status)}
-                  sx={{ mb: 2 }}
-                >
-                  Current Status:{" "}
-                  {steps.find((s) => s.value === formData.status)?.label}
-                </Alert>
-              </Box>
-            </Grid> */}
-          </Grid>
-        </Paper>
-
         <Paper elevation={0} sx={{ p: 0, mb: 3 }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle1" sx={{ mb: 2 }}>
-                Supplier: {purchaseOrder?.supplier?.supplier_name}
-              </Typography>
-            </Grid>
-            <Grid
-              item
-              xs={12}
-              md={6}
-              sx={{ display: "flex", justifyContent: "flex-end" }}
-            >
-              <Typography variant="subtitle1">
-                PO Date: {new Date(purchaseOrder?.po_date).toLocaleDateString()}
-              </Typography>
-            </Grid>
-          </Grid>
-        </Paper>
-
-        {(isPartiallyReceived || isCompleted || isCancelled) && (
+  <Grid container spacing={3} alignItems="flex-start">
+    {/* Left Column */}
+    <Grid item xs={12} md={8}>
+      <Typography variant="h5" sx={{ mb: 2 }}>
+        Purchase Order: {purchaseOrder?.po_number}
+      </Typography>
+      <Typography variant="subtitle1" sx={{ mb: 2 }}>
+        Supplier: {purchaseOrder?.supplier?.supplier_name}
+      </Typography>
+      <Typography variant="subtitle1" sx={{ mb: 2 }}>
+        PO Date: {new Date(purchaseOrder?.po_date).toLocaleDateString()}
+      </Typography>
+      {(isPartiallyReceived || isCompleted || isCancelled) && (
           <Paper elevation={0} sx={{ p: 0, mb: 3 }}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
                 {!isCompleted && !isCancelled ? (
                   <TextField
-                    fullWidth
+                    
                     label="Invoice Number"
                     name="invoice"
                     value={formData.invoice}
@@ -793,17 +774,15 @@ const UpdatePurchaseOrder = () => {
                     }
                     error={!!errors.invoice}
                     helperText={errors.invoice}
-                    required
                     disabled={isCompleted}
-                    sx={{ mb: 2 }}
+                    sx={{ mb: 2 ,width : 300}}
                   />
                 ) : (
                   <Typography>
                     Invoice Number: {formData.invoice || ""}
                   </Typography>
                 )}
-              </Grid>
-              <Grid item xs={12} md={6}>
+              {/* <Grid item xs={12} md={6}>
                 {formData.attachment &&
                 typeof formData.attachment === "string" ? (
                   <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -873,11 +852,28 @@ const UpdatePurchaseOrder = () => {
                     required
                   />
                 )}
-              </Grid>
-            </Grid>
+              </Grid> */}
+
           </Paper>
         )}
+    </Grid>
 
+    {/* Right Column */}
+    <Grid item xs={12} md={4}>
+      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+        <MultipleFileUploader
+          referenceNumber={id}
+          uploadedFiles={uploadedFiles}
+          onFilesChange={handleFilesChange}
+          modelType="purchase-orders"
+        />
+      </Box>
+    </Grid>
+  </Grid>
+</Paper>
+
+
+      
         <Paper elevation={0} sx={{ p: 0 }}>
           <Grid item xs={12}>
             <TableContainer>
@@ -1316,6 +1312,8 @@ const UpdatePurchaseOrder = () => {
               </Table>
             </TableContainer>
           </Grid>
+
+
 
           <Grid item xs={12} md={4}>
             <Box
