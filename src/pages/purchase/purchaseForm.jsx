@@ -43,7 +43,7 @@ const initialFormState = {
       price: 0
     }
   ],
-  additional_costs: []
+  // additional_costs: []
 };
 
 const CreatePurchaseOrder = () => {
@@ -102,14 +102,14 @@ const CreatePurchaseOrder = () => {
       
     });
 
-    formData.additional_costs.forEach((cost, index) => {
-      if (!cost.cost_type_id) {
-        newErrors[`additional_costs.${index}.cost_type_id`] = 'Cost type is required';
-      }
-      if (!cost.amount || Number(cost.amount) <= 0) {
-        newErrors[`additional_costs.${index}.amount`] = 'Amount must be greater than 0';
-      }
-    });
+    // formData.additional_costs.forEach((cost, index) => {
+    //   if (!cost.cost_type_id) {
+    //     newErrors[`additional_costs.${index}.cost_type_id`] = 'Cost type is required';
+    //   }
+    //   if (!cost.amount || Number(cost.amount) <= 0) {
+    //     newErrors[`additional_costs.${index}.amount`] = 'Amount must be greater than 0';
+    //   }
+    // });
   
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -452,7 +452,7 @@ const CreatePurchaseOrder = () => {
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={12}>
+          {/* <Grid item xs={12}>
         <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
           Additional Costs            
            <IconButton sx={{marginLeft:"0px !important"}} onClick={() => setOpenCostTypeModal(true)}>
@@ -544,7 +544,7 @@ const CreatePurchaseOrder = () => {
             Total with Costs: ₱{calculateTotalWithCosts().toFixed(2)}
           </Typography>
         </Box>
-      </Grid>
+      </Grid> */}
 
           <Grid item xs={12}>
             <TextField
