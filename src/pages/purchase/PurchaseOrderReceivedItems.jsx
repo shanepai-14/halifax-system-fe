@@ -29,7 +29,6 @@ const PurchaseOrderReceivedItems = ({
 
   const isCompleted = status === 'completed';
   const isCancelled = status === 'cancelled';
-  console.log('errors : ', errors);
 
   const calculateTotal = () => {
     return receivedItems.reduce((sum, item) => 

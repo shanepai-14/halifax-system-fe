@@ -44,6 +44,12 @@ import {
   useUploadAttachment,
   useUpdatePurchaseOrderStatus,
 } from "@/hooks/usePurchaseOrders";
+
+import {
+  useCreateReceivingReport,
+  useUpdateReceivingReport
+} from "@/hooks/useReceivingReport";
+
 import {
   DeleteOutlined,
   PlusOutlined,
@@ -63,6 +69,7 @@ import {
 import AddCostTypeModal from "../product/AddCostTypeModal";
 import PurchaseOrderReceivedItems from "./PurchaseOrderReceivedItems";
 import MultipleFileUploader from './MultipleFileUploader';
+import PurchaseOrderReceivingReports from "./PurchaseOrderReceivingReports";
 
 const LoadingSkeleton = () => (
   <Box>
@@ -93,7 +100,6 @@ const UpdatePurchaseOrder = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     items: [],
-    invoice: "",
     additional_costs: [],
     received_items: [],
   });
@@ -118,6 +124,8 @@ const UpdatePurchaseOrder = () => {
 
   // Queries and Mutations
   const { data: purchaseOrder, isLoading, refetch } = usePurchaseOrder(id);
+  const createReceivingReportMutation = useCreateReceivingReport();
+  const updateReceivingReportMutation = useUpdateReceivingReport();
   const updatePOMutation = useUpdatePurchaseOrder();
   const updateStatus = useUpdatePurchaseOrderStatus();
   const uploadAttachmentMutation = useUploadAttachment();
@@ -194,54 +202,7 @@ const UpdatePurchaseOrder = () => {
     document.body.removeChild(a);
   };
 
-  const handleAddCost = () => {
-    setFormData((prev) => ({
-      ...prev,
-      additional_costs: [
-        ...prev.additional_costs,
-        { cost_type_id: "", amount: "", remarks: "" },
-      ],
-    }));
-  };
 
-  const handleCostChange = (index, field, value) => {
-    if (field === "cost_type_id" && value) {
-      const isDuplicate = formData.additional_costs.some(
-        (cost, i) => i !== index && cost.cost_type_id === value
-      );
-
-      if (isDuplicate) {
-        setErrors((prev) => ({
-          ...prev,
-          [`additional_costs.${index}.cost_type_id`]:
-            "This cost type is already added",
-        }));
-        return;
-      }
-    }
-
-    const updatedCosts = [...formData.additional_costs];
-    updatedCosts[index] = {
-      ...updatedCosts[index],
-      [field]: value,
-    };
-    setFormData((prev) => ({ ...prev, additional_costs: updatedCosts }));
-
-    if (errors[`additional_costs.${index}.${field}`]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[`additional_costs.${index}.${field}`];
-        return newErrors;
-      });
-    }
-  };
-
-  const removeCost = (index) => {
-    const updatedCosts = formData.additional_costs.filter(
-      (_, i) => i !== index
-    );
-    setFormData((prev) => ({ ...prev, additional_costs: updatedCosts }));
-  };
 
   const addItem = () => {
     setFormData((prev) => ({
@@ -328,17 +289,6 @@ const UpdatePurchaseOrder = () => {
       
     }
 
-    // Validate additional costs
-    formData.additional_costs.forEach((cost, index) => {
-      if (!cost.cost_type_id) {
-        newErrors[`additional_costs.${index}.cost_type_id`] =
-          "Cost type is required";
-      }
-      if (!cost.amount || Number(cost.amount) <= 0) {
-        newErrors[`additional_costs.${index}.amount`] =
-          "Amount must be greater than 0";
-      }
-    });
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -383,40 +333,11 @@ const UpdatePurchaseOrder = () => {
     );
   };
 
-  const calculateRequestedTotalWithCosts = () => {
-    const itemsTotal = formData.items.reduce(
-      (sum, item) => sum + item.price * item.requested_quantity,
-      0
-    );
-    const costsTotal = formData.additional_costs.reduce(
-      (sum, cost) => sum + (Number(cost.amount) || 0),
-      0
-    );
-    return itemsTotal + costsTotal;
-  };
 
-  const calculateTotalCosts= () => {
 
-    const costsTotal = formData.additional_costs.reduce(
-      (sum, cost) => sum + (Number(cost.amount) || 0),
-      0
-    );
-    return costsTotal;
-  };
-  
-  
 
-  const calculateReceivedTotalWithCosts = () => {
-    const itemsTotal = formData.received_items.reduce(
-      (sum, item) => sum + item.cost_price * item.received_quantity,
-      0
-    );
-    const costsTotal = formData.additional_costs.reduce(
-      (sum, cost) => sum + (Number(cost.amount) || 0),
-      0
-    );
-    return itemsTotal + costsTotal;
-  };
+
+
 
   const handleConfirmStatusUpdate = async () => {
     setErrors({});
@@ -474,17 +395,7 @@ const UpdatePurchaseOrder = () => {
       });
     });
 
-    formData.additional_costs.forEach((cost, index) => {
-      if (!cost.cost_type_id) {
-        newErrors[`additional_costs.${index}.cost_type_id`] = "Cost type is required";
-        hasErrors = true;
-      }
-      if (!cost.amount || Number(cost.amount) <= 0) {
-        newErrors[`additional_costs.${index}.amount`] = "Amount must be greater than 0";
-        hasErrors = true;
-      }
-    });
-  
+
     if (hasErrors) {
       setErrors(newErrors);
       setDialogOpen(false);
@@ -615,6 +526,32 @@ const UpdatePurchaseOrder = () => {
       setErrors(newErrors);
     }
   };
+
+  const handleCreateReceivingReport = async (reportData) => {
+    try {
+      await createReceivingReportMutation.mutateAsync(reportData);
+      // Handle success if needed
+    } catch (error) {
+      // Error is already handled in the mutation's onError callback
+      // but you can add additional component-specific error handling here
+      return Promise.reject(error);
+    }
+  };
+
+  const handleUpdateReceivingReport = async ( rrID , receivingReport) => {
+    try {
+      console.log(rrID ,receivingReport);
+      await updateReceivingReportMutation.mutateAsync({
+        rrID: rrID,
+        data: receivingReport
+      });
+      // Handle success if needed
+    } catch (error) {
+      // Error is already handled in the mutation's onError callback
+      // but you can add additional component-specific error handling here
+      return Promise.reject(error);
+    }
+  }
 
   const isPending = formData.status === "pending";
   const isPartiallyReceived = formData.status === "partially_received";
@@ -758,104 +695,7 @@ const UpdatePurchaseOrder = () => {
       <Typography variant="subtitle1" sx={{ mb: 2 }}>
         PO Date: {new Date(purchaseOrder?.po_date).toLocaleDateString()}
       </Typography>
-      {(isPartiallyReceived || isCompleted || isCancelled) && (
-          <Paper elevation={0} sx={{ p: 0, mb: 3 }}>
-                {!isCompleted && !isCancelled ? (
-                  <TextField
-                    
-                    label="Invoice Number"
-                    name="invoice"
-                    value={formData.invoice}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        invoice: e.target.value,
-                      }))
-                    }
-                    error={!!errors.invoice}
-                    helperText={errors.invoice}
-                    disabled={isCompleted}
-                    sx={{ mb: 2 ,width : 300}}
-                  />
-                ) : (
-                  <Typography>
-                    Invoice Number: {formData.invoice || ""}
-                  </Typography>
-                )}
-              {/* <Grid item xs={12} md={6}>
-                {formData.attachment &&
-                typeof formData.attachment === "string" ? (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                    <Typography>Current Attachment:</Typography>
-                    <Link
-                      href="#"
-                      sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      onClick={handleDownload}
-                    >
-                      <FileDownloadOutlined /> Download Attachment
-                    </Link>
-                  </Box>
-                ) : (
-                  <TextField
-                    fullWidth
-                    type="file"
-                    label="Attachment"
-                    name="attachment"
-                    InputLabelProps={{ shrink: true }}
-                    inputProps={{
-                      accept: ".pdf,.doc,.docx,.png,.jpg,.jpeg",
-                    }}
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        // Allowed file types
-                        const allowedTypes = [
-                          "application/pdf",
-                          "application/msword",
-                          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                          "image/png",
-                          "image/jpeg",
-                        ];
 
-                        // Check file type
-                        if (!allowedTypes.includes(file.type)) {
-                          setErrors((prev) => ({
-                            ...prev,
-                            attachment:
-                              "File must be PDF, DOC, DOCX, PNG, or JPG format",
-                          }));
-                          e.target.value = ""; // Clear the input
-                          return;
-                        }
-
-                        // Optional: Check file size (e.g., 5MB limit)
-                        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-                        if (file.size > maxSize) {
-                          setErrors((prev) => ({
-                            ...prev,
-                            attachment: "File size must be less than 5MB",
-                          }));
-                          e.target.value = ""; // Clear the input
-                          return;
-                        }
-
-                        // If validation passes, update form data
-                        setFormData((prev) => ({
-                          ...prev,
-                          attachment: file,
-                        }));
-                      }
-                    }}
-                    error={!!errors.attachment}
-                    helperText={errors.attachment}
-                    disabled={isCompleted}
-                    required
-                  />
-                )}
-              </Grid> */}
-
-          </Paper>
-        )}
     </Grid>
 
     {/* Right Column */}
@@ -1100,220 +940,21 @@ const UpdatePurchaseOrder = () => {
             <Box
               sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}
             ></Box>
-            {!isPending && (
-              <PurchaseOrderReceivedItems
-                products={products}
-                attributes={attributes}
-                receivedItems={formData.received_items}
-                onItemChange={handleReceivedItemChange}
-                onAddItem={handleReceivedAddItem}
-                onRemoveItem={handleReceivedRemoveItem}
-                errors={errors}
-                disabled={isCompleted}
-                status={formData.status}
-              />
-            )}
+           {!isPending  && (
+            <PurchaseOrderReceivingReports 
+              receivingReports={formData.receiving_reports}
+              products={products}
+              costTypes={costTypes}
+              attributes={attributes} 
+              status={formData.status}
+              poId={formData.po_id}
+              poNumber={formData.po_number}
+              onCreateReceivingReport={handleCreateReceivingReport}
+              onUpdateReceivingReport={handleUpdateReceivingReport}
+
+            />
+          )}
           </Grid>
-          <Grid item xs={12}>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell colSpan={isCompleted || isCancelled  ? 3 : 4}>
-                      {" "}
-                      <Typography variant="h5" sx={{ mt: 4, mb: 1 }} >
-                        Additional Costs
-                        <IconButton
-                          sx={{ marginLeft: "0px !important" }}
-                          onClick={() => setOpenCostTypeModal(true)}
-                        >
-                          <PlusOutlined />
-                        </IconButton>
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Cost Type</TableCell>
-                    <TableCell>Amount</TableCell>
-                    <TableCell>Remarks</TableCell>
-                    {!isCompleted && !isCancelled  && <TableCell width={50} />}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {formData.additional_costs.map((cost, index) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        {!isCompleted && !isCancelled ? (
-                          <Autocomplete
-                            size="small"
-                            value={
-                              costTypes?.find(
-                                (type) =>
-                                  type.cost_type_id === cost.cost_type_id
-                              ) || null
-                            }
-                            onChange={(e, newValue) =>
-                              handleCostChange(
-                                index,
-                                "cost_type_id",
-                                newValue ? newValue.cost_type_id : ""
-                              )
-                            }
-                            options={
-                              costTypes?.filter(
-                                (type) =>
-                                  type.is_active &&
-                                  !formData.additional_costs.some(
-                                    (c, i) =>
-                                      i !== index &&
-                                      c.cost_type_id === type.cost_type_id
-                                  )
-                              ) || []
-                            }
-                            getOptionLabel={(option) => option.name || ""}
-                            isOptionEqualToValue={(option, value) =>
-                              option.cost_type_id === value
-                            }
-                            disabled={!isPending && !isPartiallyReceived}
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                fullWidth
-                                sx={{
-                                  "& .MuiInputBase-root": {
-                                    padding: "4px 8px",
-                                  },
-                                  "& .MuiFormLabel-root": {
-                                    fontSize: "0.875rem",
-                                  },
-                                }}
-                                error={
-                                  !!errors[
-                                    `additional_costs.${index}.cost_type_id`
-                                  ]
-                                }
-                                helperText={
-                                  errors[
-                                    `additional_costs.${index}.cost_type_id`
-                                  ] || "Required"
-                                }
-                              />
-                            )}
-                          />
-                        ) : (
-                          costTypes?.find(
-                            (type) => type.cost_type_id === cost.cost_type_id
-                          )?.name || ""
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {!isCompleted && !isCancelled  ? (
-                          <TextField
-                            size="small"
-                            type="number"
-                            value={cost.amount}
-                            onChange={(e) =>
-                              handleCostChange(index, "amount", e.target.value)
-                            }
-                            error={!!errors[`additional_costs.${index}.amount`]}
-                            helperText={
-                              errors[`additional_costs.${index}.amount`] ||
-                              "Required"
-                            }
-                            inputProps={{ min: 0, step: 0.01 }}
-                            disabled={!isPending && !isPartiallyReceived}
-                          />
-                        ) : (
-                          cost.amount
-                        )}
-                      </TableCell>
-                      <TableCell sx={{ verticalAlign: "top" }}>
-                        {!isCompleted && !isCancelled  ? (
-                          <TextField
-                            size="small"
-                            value={cost.remarks || ""}
-                            onChange={(e) =>
-                              handleCostChange(index, "remarks", e.target.value)
-                            }
-                            fullWidth
-                            disabled={!isPending && !isPartiallyReceived}
-                          />
-                        ) : (
-                          cost.remarks || ""
-                        )}
-                      </TableCell>
-                      {!isCompleted && !isCancelled  && (
-                        <TableCell sx={{verticalAlign:"top"}}>
-                          <IconButton
-                            size="large"
-                            onClick={() => removeCost(index)}
-                            disabled={!isPending && !isPartiallyReceived}
-                          >
-                            <DeleteOutlined />
-                          </IconButton>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                  <TableRow>
-                  <TableCell  sx={{border:"none"}} colSpan={ !isCompleted && !isCancelled  ? 2 : 1}>
-                      <Button
-                        startIcon={<PlusOutlined />}
-                        onClick={handleAddCost}
-                        sx={{ visibility: !isCompleted && !isCancelled ? "visible" : "hidden" }}
-                      >
-                        Add Additional Cost
-                      </Button>
-                    </TableCell >
-
-                    <TableCell >
-                      <Typography variant="h5" textAlign="right">
-                        Total Cost:
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h5">
-                        ₱{calculateTotalCosts().toFixed(2)}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell sx={{border:"none"}} colSpan={ !isCompleted && !isCancelled ? 2 : 1}>
-
-                    </TableCell>
-                
-                    <TableCell  sx={{ verticalAlign: "right" }}>
-                      <Typography variant="h5" textAlign="right">
-                        Total Requested with Costs:
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h5">
-                        ₱{calculateRequestedTotalWithCosts().toFixed(2)}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell sx={{border:"none"}} colSpan={ !isCompleted && !isCancelled ? 2 : 1}>
-
-                    </TableCell>
-                    <TableCell sx={{ verticalAlign: "right" }} >
-                      <Typography variant="h5" textAlign="right">
-                        Total Received with Costs:
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h5">
-                        ₱{calculateReceivedTotalWithCosts().toFixed(2)}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Grid>
-
-
 
           <Grid item xs={12} md={4}>
             <Box
