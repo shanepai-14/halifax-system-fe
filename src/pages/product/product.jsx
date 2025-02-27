@@ -22,6 +22,7 @@ import { useProducts, useCategories ,useDeleteProduct } from '@/hooks/useProduct
 import { getFileUrl } from '@/utils/fileHelper';
 import CardSkeleton from '@/components/CardSkeleton';
 import TableRowSkeleton from '@/components/TableRowSkeleton';
+import CategoryChip from '@/components/CategoryChip';
 import Swal from 'sweetalert2';
 
 
@@ -199,6 +200,15 @@ const [sortConfig, setSortConfig] = useState({
             Attributes
           </TableSortLabel>
         </TableCell>
+        <TableCell align="right">
+            <TableSortLabel
+              active={sortConfig.field === 'quantity'}
+              direction={sortConfig.field === 'quantity' ? sortConfig.direction : 'asc'}
+              onClick={() => handleSort('quantity')}
+            >
+              Quantity
+            </TableSortLabel>
+          </TableCell>
           <TableCell align="right">
             <TableSortLabel
               active={sortConfig.field === 'reorder_level'}
@@ -245,8 +255,9 @@ const [sortConfig, setSortConfig] = useState({
                 </TableCell>
                 <TableCell>{row.product_code}</TableCell>
                 <TableCell>{row.product_name}</TableCell>
-                <TableCell>{row.category?.name}</TableCell>
+                <TableCell>{<CategoryChip category={row.category} />}</TableCell>
                 <TableCell>{renderAttributes(row.attributes)}</TableCell>
+                <TableCell align="right">{Number(row.quantity)}</TableCell>
                 <TableCell align="right">{row.reorder_level}</TableCell>
                   <TableCell align="right">
                     <IconButton onClick={ () => handleOpenEditProductModal(row)}>
