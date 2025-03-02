@@ -22,7 +22,9 @@ import {
   DialogActions,
   TextField,
   CircularProgress,
-  IconButton
+  IconButton,
+  Switch,
+  FormControlLabel 
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ReceiptIcon from '@mui/icons-material/Receipt';
@@ -63,6 +65,7 @@ const PurchaseOrderReceivingReports = ({
   const [reportData, setReportData] = useState({
     invoice: '',
     term: 0,
+    is_paid: false,
     received_items: [
       {
         product_id: '',
@@ -73,7 +76,7 @@ const PurchaseOrderReceivingReports = ({
         term_price: 0,
         wholesale_price: 0,
         regular_price: 0,
-        remarks: ''
+        remarks: '',
       }
     ],
     additional_costs: [],
@@ -89,6 +92,7 @@ const PurchaseOrderReceivingReports = ({
     setReportData({
       invoice: '',
       term: 0,
+      is_paid: false,
       received_items: [
         {
           product_id: '',
@@ -115,6 +119,7 @@ const PurchaseOrderReceivingReports = ({
     setReportData({
       invoice: report.invoice || '',
       term: report.term || 0,
+      is_paid: report.is_paid || false,
       received_items: report.received_items ? [...report.received_items] : [],
       additional_costs: report.additional_costs ? [...report.additional_costs] : [],
       attachments: report.attachments || []
@@ -321,6 +326,7 @@ const PurchaseOrderReceivingReports = ({
         po_id: poId,
         invoice: reportData.invoice,
         term: reportData.term,
+        is_paid: reportData.is_paid,
         received_items: reportData.received_items,
         additional_costs: reportData.additional_costs,
       };
@@ -408,6 +414,18 @@ const PurchaseOrderReceivingReports = ({
                 inputProps={{
                   min: 0,
                 }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={reportData.is_paid}
+                    onChange={(e) => handleReportDataChange("is_paid", e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label="Mark as Paid"
               />
             </Grid>
             <Grid item xs={12}>
@@ -551,6 +569,19 @@ const PurchaseOrderReceivingReports = ({
                   size="small" 
                   sx={{ backgroundColor: 'primary.light', color: 'white' }}
                 />
+                  {report.is_paid ? (
+                  <Chip 
+                    label="PAID" 
+                    size="small" 
+                    color="success"
+                  />
+                ) : (
+                  <Chip 
+                    label="UNPAID" 
+                    size="small" 
+                    color="error"
+                  />
+                )}
                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
                   ₱{calculateGrandTotal(report).toFixed(2)}
                 </Typography>
@@ -590,6 +621,9 @@ const PurchaseOrderReceivingReports = ({
                     </Typography>
                     <Typography variant="body2">
                       <strong>Received Date:</strong> {formatDate(report.created_at)}
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>Payment Status:</strong> {report.is_paid ? 'Paid' : 'Unpaid'}
                     </Typography>
                   </Box>
                 </Grid>
