@@ -285,6 +285,9 @@ const FileUploader = ({ uploadedFiles = [], onFilesChange, referenceNumber, mode
                     case 'purchase-orders':
                       uploadUrl = `/purchase-orders/${referenceNumber}/attachments`;
                       break;
+                      case 'receiving-reports':
+                      uploadUrl = `/receiving-reports/${referenceNumber}/attachments`;  
+                      break;
                   }
   
                   const response = await api.post(uploadUrl, formData, {

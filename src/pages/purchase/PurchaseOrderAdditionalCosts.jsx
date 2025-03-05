@@ -43,6 +43,7 @@ const PurchaseOrderAdditionalCosts = ({
   calculateTotalCosts = () => 0,
   onAddCostType
 }) => {
+
   const isCompleted = status === 'completed';
   const isCancelled = status === 'cancelled';
   const isReadOnly = disabled || isCompleted || isCancelled;
