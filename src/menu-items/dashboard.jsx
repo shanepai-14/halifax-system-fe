@@ -1,5 +1,5 @@
 // assets
-import { DashboardOutlined ,ShoppingCartOutlined ,DropboxOutlined ,AreaChartOutlined ,UserOutlined ,ProductOutlined ,ShoppingOutlined } from '@ant-design/icons';
+import { DashboardOutlined ,ShoppingCartOutlined ,DropboxOutlined ,AreaChartOutlined ,UserOutlined ,ProductOutlined ,ShoppingOutlined , AuditOutlined } from '@ant-design/icons';
 
 
 
@@ -25,14 +25,6 @@ const dashboard = {
     //   type: 'item',
     //   url: '/app/dashboard',
     //   icon: DashboardOutlined,
-    //   breadcrumbs: false
-    // },
-    // {
-    //   id: 'inventory',
-    //   title: 'Inventory',
-    //   type: 'item',
-    //   url: '/app/inventory',
-    //   icon: DropboxOutlined ,
     //   breadcrumbs: false
     // },
     {
@@ -65,6 +57,22 @@ const dashboard = {
       type: 'item',
       url: '/app/purchase',
       icon: ShoppingOutlined ,
+      breadcrumbs: false
+    },
+    {
+      id: 'receiving',
+      title: 'Receiving Report',
+      type: 'item',
+      url: '/app/receiving-report',
+      icon: AuditOutlined ,
+      breadcrumbs: false
+    },
+    {
+      id: 'inventory',
+      title: 'Inventory',
+      type: 'item',
+      url: '/app/inventory',
+      icon: DropboxOutlined ,
       breadcrumbs: false
     },
  
