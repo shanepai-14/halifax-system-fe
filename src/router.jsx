@@ -11,6 +11,8 @@ const PurchasePage = Loadable(lazy(() => import('@pages/purchase/index')));
 const Purchase = Loadable(lazy(() => import('@pages/purchase/purchase')));
 const PurchaseForm = Loadable(lazy(() => import('@pages/purchase/purchaseForm')));
 const PurchaseUpdate = Loadable(lazy(() => import('@pages/purchase/updatePurchase')));
+const ReceivingReportPage = Loadable(lazy(() => import('@pages/receiving/index')));
+const ReceivingReport = Loadable(lazy(() => import('@pages/receiving/ReceivingReport')));
 const AuthLogin = Loadable(lazy(() => import('@pages/authentication/login')));
 
 const router = [   // Changed from object to array
@@ -62,6 +64,16 @@ const router = [   // Changed from object to array
                 path: ':id/edit',
                 element: <PurchaseUpdate />
               }
+            ]
+          },
+          {
+            path: 'receiving-report',
+            element: <ReceivingReportPage />,
+            children: [
+              {
+                index: true,
+                element: <ReceivingReport />
+              },
             ]
           }
         ]  

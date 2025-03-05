@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef} from 'react';
 import {
   Box,
   Typography,
@@ -24,6 +24,7 @@ import {
   CircularProgress,
   IconButton,
   Switch,
+  Tooltip,
   FormControlLabel 
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -33,7 +34,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import PurchaseOrderReceivedItems from './PurchaseOrderReceivedItems';
 import PurchaseOrderAdditionalCosts from './PurchaseOrderAdditionalCosts';
 import MultipleFileUploader from './MultipleFileUploader';
-
+import PrintIcon from '@mui/icons-material/Print';
+import PrintableRR from '../receiving/PrintableRR';
+import { useReactToPrint } from 'react-to-print';
 /**
  * Component to display a list of receiving reports for a purchase order
  * @param {Object} props
@@ -57,11 +60,14 @@ const PurchaseOrderReceivingReports = ({
   onCreateReceivingReport,
   onUpdateReceivingReport
 }) => {
+  const contentRef = useRef();
   const [expanded, setExpanded] = useState(false);
   const [reportDialog, setReportDialog] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState(null);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [errors, setErrors] = useState({});
   const [reportData, setReportData] = useState({
     invoice: '',
     term: 0,
@@ -82,7 +88,11 @@ const PurchaseOrderReceivingReports = ({
     additional_costs: [],
     attachments: []
   });
-  const [errors, setErrors] = useState({});
+  
+
+    const handlePrint = useReactToPrint({
+      contentRef
+    });
 
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
@@ -598,6 +608,18 @@ const PurchaseOrderReceivingReports = ({
                     <EditIcon />
                   </IconButton>
                 )}
+                 <Tooltip title="Print Receiving Report">
+                      <IconButton 
+                      size="small" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedReport(report);
+                          setTimeout(handlePrint, 100);
+                        }}
+                      >
+                        <PrintIcon  />
+                      </IconButton>
+                    </Tooltip>
               </Box>
             </Box>
           </AccordionSummary>
@@ -699,6 +721,7 @@ const PurchaseOrderReceivingReports = ({
       
       {/* Receiving Report Dialog (used for both create and edit) */}
       {reportDialog && renderReportDialog()}
+      <PrintableRR receivingReport={selectedReport} contentRef={contentRef}/>
     </Box>
   );
 };

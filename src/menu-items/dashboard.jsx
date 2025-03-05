@@ -1,5 +1,5 @@
 // assets
-import { DashboardOutlined ,ShoppingCartOutlined ,DropboxOutlined ,AreaChartOutlined ,UserOutlined ,ProductOutlined ,ShoppingOutlined } from '@ant-design/icons';
+import { DashboardOutlined ,ShoppingCartOutlined ,DropboxOutlined ,AreaChartOutlined ,UserOutlined ,ProductOutlined ,ShoppingOutlined , AuditOutlined } from '@ant-design/icons';
 
 
 
@@ -65,6 +65,14 @@ const dashboard = {
       type: 'item',
       url: '/app/purchase',
       icon: ShoppingOutlined ,
+      breadcrumbs: false
+    },
+    {
+      id: 'receiving',
+      title: 'Receiving Report',
+      type: 'item',
+      url: '/app/receiving-report',
+      icon: AuditOutlined ,
       breadcrumbs: false
     },
  
