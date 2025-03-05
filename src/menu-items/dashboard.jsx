@@ -28,14 +28,6 @@ const dashboard = {
       breadcrumbs: false
     },
     {
-      id: 'inventory',
-      title: 'Inventory',
-      type: 'item',
-      url: '/app/inventory',
-      icon: DropboxOutlined ,
-      breadcrumbs: false
-    },
-    {
       id: 'product',
       title: 'Product',
       type: 'item',
@@ -73,6 +65,14 @@ const dashboard = {
       type: 'item',
       url: '/app/receiving-report',
       icon: AuditOutlined ,
+      breadcrumbs: false
+    },
+    {
+      id: 'inventory',
+      title: 'Inventory',
+      type: 'item',
+      url: '/app/inventory',
+      icon: DropboxOutlined ,
       breadcrumbs: false
     },
  

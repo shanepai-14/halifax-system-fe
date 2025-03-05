@@ -98,8 +98,8 @@ const ReceivingReportPage = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSupplier, setSelectedSupplier] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
+  const [selectedSupplier, setSelectedSupplier] = useState('All');
+  const [selectedStatus, setSelectedStatus] = useState('All');
   const [filters, setFilters] = useState({});
   const [selectedReport, setSelectedReport] = useState(null);
   // No longer tracking delete-related state
@@ -111,7 +111,7 @@ const ReceivingReportPage = () => {
   const { data, isLoading, refetch } = useReceivingReports({
     search: searchTerm,
     supplier_id: selectedSupplier || undefined,
-    is_paid: selectedStatus === 'paid' ? true : (selectedStatus === 'unpaid' ? false : undefined),
+    is_paid: selectedStatus === 'paid' ? true : selectedStatus === 'unpaid' ? false : 'All',
     per_page: rowsPerPage,
     page: page + 1,
     ...filters
@@ -129,7 +129,7 @@ const ReceivingReportPage = () => {
     if (searchTerm) newFilters.search = searchTerm;
     if (selectedSupplier) newFilters.supplier_id = selectedSupplier;
     if (selectedStatus) {
-      newFilters.is_paid = selectedStatus === 'paid' ? true : false;
+      newFilters.is_paid = selectedStatus === 'paid' ? true : selectedStatus === 'unpaid' ? false : 'All';
     }
     
     setFilters(newFilters);
@@ -164,8 +164,8 @@ const ReceivingReportPage = () => {
   
   const handleClearFilter = () => {
     setSearchTerm('');
-    setSelectedSupplier('');
-    setSelectedStatus('');
+    setSelectedSupplier('All');
+    setSelectedStatus('All');
     setFilters({});
   };
 
@@ -200,7 +200,7 @@ const ReceivingReportPage = () => {
             label="Filter by Supplier"
             sx={{ minWidth: 200 }}
           >
-            <MenuItem value="">All Suppliers</MenuItem>
+            <MenuItem value="All">All Suppliers</MenuItem>
             {suppliers?.map((supplier) => (
               <MenuItem key={supplier.supplier_id} value={supplier.supplier_id}>
                 {supplier.supplier_name}
@@ -215,7 +215,7 @@ const ReceivingReportPage = () => {
             label="Filter by Status"
             sx={{ minWidth: 200 }}
           >
-            <MenuItem value="">All Status</MenuItem>
+            <MenuItem value="All">All Status</MenuItem>
             <MenuItem value="paid">Paid</MenuItem>
             <MenuItem value="unpaid">Unpaid</MenuItem>
           </TextField>

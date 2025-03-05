@@ -13,6 +13,10 @@ const PurchaseForm = Loadable(lazy(() => import('@pages/purchase/purchaseForm'))
 const PurchaseUpdate = Loadable(lazy(() => import('@pages/purchase/updatePurchase')));
 const ReceivingReportPage = Loadable(lazy(() => import('@pages/receiving/index')));
 const ReceivingReport = Loadable(lazy(() => import('@pages/receiving/ReceivingReport')));
+const InventoryPage = Loadable(lazy(() => import('@pages/inventory/index')));
+const Inventory = Loadable(lazy(() => import('@pages/inventory/InventoryManagement')));
+const InventoryProductDetail = Loadable(lazy(() => import('@pages/inventory/InventoryProductDetail')));
+
 const AuthLogin = Loadable(lazy(() => import('@pages/authentication/login')));
 
 const router = [   // Changed from object to array
@@ -74,6 +78,20 @@ const router = [   // Changed from object to array
                 index: true,
                 element: <ReceivingReport />
               },
+            ]
+          },
+          {
+            path: 'inventory',
+            element: <InventoryPage />,
+            children: [
+              {
+                index: true,
+                element: <Inventory />
+              },
+              {
+                path: ':id',
+                element: <InventoryProductDetail />
+              }
             ]
           }
         ]  
