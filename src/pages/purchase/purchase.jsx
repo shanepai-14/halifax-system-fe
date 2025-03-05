@@ -195,7 +195,6 @@ const PurchaseOrderPage = () => {
               <TableCell>PO Number</TableCell>
               <TableCell>Date</TableCell>
               <TableCell>Supplier</TableCell>
-              <TableCell>Invoice</TableCell>
               <TableCell>Total Amount</TableCell>
               <TableCell>Status</TableCell>
               <TableCell align="right">Actions</TableCell>
@@ -221,7 +220,6 @@ const PurchaseOrderPage = () => {
                       {format(new Date(po.po_date), 'MMM dd, yyyy')}
                     </TableCell>
                     <TableCell>{po.supplier?.supplier_name}</TableCell>
-                    <TableCell>{po.invoice}</TableCell>
                     <TableCell>
                       ₱{Number(po.total_amount).toLocaleString()}
                     </TableCell>

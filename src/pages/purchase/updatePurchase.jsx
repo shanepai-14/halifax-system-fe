@@ -67,7 +67,6 @@ import {
   selectProducts,
 } from "@/store/slices/productsSlice";
 import AddCostTypeModal from "../product/AddCostTypeModal";
-import PurchaseOrderReceivedItems from "./PurchaseOrderReceivedItems";
 import MultipleFileUploader from './MultipleFileUploader';
 import PurchaseOrderReceivingReports from "./PurchaseOrderReceivingReports";
 
@@ -939,7 +938,10 @@ const UpdatePurchaseOrder = () => {
             ></Box>
            {!isPending  && (
             <PurchaseOrderReceivingReports 
-              receivingReports={formData.receiving_reports}
+              receivingReports={formData.receiving_reports?.map(report => ({
+                ...report,
+                supplier: formData.supplier 
+              }))}
               products={products}
               costTypes={costTypes}
               attributes={attributes} 

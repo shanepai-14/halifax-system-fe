@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef} from 'react';
 import {
   Box,
   Typography,
@@ -22,7 +22,10 @@ import {
   DialogActions,
   TextField,
   CircularProgress,
-  IconButton
+  IconButton,
+  Switch,
+  Tooltip,
+  FormControlLabel 
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ReceiptIcon from '@mui/icons-material/Receipt';
@@ -30,7 +33,10 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import EditIcon from '@mui/icons-material/Edit';
 import PurchaseOrderReceivedItems from './PurchaseOrderReceivedItems';
 import PurchaseOrderAdditionalCosts from './PurchaseOrderAdditionalCosts';
-
+import MultipleFileUploader from './MultipleFileUploader';
+import PrintIcon from '@mui/icons-material/Print';
+import PrintableRR from '../receiving/PrintableRR';
+import { useReactToPrint } from 'react-to-print';
 /**
  * Component to display a list of receiving reports for a purchase order
  * @param {Object} props
@@ -54,14 +60,18 @@ const PurchaseOrderReceivingReports = ({
   onCreateReceivingReport,
   onUpdateReceivingReport
 }) => {
+  const contentRef = useRef();
   const [expanded, setExpanded] = useState(false);
   const [reportDialog, setReportDialog] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState(null);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [errors, setErrors] = useState({});
   const [reportData, setReportData] = useState({
     invoice: '',
     term: 0,
+    is_paid: false,
     received_items: [
       {
         product_id: '',
@@ -72,12 +82,17 @@ const PurchaseOrderReceivingReports = ({
         term_price: 0,
         wholesale_price: 0,
         regular_price: 0,
-        remarks: ''
+        remarks: '',
       }
     ],
-    additional_costs: [] 
+    additional_costs: [],
+    attachments: []
   });
-  const [errors, setErrors] = useState({});
+  
+
+    const handlePrint = useReactToPrint({
+      contentRef
+    });
 
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
@@ -87,6 +102,7 @@ const PurchaseOrderReceivingReports = ({
     setReportData({
       invoice: '',
       term: 0,
+      is_paid: false,
       received_items: [
         {
           product_id: '',
@@ -100,7 +116,8 @@ const PurchaseOrderReceivingReports = ({
           remarks: ''
         }
       ],
-      additional_costs: [] 
+      additional_costs: [],
+      attachments: []
     });
     setErrors({});
     setIsEditing(false);
@@ -109,13 +126,13 @@ const PurchaseOrderReceivingReports = ({
   };
 
   const openEditReportDialog = (report) => {
-    
-    console.log(report);
     setReportData({
       invoice: report.invoice || '',
       term: report.term || 0,
+      is_paid: report.is_paid || false,
       received_items: report.received_items ? [...report.received_items] : [],
-      additional_costs: report.additional_costs ? [...report.additional_costs] : []
+      additional_costs: report.additional_costs ? [...report.additional_costs] : [],
+      attachments: report.attachments || []
     });
     setErrors({});
     setIsEditing(true);
@@ -142,6 +159,37 @@ const PurchaseOrderReceivingReports = ({
         delete newErrors[`additional_costs.${index}.${field}`];
         return newErrors;
       });
+    }
+  };
+
+  const handleFilesChange = (files, reportId, action = 'append') => {
+    if (isEditing) {
+      // If we're editing, update the reportData attachments
+      if (action === 'append') {
+        setReportData(prev => {
+          // Filter out any duplicates before appending
+          const newFiles = files.filter(newFile => 
+            !prev.attachments.some(prevFile => prevFile.id === newFile.id)
+          );
+          return {
+            ...prev,
+            attachments: [...(prev.attachments || []), ...newFiles]
+          };
+        });
+      } else {
+        setReportData(prev => ({
+          ...prev,
+          attachments: files
+        }));
+      }
+    } else {
+      // For new reports, just store the files in reportData
+      setReportData(prev => ({
+        ...prev,
+        attachments: action === 'append' 
+          ? [...(prev.attachments || []), ...files] 
+          : files
+      }));
     }
   };
 
@@ -288,13 +336,12 @@ const PurchaseOrderReceivingReports = ({
         po_id: poId,
         invoice: reportData.invoice,
         term: reportData.term,
+        is_paid: reportData.is_paid,
         received_items: reportData.received_items,
         additional_costs: reportData.additional_costs,
       };
       
       if (isEditing) {
-        
-        console.log(selectedReportId);
         await onUpdateReceivingReport(selectedReportId, dataToSave);
       } else {
         // Create new report
@@ -340,7 +387,7 @@ const PurchaseOrderReceivingReports = ({
   
   // Check if creating or updating receiving reports is allowed
   const canCreateNewReport = status === 'partially_received' && onCreateReceivingReport;
-  const canUpdateReport = status === 'partially_received' && onUpdateReceivingReport;
+  const canUpdateReport = (status === 'partially_received' || status === 'completed') && onUpdateReceivingReport;
   
   // Render the receiving report dialog (for both create and edit)
   const renderReportDialog = () => (
@@ -351,7 +398,7 @@ const PurchaseOrderReceivingReports = ({
       maxWidth="lg"
     >
       <DialogTitle>
-        {isEditing ? `Edit Receiving Report for PO ${poNumber}` : `Create New Receiving Report for PO ${poNumber}`}
+        {isEditing ? `Edit Receiving Report for ${poNumber}` : `Create New Receiving Report for PO ${poNumber}`}
       </DialogTitle>
       <DialogContent>
         <Box sx={{ mb: 3, mt: 2 }}>
@@ -379,6 +426,26 @@ const PurchaseOrderReceivingReports = ({
                 }}
               />
             </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={reportData.is_paid}
+                    onChange={(e) => handleReportDataChange("is_paid", e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label="Mark as Paid"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <MultipleFileUploader
+                referenceNumber={selectedReportId || "temp"}
+                uploadedFiles={reportData.attachments || []}
+                onFilesChange={(files, action) => handleFilesChange(files, selectedReportId, action)}
+                modelType="receiving-reports"
+              />
+            </Grid>
           </Grid>
         </Box>
 
@@ -391,7 +458,7 @@ const PurchaseOrderReceivingReports = ({
           onRemoveItem={handleRemoveItem}
           errors={errors}
           disabled={false}
-          status="partially_received"
+          status={status}
         />
         <PurchaseOrderAdditionalCosts
           costTypes={costTypes}
@@ -512,6 +579,19 @@ const PurchaseOrderReceivingReports = ({
                   size="small" 
                   sx={{ backgroundColor: 'primary.light', color: 'white' }}
                 />
+                  {report.is_paid ? (
+                  <Chip 
+                    label="PAID" 
+                    size="small" 
+                    color="success"
+                  />
+                ) : (
+                  <Chip 
+                    label="UNPAID" 
+                    size="small" 
+                    color="error"
+                  />
+                )}
                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
                   ₱{calculateGrandTotal(report).toFixed(2)}
                 </Typography>
@@ -528,6 +608,18 @@ const PurchaseOrderReceivingReports = ({
                     <EditIcon />
                   </IconButton>
                 )}
+                 <Tooltip title="Print Receiving Report">
+                      <IconButton 
+                      size="small" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedReport(report);
+                          setTimeout(handlePrint, 100);
+                        }}
+                      >
+                        <PrintIcon  />
+                      </IconButton>
+                    </Tooltip>
               </Box>
             </Box>
           </AccordionSummary>
@@ -535,6 +627,40 @@ const PurchaseOrderReceivingReports = ({
           <AccordionDetails sx={{ p: 0 }}>
             <Box sx={{ p: 2 }}>
               <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2, mb: 1 }}>
+                    Report Details
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Typography variant="body2">
+                      <strong>Batch Number:</strong> {report.batch_number}
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>Invoice:</strong> {report.invoice || 'N/A'}
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>Payment Terms:</strong> {report.term || 0} days
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>Received Date:</strong> {formatDate(report.created_at)}
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>Payment Status:</strong> {report.is_paid ? 'Paid' : 'Unpaid'}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  {/* FileUploader for viewing existing attachments */}
+                  <MultipleFileUploader
+                    referenceNumber={report.rr_id}
+                    uploadedFiles={report.attachments || []}
+                    onFilesChange={(files, action) => {
+                      // This is for display only in the expanded view, changes here won't affect the report until saved
+                      // We'll handle this in the backend
+                    }}
+                    modelType="receiving-reports"
+                  />
+                </Grid>
                 <Grid item xs={12}>
                   {/* Use the existing PurchaseOrderReceivedItems component */}
                   <PurchaseOrderReceivedItems
@@ -595,6 +721,7 @@ const PurchaseOrderReceivingReports = ({
       
       {/* Receiving Report Dialog (used for both create and edit) */}
       {reportDialog && renderReportDialog()}
+      <PrintableRR receivingReport={selectedReport} contentRef={contentRef}/>
     </Box>
   );
 };
