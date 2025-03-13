@@ -202,6 +202,7 @@ const UpdatePurchaseOrder = () => {
   };
 
 
+
   const addItem = () => {
     setFormData((prev) => ({
       ...prev,
@@ -392,6 +393,7 @@ const UpdatePurchaseOrder = () => {
         }
       });
     });
+
 
     if (hasErrors) {
       setErrors(newErrors);
@@ -692,6 +694,7 @@ const UpdatePurchaseOrder = () => {
       <Typography variant="subtitle1" sx={{ mb: 2 }}>
         PO Date: {new Date(purchaseOrder?.po_date).toLocaleDateString()}
       </Typography>
+
     </Grid>
 
     {/* Right Column */}

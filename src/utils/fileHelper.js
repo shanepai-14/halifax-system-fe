@@ -9,7 +9,7 @@ export const getFileUrl = (filePath) => {
     }
   
     // Get the base URL from environment variables
-    const baseURL =  'https://hgasims.site';
+    const baseURL =  'http://localhost:8000';
     
     // Remove any leading slashes from the file path
     const cleanPath = filePath.replace(/^\/+/, '');
