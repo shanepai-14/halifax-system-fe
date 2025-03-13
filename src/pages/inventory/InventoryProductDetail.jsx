@@ -23,7 +23,8 @@ import {
   useCreateAdjustment, 
   useGetProductAdjustments,
   useGetProductInventoryLogs,
-  useGetProductTransactions
+  useGetProductTransactions,
+  useGetProductReport
 } from '@/hooks/useInventory';
 
 // Import the component pieces
@@ -44,7 +45,7 @@ const adjustmentTypes = [
   { value: 'reduction', label: 'Reduction' },
   { value: 'damage', label: 'Damage' },
   { value: 'loss', label: 'Loss' },
-  { value: 'return', label: 'Return' },
+  // { value: 'return', label: 'Return' },
   { value: 'correction', label: 'Correction' },
 ];
 
@@ -63,6 +64,8 @@ const InventoryProductDetail = () => {
   const { data: productAdjustments, isLoading: isLoadingAdjustments } = useGetProductAdjustments(id);
   const { data: inventoryLogs, isLoading: isLoadingLogs } = useGetProductInventoryLogs(id);
   const { data: productTransactions, isLoading: isLoadingTransactions } = useGetProductTransactions(id);
+  const { data: productReport, isLoading: isLoadingReport } = useGetProductReport(id);
+ 
   const { mutateAsync: createAdjustment } = useCreateAdjustment();
 
   // Get data from Redux
@@ -184,10 +187,10 @@ const InventoryProductDetail = () => {
             />
 
             {/* Product Attributes Card */}
-            <ProductAttributesCard 
+            {/* <ProductAttributesCard 
               product={product}
               attributes={attributes}
-            />
+            /> */}
 
             {/* Inventory Valuation Card */}
             {/* <InventoryValuationCard 
@@ -255,7 +258,7 @@ const InventoryProductDetail = () => {
                   </Typography>
                   
                   <ReceivingReportsAccordion
-                    transactions={productTransactions}
+                    transactions={productReport}
                     onViewReport={handleOpenReportDialog}
                   />
                 </Box>
