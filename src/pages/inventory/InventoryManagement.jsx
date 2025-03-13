@@ -43,6 +43,7 @@ import {
   WarningOutlined
 } from '@ant-design/icons';
 import InventoryAdjustmentForm from './InventoryAdjustmentForm';
+import InventorySummaryCards from './components/InventorySummaryCards';
 import { useSelector } from 'react-redux';
 import { selectProducts, selectCategories } from '@/store/slices/productsSlice';
 import { toast } from 'sonner';
@@ -65,7 +66,7 @@ const adjustmentTypes = [
   { value: 'reduction', label: 'Reduction' },
   { value: 'damage', label: 'Damage' },
   { value: 'loss', label: 'Loss' },
-  { value: 'return', label: 'Return' },
+  // { value: 'return', label: 'Return' },
   { value: 'correction', label: 'Correction' },
 ];
 
@@ -106,15 +107,42 @@ const InventoryManagement = () => {
   const { mutateAsync: createAdjustment } = useCreateAdjustment();
   const { data: inventoryLogs = [], isLoading: isLoadingLogs } = useGetInventoryLogs();
 
-  // Combine products with inventory data
-  const inventoryData = inventory.map(item => {
-    const product = products.find(p => p.id === item.product_id);
+  const inventoryData = React.useMemo(() => {
+    return inventory.map(item => {
+      const product = products.find(p => p.id === item.product_id);
+      return {
+        ...item,
+        ...product,
+        status: determineStockStatus(item.quantity, product?.reorder_level || 0)
+      };
+    });
+  }, [inventory, products]);
+
+  // Calculate summary statistics from inventory data
+  const inventorySummaryStats = React.useMemo(() => {
+    // This would normally be calculated from real data
+    // Here using sample calculations for demonstration
+    const totalItems = inventoryData.length;
+    const totalValue = inventoryData.reduce(
+      (sum, item) => sum + (item.quantity * (item.cost_price || 0)), 0
+    );
+    const lowStockItems = inventoryData.filter(item => item.status === 'low').length;
+    const reorderNeeded = inventoryData.filter(
+      item => item.quantity <= (item.reorder_level * 0.7)
+    ).length;
+    
     return {
-      ...item,
-      ...product,
-      status: determineStockStatus(item.quantity, product?.reorder_level || 0)
+      totalItems,
+      totalValue,
+      lowStockItems,
+      reorderNeeded,
+      // Other statistics would come from various sources in a real app
+      topSellingItems: 5,
+      incomingStock: 42,
+      inventoryTurnover: 4.2,
+      stockAccuracy: 98.3
     };
-  });
+  }, [inventoryData]);
 
   // Filter inventory data
   const filteredData = inventoryData.filter(item => {
@@ -197,6 +225,10 @@ const InventoryManagement = () => {
 
   return (
     <Container maxWidth="xxl" sx={{ mt: 0, px: '0!important' }}>
+        <InventorySummaryCards 
+        inventoryData={inventoryData} 
+        stats={inventorySummaryStats} 
+      />
       <Box sx={{ mb: 4 }}>
         <Tabs value={tabValue} onChange={handleTabChange} sx={{ mb: 3 }}>
           <Tab label="Current Inventory" />

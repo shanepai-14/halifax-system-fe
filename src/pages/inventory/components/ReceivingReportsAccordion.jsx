@@ -21,8 +21,10 @@ const ReceivingReportsAccordion = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
 
+  console.log(transactions);
+
   // Filter to show only purchase transactions
-  const purchaseTransactions = transactions?.filter(t => t.transaction_type === 'purchase') || [];
+  const purchaseTransactions = transactions;
 
   const handleAccordionChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
@@ -50,15 +52,15 @@ const ReceivingReportsAccordion = ({
               <ReceiptIcon sx={{ mr: 2, color: 'primary.main' }} />
               <Box sx={{ flexGrow: 1 }}>
                 <Typography variant="subtitle1">
-                  Receiving Report #{transaction.reference_id}
+                  Receiving Report #{transaction.batch_number}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Received: {new Date(transaction.created_at).toLocaleDateString()}
+                  Received: {new Date(transaction.received_at).toLocaleDateString()}
                 </Typography>
               </Box>
               <Box>
                 <Chip 
-                  label={`+${transaction.quantity}`} 
+                  label={`+${transaction.quantity_received}`} 
                   color="success"
                   size="small"
                   sx={{ mr: 1 }}
@@ -77,15 +79,15 @@ const ReceivingReportsAccordion = ({
                     <strong>Invoice:</strong> {transaction.invoice_number || 'N/A'}
                   </Typography>
                   <Typography variant="body2" sx={{ mb: 1 }}>
-                    <strong>Quantity Received:</strong> {transaction.quantity}
+                    <strong>Quantity Received:</strong> {transaction.quantity_received}
                   </Typography>
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Typography variant="body2" sx={{ mb: 1 }}>
-                    <strong>Cost Price:</strong> ₱{transaction.cost_price?.toFixed(2) || 'N/A'}
+                    {/* <strong>Cost Price:</strong> ₱{transaction.cost_price?.toFixed(2) || 'N/A'} */}
                   </Typography>
                   <Typography variant="body2" sx={{ mb: 1 }}>
-                    <strong>Supplier:</strong> {transaction.supplier_name || 'N/A'}
+                    <strong>Supplier:</strong> {transaction.supplier || 'N/A'}
                   </Typography>
                   <Typography variant="body2" sx={{ mb: 1 }}>
                     <strong>Payment Status:</strong> {transaction.is_paid ? 'Paid' : 'Unpaid'}

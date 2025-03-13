@@ -78,6 +78,7 @@ const PurchaseOrderReceivingReports = ({
         attribute_id: '',
         received_quantity: 0,
         cost_price: 0,
+        distribution_price:0,
         walk_in_price: 0,
         term_price: 0,
         wholesale_price: 0,
@@ -109,6 +110,7 @@ const PurchaseOrderReceivingReports = ({
           attribute_id: '',
           received_quantity: 0,
           cost_price: 0,
+          distribution_price:0,
           walk_in_price: 0,
           term_price: 0,
           wholesale_price: 0,
@@ -241,6 +243,10 @@ const PurchaseOrderReceivingReports = ({
   };
   
   const handleItemChange = (index, field, value) => {
+
+    if(field == 'distribution_price'){
+      console.log('distribution_price' , value);
+    }
     const updatedItems = [...reportData.received_items];
     updatedItems[index] = {
       ...updatedItems[index],
@@ -268,6 +274,7 @@ const PurchaseOrderReceivingReports = ({
       attribute_id: '',
       received_quantity: 0,
       cost_price: 0,
+      distribution_price :0,
       walk_in_price: 0,
       term_price: 0,
       wholesale_price: 0,
@@ -459,6 +466,7 @@ const PurchaseOrderReceivingReports = ({
           errors={errors}
           disabled={false}
           status={status}
+          totalAdditonalCost={calculateAdditionalCosts()} 
         />
         <PurchaseOrderAdditionalCosts
           costTypes={costTypes}
@@ -672,7 +680,8 @@ const PurchaseOrderReceivingReports = ({
                     onRemoveItem={() => {}} // Read-only, so empty function
                     errors={{}}
                     disabled={true}        // Always disabled in view mode
-                    status="completed"     // Force read-only view
+                    status="completed"
+                      // Force read-only view
                   />
 
                   <PurchaseOrderAdditionalCosts 

@@ -38,7 +38,7 @@ const validationSchema = Yup.object().shape({
   product_type: Yup.string()
     .oneOf(["raw", "finished", "custom"], "Invalid product type")
     .required("Required"),
-  product_image: Yup.mixed().test(
+  product_image: Yup.mixed().nullable().test(
     "fileSize",
     "File is too large",
     (value) => !value || value.size <= 5000000
@@ -142,7 +142,6 @@ const AddProductModal = ({ open, handleClose, categories }) => {
                       label="Upload or drop a Product Image"
                       types={fileTypes}
                       multiple={false}
-                      required
                     />
                     {touched.product_image && errors.product_image && (
                       <Typography
