@@ -38,6 +38,7 @@ import AdjustmentsTable from './components/AdjustmentsTable';
 import ReportDetailDialog from './components/ReportDetailDialog';
 import InventoryAdjustmentForm from './InventoryAdjustmentForm';
 import OverviewTabContent from './components/OverviewTabContent';
+import ProductPricing from './components/ProductPricing';
 
 // Adjustment types array (for consistent use across components)
 const adjustmentTypes = [
@@ -206,6 +207,7 @@ const InventoryProductDetail = () => {
                 <Tab label="Stock History" />
                 <Tab label="Receiving Reports" />
                 <Tab label="Adjustments" />
+                <Tab label="Pricing" />
               </Tabs>
 
               {/* Overview Tab */}
@@ -272,6 +274,9 @@ const InventoryProductDetail = () => {
                   onNewAdjustment={handleOpenAdjustmentDialog}
                 />
               )}
+        {tabValue === 4 && (
+            <ProductPricing productId={id} productName="Example Product" />
+          )}
             </Paper>
           </Grid>
         </Grid>
