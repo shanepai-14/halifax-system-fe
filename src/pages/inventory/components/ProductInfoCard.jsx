@@ -9,6 +9,7 @@ import {
   Chip
 } from '@mui/material';
 import { EditOutlined, PrinterOutlined  } from '@ant-design/icons';
+import { getFileUrl } from '@/utils/fileHelper';
 
 // Status indicators with colors
 const inventoryStatus = {
@@ -40,11 +41,9 @@ const ProductInfoCard = ({
             <Box
               component="img"
               sx={{ width: 80, height: 80, objectFit: 'contain' }}
-              src={`/storage/${product.product_image}`}
+              src={getFileUrl(product.product_image)}
               alt={product.product_name}
-              onError={(e) => {
-                e.target.src = '/placeholder-image.png';
-              }}
+  
             />
           )}
         </Box>

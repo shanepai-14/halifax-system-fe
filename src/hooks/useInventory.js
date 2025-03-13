@@ -121,6 +121,17 @@ export const useGetProductTransactions = (productId) => {
   });
 };
 
+export const useGetProductReport = (productId) => {
+  return useQuery({
+    queryKey: ['product-reports', productId],
+    queryFn: async () => {
+      const response = await api.get(`/inventory/report/product/${productId}`);
+      return response.data.data;
+    },
+    enabled: !!productId
+  });
+};
+
 /**
  * Hook to generate inventory reports
  */
