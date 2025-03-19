@@ -412,7 +412,7 @@ const PurchaseOrderReceivingReports = ({
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <TextField
-                label="Invoice Number"
+                label="Reference Number"
                 fullWidth
                 value={reportData.invoice}
                 onChange={(e) =>

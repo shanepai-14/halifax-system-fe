@@ -77,7 +77,7 @@ const PrintableRR = ({ receivingReport, contentRef }) => {
             <strong>Payment Status:</strong> {receivingReport.is_paid ? 'PAID' : 'UNPAID'}
           </Typography>
             <Typography>
-              <strong>Invoice Number:</strong> {receivingReport.invoice ? receivingReport.invoice : "NO INVOICE YET"}
+              <strong>Reference Number:</strong> {receivingReport.invoice ? receivingReport.invoice : "NO INVOICE YET"}
             </Typography>
           {receivingReport.term > 0 && (
             <Typography>

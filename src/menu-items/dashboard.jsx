@@ -28,6 +28,14 @@ const dashboard = {
       breadcrumbs: false
     },
     {
+      id: 'customer',
+      title: 'Customer',
+      type: 'item',
+      url: '/app/customer',
+      icon: DropboxOutlined ,
+      breadcrumbs: false
+    },
+    {
       id: 'product',
       title: 'Product',
       type: 'item',
