@@ -17,7 +17,7 @@ const InventoryPage = Loadable(lazy(() => import('@pages/inventory/index')));
 const Inventory = Loadable(lazy(() => import('@pages/inventory/InventoryManagement')));
 const CustomerIndex = Loadable(lazy(() => import('@pages/customer/index')));
 const CustomerPage = Loadable(lazy(() => import('@pages/customer/customers')));
-const CustomerForm = Loadable(lazy(() => import('@/pages/customer/CustomerModal')));
+const SalesPage = Loadable(lazy(() => import('@/pages/sales/NewOrderPage')));
 const InventoryProductDetail = Loadable(lazy(() => import('@pages/inventory/InventoryProductDetail')));
 
 const AuthLogin = Loadable(lazy(() => import('@pages/authentication/login')));
@@ -106,6 +106,10 @@ const router = [   // Changed from object to array
                 element: <CustomerPage />
               },
             ]
+          },
+          {
+            path: 'sales',
+            element: <SalesPage />,
           }
         ]  
     },
