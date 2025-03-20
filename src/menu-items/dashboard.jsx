@@ -43,14 +43,14 @@ const dashboard = {
       icon: ProductOutlined  ,
       breadcrumbs: false
     },
-    // {
-    //   id: 'sales',
-    //   title: 'Sales',
-    //   type: 'item',
-    //   url: '/app/sales',
-    //   icon: ShoppingCartOutlined ,
-    //   breadcrumbs: false
-    // },
+    {
+      id: 'sales',
+      title: 'Sales',
+      type: 'item',
+      url: '/app/sales',
+      icon: ShoppingCartOutlined ,
+      breadcrumbs: false
+    },
     {
       id: 'supplier',
       title: 'Supplier',
