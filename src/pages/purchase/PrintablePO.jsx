@@ -68,7 +68,7 @@ const PrintablePO = ({ purchaseOrder , contentRef }) => {
             </Typography>
             {purchaseOrder?.invoice && (
               <Typography>
-                <strong>Invoice Number:</strong> {purchaseOrder.invoice}
+                <strong>Reference Number:</strong> {purchaseOrder.invoice}
               </Typography>
             )}
           </Box>

@@ -55,7 +55,7 @@ const ReportDetailDialog = ({
                 <strong>Receipt Date:</strong> {new Date(report.created_at).toLocaleDateString()}
               </Typography>
               <Typography variant="body2" sx={{ mb: 1 }}>
-                <strong>Invoice Number:</strong> {report.invoice_number || 'N/A'}
+                <strong>Reference Number:</strong> {report.invoice_number || 'N/A'}
               </Typography>
               <Typography variant="body2" sx={{ mb: 1 }}>
                 <strong>Payment Status:</strong> {report.is_paid ? 'Paid' : 'Unpaid'}

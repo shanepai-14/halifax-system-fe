@@ -1,5 +1,5 @@
 // assets
-import { DashboardOutlined ,ShoppingCartOutlined ,DropboxOutlined ,AreaChartOutlined ,UserOutlined ,ProductOutlined ,ShoppingOutlined , AuditOutlined } from '@ant-design/icons';
+import { DashboardOutlined ,SmileOutlined , ShoppingCartOutlined ,DropboxOutlined ,AreaChartOutlined ,UserOutlined ,ProductOutlined ,ShoppingOutlined , AuditOutlined } from '@ant-design/icons';
 
 
 
@@ -27,6 +27,14 @@ const dashboard = {
     //   icon: DashboardOutlined,
     //   breadcrumbs: false
     // },
+    {
+      id: 'customer',
+      title: 'Customer',
+      type: 'item',
+      url: '/app/customer',
+      icon: SmileOutlined  ,
+      breadcrumbs: false
+    },
     {
       id: 'product',
       title: 'Product',
