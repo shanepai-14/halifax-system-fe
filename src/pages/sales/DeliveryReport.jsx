@@ -4,9 +4,10 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, 
   TableRow, IconButton, InputAdornment, Button,
   Radio, RadioGroup, FormControlLabel, FormControl, FormLabel,
-  Paper, Divider, Grid, Select, MenuItem, InputLabel
+  Paper, Divider, Grid, Select, MenuItem, InputLabel,
+  CircularProgress, Checkbox, FormControlLabel as MuiFormControlLabel
 } from '@mui/material';
-import { DeleteOutlined, PlusCircleOutlined, MinusCircleOutlined, PrinterOutlined } from '@ant-design/icons';
+import { DeleteOutlined, PlusCircleOutlined, MinusCircleOutlined, PrinterOutlined, SaveOutlined } from '@ant-design/icons';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 
@@ -48,7 +49,8 @@ const DeliveryReport = forwardRef(({
   onRemoveProduct, 
   onQuantityChange, 
   onDiscountChange,
-  onPrint
+  onPrint,
+  isSubmitting = false
 }, ref) => {
   const initialValues = {
     customer: null,
@@ -58,7 +60,8 @@ const DeliveryReport = forwardRef(({
     orderDate: formatDateForInput(new Date()),
     deliveryDate: formatDateForInput(new Date(Date.now() + 86400000)), // today + 1 day
     paymentMethod: 'cash',
-    customerType: 'walkin' // Default to regular pricing
+    customerType: 'walkin', // Default to regular pricing
+    printAfterSubmit: true // New option to print after submitting
   };
 
   const getPriceByCustomerType = (item, customerType) => {
@@ -81,22 +84,17 @@ const DeliveryReport = forwardRef(({
     return subtotal - discountAmount;
   };
 
-  // Generate a random DR number for display purposes
-  const drNumber = "DR-" + Math.floor(100000 + Math.random() * 900000);
 
   return (
     <Formik
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={(values, { setSubmitting }) => {
-        onSubmit({...values, orderItems: orderItems.map(item => ({
-          ...item,
-          price: getPriceByCustomerType(item, values.customerType)
-        }))});
-        setSubmitting(false);
+        onSubmit(values);
+        // Don't set submitting to false here, let the parent component handle it
       }}
     >
-      {({ errors, touched, setFieldValue, values, isSubmitting }) => (
+      {({ errors, touched, setFieldValue, values, isValid, dirty }) => (
         <Form>
           <div ref={ref}>
             <Box sx={{ width: '100%', border: (ref ? '1px solid transparent' : 'none') }}>
@@ -105,10 +103,11 @@ const DeliveryReport = forwardRef(({
                 <Typography variant="h5" gutterBottom>
                   DELIVERY REPORT
                 </Typography>
+          
               </Box>
               
-              <Grid container spacing={2} sx={{paddingTop :"0!important"}}>
-                <Grid item xs={12} md={6} sx={{paddingTop :"0!important"}}>
+              <Grid container spacing={2} sx={{paddingTop: "0!important"}}>
+                <Grid item xs={12} md={6} sx={{paddingTop: "0!important"}}>
                   <Field
                     name="customer"
                     component={Autocomplete}
@@ -132,15 +131,13 @@ const DeliveryReport = forwardRef(({
                       setFieldValue('city', value ? value.city : '');
                     }}
                   />
-                  
-            
                 </Grid>
 
-                <Grid item xs={12} md={6} sx={{paddingTop :"0!important"}}>
+                <Grid item xs={12} md={6} sx={{paddingTop: "0!important"}}>
                   <FormControl fullWidth margin="normal">
                     <InputLabel id="customer-type-label">Customer Type</InputLabel>
                     <Field
-                     size="small" 
+                      size="small" 
                       as={Select}
                       labelId="customer-type-label"
                       id="customerType"
@@ -159,8 +156,8 @@ const DeliveryReport = forwardRef(({
                   </FormControl>
                 </Grid>
 
-                <Grid item xs={12} md={12} sx={{paddingTop :"0!important"}}>
-                <Field
+                <Grid item xs={12} md={12} sx={{paddingTop: "0!important"}}>
+                  <Field
                     as={TextField}
                     name="address"
                     label="Address"
@@ -169,9 +166,9 @@ const DeliveryReport = forwardRef(({
                     error={touched.address && !!errors.address}
                     helperText={touched.address && errors.address}
                   />
-               </Grid>
+                </Grid>
                
-                <Grid item xs={12} md={6} sx={{paddingTop :"0!important"}}>
+                <Grid item xs={12} md={6} sx={{paddingTop: "0!important"}}>
                   <Field
                     as={TextField}
                     name="phone"
@@ -179,7 +176,7 @@ const DeliveryReport = forwardRef(({
                     fullWidth
                     margin="normal"
                     error={touched.phone && !!errors.phone}
-                    // helperText={touched.phone && errors.phone}
+                    helperText={touched.phone && errors.phone}
                   />
 
                   <Field
@@ -187,17 +184,15 @@ const DeliveryReport = forwardRef(({
                     name="orderDate"
                     label="Order Date"
                     type="date"
-                    disabled
                     fullWidth
                     margin="normal"
                     InputLabelProps={{ shrink: true }}
                     error={touched.orderDate && !!errors.orderDate}
-                    //   helperText={touched.orderDate && errors.orderDate}
+                    helperText={touched.orderDate && errors.orderDate}
                   />
-                 
                 </Grid>
                 
-                <Grid item xs={12} md={6} sx={{paddingTop :"0!important"}}>
+                <Grid item xs={12} md={6} sx={{paddingTop: "0!important"}}>
                   <Box>
                     <Field
                       as={TextField}
@@ -206,7 +201,7 @@ const DeliveryReport = forwardRef(({
                       fullWidth
                       margin="normal"
                       error={touched.city && !!errors.city}
-                      // helperText={touched.city && errors.city}
+                      helperText={touched.city && errors.city}
                     />
                   </Box>
                   <Box>
@@ -219,11 +214,11 @@ const DeliveryReport = forwardRef(({
                       margin="normal"
                       InputLabelProps={{ shrink: true }}
                       error={touched.deliveryDate && !!errors.deliveryDate}
-                      //   helperText={touched.deliveryDate && errors.deliveryDate}
+                      helperText={touched.deliveryDate && errors.deliveryDate}
                     />
                   </Box>
                 </Grid>
-                <Grid item xs={12} md={12} sx={{paddingTop :"0!important"}}>
+                <Grid item xs={12} md={12} sx={{paddingTop: "0!important"}}>
                   <FormControl component="fieldset" margin="normal" fullWidth>
                     <FormLabel component="legend">Payment Method</FormLabel>
                     <RadioGroup
@@ -243,14 +238,13 @@ const DeliveryReport = forwardRef(({
                     )}
                   </FormControl>
                 </Grid>
-
               </Grid>
 
               <Divider sx={{ my: 2 }} />
               
               <Typography variant="h6" gutterBottom>Order Items</Typography>
               
-              <TableContainer component={Paper} sx={{ mb: 2, maxHeight: 'auto', overflow: 'auto' }}>
+              <TableContainer component={Paper} sx={{ mb: 2, maxHeight: '300px', overflow: 'auto' }}>
                 <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
@@ -259,7 +253,7 @@ const DeliveryReport = forwardRef(({
                       <TableCell align="center">Quantity</TableCell>
                       <TableCell align="right">Discount (%)</TableCell>
                       <TableCell align="right">Subtotal</TableCell>
-                      <TableCell align="right"> </TableCell>
+                      <TableCell align="right"></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -327,26 +321,41 @@ const DeliveryReport = forwardRef(({
             </Box>
           </div>
           
-          {/* Action buttons */}
-          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
-            <Button
-              variant="outlined"
-              color="primary"
-              startIcon={<PrinterOutlined />}
-              onClick={() => onPrint(values)}
-              disabled={orderItems.length === 0}
-            >
-              Print Delivery Report
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              size="large"
-              disabled={orderItems.length === 0 || isSubmitting}
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit Delivery Report'}
-            </Button>
+          {/* Action buttons and options */}
+          <Box sx={{ mt: 3 }}>
+            <MuiFormControlLabel
+              control={
+                <Checkbox
+                  checked={values.printAfterSubmit}
+                  onChange={(e) => setFieldValue('printAfterSubmit', e.target.checked)}
+                  name="printAfterSubmit"
+                  color="primary"
+                />
+              }
+              label="Print after submitting"
+            />
+            
+            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
+              <Button
+                variant="outlined"
+                color="primary"
+                startIcon={<PrinterOutlined />}
+                onClick={() => onPrint(values)}
+                disabled={orderItems.length === 0 || isSubmitting}
+              >
+                Print Preview
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                size="large"
+                startIcon={isSubmitting ? <CircularProgress size={24} color="inherit" /> : <SaveOutlined />}
+                disabled={orderItems.length === 0 || isSubmitting || !isValid}
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Delivery Report'}
+              </Button>
+            </Box>
           </Box>
         </Form>
       )}
