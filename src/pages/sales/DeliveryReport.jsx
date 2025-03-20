@@ -18,16 +18,6 @@ const formatDateForInput = (date) => {
   return d.toISOString().split('T')[0];
 };
 
-// Format date for display
-const formatDateForDisplay = (dateString) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-};
 
 const validationSchema = Yup.object().shape({
   customer: Yup.object().nullable().required('Customer is required'),
@@ -61,7 +51,6 @@ const DeliveryReport = forwardRef(({
     deliveryDate: formatDateForInput(new Date(Date.now() + 86400000)), // today + 1 day
     paymentMethod: 'cash',
     customerType: 'walkin', // Default to regular pricing
-    printAfterSubmit: true // New option to print after submitting
   };
 
   const getPriceByCustomerType = (item, customerType) => {
@@ -323,20 +312,10 @@ const DeliveryReport = forwardRef(({
           
           {/* Action buttons and options */}
           <Box sx={{ mt: 3 }}>
-            <MuiFormControlLabel
-              control={
-                <Checkbox
-                  checked={values.printAfterSubmit}
-                  onChange={(e) => setFieldValue('printAfterSubmit', e.target.checked)}
-                  name="printAfterSubmit"
-                  color="primary"
-                />
-              }
-              label="Print after submitting"
-            />
+           
             
-            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
-              <Button
+            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+              {/* <Button
                 variant="outlined"
                 color="primary"
                 startIcon={<PrinterOutlined />}
@@ -344,12 +323,13 @@ const DeliveryReport = forwardRef(({
                 disabled={orderItems.length === 0 || isSubmitting}
               >
                 Print Preview
-              </Button>
+              </Button> */}
               <Button
                 type="submit"
                 variant="contained"
                 color="primary"
                 size="large"
+                fullWidth
                 startIcon={isSubmitting ? <CircularProgress size={24} color="inherit" /> : <SaveOutlined />}
                 disabled={orderItems.length === 0 || isSubmitting || !isValid}
               >

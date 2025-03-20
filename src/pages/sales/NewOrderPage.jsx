@@ -34,7 +34,7 @@ const NewOrderPage = () => {
   const [alertInfo, setAlertInfo] = useState({ open: false, message: '', type: 'info' });
   
   const deliveryReportRef = useRef();
-  const printContentRef = useRef();
+  const contentRef = useRef();
   const navigate = useNavigate();
 
   // Load inventory data on component mount
@@ -65,10 +65,7 @@ const NewOrderPage = () => {
   };
 
   const handlePrint = useReactToPrint({
-    content: () => printContentRef.current,
-    documentTitle: "Delivery-Report",
-    removeAfterPrint: true,
-    onAfterPrint: () => console.log('Print completed')
+    contentRef
   });
 
   const handleAddProduct = (product) => {
@@ -147,6 +144,7 @@ const NewOrderPage = () => {
       const saleData = {
         customer_id: formData.customer?.id,
         customer: {
+          id :formData.customer?.id,
           customer_name: formData.customer?.customer_name || 'Walk-in Customer',
           contact_number: formData.phone || '',
           email: formData.customer?.email || '',
@@ -189,12 +187,18 @@ const NewOrderPage = () => {
           message: 'Sale created successfully!',
           type: 'success'
         });
+
+
         
         // Clear order items
         setOrderItems([]);
         
         // Reset products to reflect updated inventory
         getAllInventory();
+
+        navigate(`/app/delivery-report/${result.id}`, { 
+            state: { reportData: result }
+          });
         
         // Print the invoice if requested
         if (formData.printAfterSubmit) {
@@ -314,7 +318,7 @@ const NewOrderPage = () => {
       <div style={{ display: 'none' }}>
         <PrintableDR 
           deliveryReportData={currentDR}
-          contentRef={printContentRef}
+          contentRef={contentRef}
         />
       </div>
 
