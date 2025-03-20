@@ -4,7 +4,7 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, 
   TableRow, IconButton, InputAdornment, Button,
   Radio, RadioGroup, FormControlLabel, FormControl, FormLabel,
-  Paper, Divider, Grid
+  Paper, Divider, Grid, Select, MenuItem, InputLabel
 } from '@mui/material';
 import { DeleteOutlined, PlusCircleOutlined, MinusCircleOutlined, PrinterOutlined } from '@ant-design/icons';
 import { Formik, Form, Field } from 'formik';
@@ -36,7 +36,8 @@ const validationSchema = Yup.object().shape({
   orderDate: Yup.date().required('Order date is required'),
   deliveryDate: Yup.date().required('Delivery date is required')
     .min(Yup.ref('orderDate'), 'Delivery date must be after order date'),
-  paymentMethod: Yup.string().required('Payment method is required')
+  paymentMethod: Yup.string().required('Payment method is required'),
+  customerType: Yup.string().required('Customer type is required')
 });
 
 const DeliveryReport = forwardRef(({ 
@@ -56,11 +57,25 @@ const DeliveryReport = forwardRef(({
     city: '',
     orderDate: formatDateForInput(new Date()),
     deliveryDate: formatDateForInput(new Date(Date.now() + 86400000)), // today + 1 day
-    paymentMethod: 'cash'
+    paymentMethod: 'cash',
+    customerType: 'walkin' // Default to regular pricing
   };
 
-  const calculateItemSubtotal = (item) => {
-    const subtotal = item.price * item.quantity;
+  const getPriceByCustomerType = (item, customerType) => {
+    switch(customerType) {
+      case 'walkin':
+        return item.walk_in_price || item.regular_price;
+      case 'wholesale':
+        return item.wholesale_price || item.regular_price;
+      case 'regular':
+      default:
+        return item.regular_price;
+    }
+  };
+
+  const calculateItemSubtotal = (item, customerType) => {
+    const price = getPriceByCustomerType(item, customerType);
+    const subtotal = Number(price) * item.quantity;
     const discountPercentage = parseFloat(item.discount) || 0;
     const discountAmount = subtotal * (discountPercentage / 100);
     return subtotal - discountAmount;
@@ -74,28 +89,32 @@ const DeliveryReport = forwardRef(({
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={(values, { setSubmitting }) => {
-        onSubmit(values);
+        onSubmit({...values, orderItems: orderItems.map(item => ({
+          ...item,
+          price: getPriceByCustomerType(item, values.customerType)
+        }))});
         setSubmitting(false);
       }}
     >
       {({ errors, touched, setFieldValue, values, isSubmitting }) => (
         <Form>
           <div ref={ref}>
-            <Box sx={{ width: '100%', p: 2, border: (ref ? '1px solid transparent' : 'none') }}>
+            <Box sx={{ width: '100%', border: (ref ? '1px solid transparent' : 'none') }}>
               {/* Header for DR */}
-              <Box sx={{ mb: 1, textAlign: 'center' }}>
+              <Box sx={{ mb:0, textAlign: 'center' }}>
                 <Typography variant="h5" gutterBottom>
                   DELIVERY REPORT
                 </Typography>
               </Box>
               
-              <Grid container spacing={2} >
-                <Grid item xs={12} md={12}>
+              <Grid container spacing={2} sx={{paddingTop :"0!important"}}>
+                <Grid item xs={12} md={6} sx={{paddingTop :"0!important"}}>
                   <Field
                     name="customer"
                     component={Autocomplete}
+                    size="small" 
                     options={customers}
-                    getOptionLabel={(option) => option.name}
+                    getOptionLabel={(option) => option.customer_name}
                     renderInput={(params) => (
                       <TextField
                         {...params}
@@ -108,12 +127,40 @@ const DeliveryReport = forwardRef(({
                     )}
                     onChange={(_, value) => {
                       setFieldValue('customer', value);
-                      setFieldValue('phone', value ? value.phone : '');
+                      setFieldValue('phone', value ? value.contact_number : '');
                       setFieldValue('address', value ? value.address : '');
                       setFieldValue('city', value ? value.city : '');
                     }}
                   />
-                      <Field
+                  
+            
+                </Grid>
+
+                <Grid item xs={12} md={6} sx={{paddingTop :"0!important"}}>
+                  <FormControl fullWidth margin="normal">
+                    <InputLabel id="customer-type-label">Customer Type</InputLabel>
+                    <Field
+                     size="small" 
+                      as={Select}
+                      labelId="customer-type-label"
+                      id="customerType"
+                      name="customerType"
+                      label="Customer Type"
+                      value={values.customerType}
+                      onChange={(e) => setFieldValue('customerType', e.target.value)}
+                    >
+                      <MenuItem value="regular">Regular</MenuItem>
+                      <MenuItem value="walkin">Walk-in</MenuItem>
+                      <MenuItem value="wholesale">Wholesale</MenuItem>
+                    </Field>
+                    {touched.customerType && errors.customerType && (
+                      <Typography color="error" variant="caption">{errors.customerType}</Typography>
+                    )}
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12} md={12} sx={{paddingTop :"0!important"}}>
+                <Field
                     as={TextField}
                     name="address"
                     label="Address"
@@ -122,7 +169,8 @@ const DeliveryReport = forwardRef(({
                     error={touched.address && !!errors.address}
                     helperText={touched.address && errors.address}
                   />
-                  </Grid>
+               </Grid>
+               
                 <Grid item xs={12} md={6} sx={{paddingTop :"0!important"}}>
                   <Field
                     as={TextField}
@@ -131,38 +179,37 @@ const DeliveryReport = forwardRef(({
                     fullWidth
                     margin="normal"
                     error={touched.phone && !!errors.phone}
-                    helperText={touched.phone && errors.phone}
+                    // helperText={touched.phone && errors.phone}
                   />
 
-<Field
-                      as={TextField}
-                      name="orderDate"
-                      label="Order Date"
-                      type="date"
-                      fullWidth
-                      margin="normal"
-                      InputLabelProps={{ shrink: true }}
-                      error={touched.orderDate && !!errors.orderDate}
-                      helperText={touched.orderDate && errors.orderDate}
-                    />
-
+                  <Field
+                    as={TextField}
+                    name="orderDate"
+                    label="Order Date"
+                    type="date"
+                    disabled
+                    fullWidth
+                    margin="normal"
+                    InputLabelProps={{ shrink: true }}
+                    error={touched.orderDate && !!errors.orderDate}
+                    //   helperText={touched.orderDate && errors.orderDate}
+                  />
                  
                 </Grid>
                 
                 <Grid item xs={12} md={6} sx={{paddingTop :"0!important"}}>
-                  <Box >
-                  <Field
-                    as={TextField}
-                    name="city"
-                    label="City"
-                    fullWidth
-                    margin="normal"
-                    error={touched.city && !!errors.city}
-                    helperText={touched.city && errors.city}
-                  />
-                  
+                  <Box>
+                    <Field
+                      as={TextField}
+                      name="city"
+                      label="City"
+                      fullWidth
+                      margin="normal"
+                      error={touched.city && !!errors.city}
+                      // helperText={touched.city && errors.city}
+                    />
                   </Box>
-                  <Box >
+                  <Box>
                     <Field
                       as={TextField}
                       name="deliveryDate"
@@ -172,11 +219,11 @@ const DeliveryReport = forwardRef(({
                       margin="normal"
                       InputLabelProps={{ shrink: true }}
                       error={touched.deliveryDate && !!errors.deliveryDate}
-                      helperText={touched.deliveryDate && errors.deliveryDate}
+                      //   helperText={touched.deliveryDate && errors.deliveryDate}
                     />
                   </Box>
-                  </Grid>
-                  <Grid item xs={12} md={12} sx={{paddingTop :"0!important"}}>
+                </Grid>
+                <Grid item xs={12} md={12} sx={{paddingTop :"0!important"}}>
                   <FormControl component="fieldset" margin="normal" fullWidth>
                     <FormLabel component="legend">Payment Method</FormLabel>
                     <RadioGroup
@@ -185,26 +232,25 @@ const DeliveryReport = forwardRef(({
                       value={values.paymentMethod}
                       onChange={(e) => setFieldValue('paymentMethod', e.target.value)}
                     >
-                    <FormControlLabel value="cod" control={<Radio />} label="COD" />
+                      <FormControlLabel value="cod" control={<Radio />} label="COD" />
                       <FormControlLabel value="cash" control={<Radio />} label="Cash" />
                       <FormControlLabel value="cheque" control={<Radio />} label="Cheque" />
-                      <FormControlLabel value="onlibe" control={<Radio />} label="Online Payment" />
-                      <FormControlLabel value="bank" control={<Radio />} label="Bank Transfer" />
+                      <FormControlLabel value="online" control={<Radio />} label="Online Payment" />
                       <FormControlLabel value="term" control={<Radio />} label="Term" />
                     </RadioGroup>
                     {touched.paymentMethod && errors.paymentMethod && (
                       <Typography color="error" variant="caption">{errors.paymentMethod}</Typography>
                     )}
                   </FormControl>
-                  </Grid>
-                
+                </Grid>
+
               </Grid>
 
               <Divider sx={{ my: 2 }} />
               
               <Typography variant="h6" gutterBottom>Order Items</Typography>
               
-              <TableContainer component={Paper} sx={{ mb: 2, maxHeight: '300px', overflow: 'auto' }}>
+              <TableContainer component={Paper} sx={{ mb: 2, maxHeight: 'auto', overflow: 'auto' }}>
                 <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
@@ -213,7 +259,7 @@ const DeliveryReport = forwardRef(({
                       <TableCell align="center">Quantity</TableCell>
                       <TableCell align="right">Discount (%)</TableCell>
                       <TableCell align="right">Subtotal</TableCell>
-                      <TableCell align="right">Actions</TableCell>
+                      <TableCell align="right"> </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -225,8 +271,8 @@ const DeliveryReport = forwardRef(({
                       orderItems.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell>{item.name}</TableCell>
-                          <TableCell align="right">₱{item.price.toFixed(2)}</TableCell>
-                          <TableCell align="center" sx={{ display: 'flex', justifyContent: 'center', alignItems: "center" }}>
+                          <TableCell align="right">₱{Number(getPriceByCustomerType(item, values.customerType)).toFixed(2)}</TableCell>
+                          <TableCell align="center" sx={{ display: 'flex', justifyContent: 'center', alignItems: "center"}} >
                             <IconButton size="small" onClick={() => onQuantityChange(item.id, -1)}>
                               <MinusCircleOutlined />
                             </IconButton>
@@ -257,7 +303,7 @@ const DeliveryReport = forwardRef(({
                               size="small"
                             />
                           </TableCell>
-                          <TableCell align="right">₱{calculateItemSubtotal(item).toFixed(2)}</TableCell>
+                          <TableCell align="right">₱{calculateItemSubtotal(item, values.customerType).toFixed(2)}</TableCell>
                           <TableCell align="right">
                             <IconButton onClick={() => onRemoveProduct(item.id)}>
                               <DeleteOutlined />
@@ -275,7 +321,7 @@ const DeliveryReport = forwardRef(({
                   Payment Method: {values.paymentMethod.charAt(0).toUpperCase() + values.paymentMethod.slice(1)}
                 </Typography>
                 <Typography variant="h6">
-                  Total Amount: ₱{totalPrice.toFixed(2)}
+                  Total Amount: ₱{orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item, values.customerType), 0).toFixed(2)}
                 </Typography>
               </Box>
             </Box>

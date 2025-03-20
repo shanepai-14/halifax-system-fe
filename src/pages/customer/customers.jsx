@@ -68,9 +68,7 @@ const CustomerPage = () => {
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
-  useEffect(() => {
-    getAllCustomers();
-  }, []);
+
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);

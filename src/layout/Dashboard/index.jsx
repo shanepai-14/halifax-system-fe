@@ -23,6 +23,8 @@ import {
 import { useProducts, useCategories , useAttributes } from '@/hooks/useProducts';
 import { useCostTypes } from '@/hooks/useCostTypes';
 import { useSuppliers } from '@/hooks/useSuppliers';
+import { useCustomers } from '@/hooks/useCustomers';
+import { useSales } from '@/hooks/useSales';
 import { Toaster } from 'sonner'
 import { handlerDrawerOpen, useGetMenuMaster } from '@api/menu';
 
@@ -37,6 +39,8 @@ export default function DashboardLayout() {
   const { data: attributes, refetch: refetchAttributes } = useAttributes();
   const { data: suppliers, refetch: refetchSuppliers } = useSuppliers();
   const { data: costTypes, refetch: refetchCostTypes } = useCostTypes();
+  const { getAllCustomers } = useCustomers();
+  const { getAllInventory } = useSales();
   
   useEffect(() => {
     // Initial data fetch
@@ -46,7 +50,9 @@ export default function DashboardLayout() {
         refetchCategories(),
         refetchAttributes(),
         refetchSuppliers(),
-        refetchCostTypes()
+        refetchCostTypes(),
+        getAllCustomers(),
+        getAllInventory(),
       ]);
     };
   

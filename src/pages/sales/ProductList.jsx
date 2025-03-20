@@ -4,29 +4,23 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, 
   TableRow, IconButton, Card, CardContent, CardMedia, 
   Grid, Chip, Button, Dialog, DialogTitle, 
-  DialogContent, DialogActions
+  DialogContent, DialogActions, Tooltip, Zoom, Fade
 } from '@mui/material';
+import { getFileUrl } from '@/utils/fileHelper';
 import { 
   SearchOutlined, 
   PlusOutlined, 
   UnorderedListOutlined,  
-  AppstoreOutlined 
+  AppstoreOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined
 } from '@ant-design/icons';
 
-const ProductList = ({ products, onAddProduct, dialogOpen, selectedProduct, onCloseDialog }) => {
+const ProductList = ({ products, categories, onAddProduct, dialogOpen, selectedProduct, onCloseDialog, onMinimize, isMinimized }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'card'
   const [filteredProducts, setFilteredProducts] = useState(products);
   const [selectedCategory, setSelectedCategory] = useState(null);
-
-  // Get unique categories with count
-  const uniqueCategories = [...new Set(products.map(product => product.category))];
-  const categoryCounts = uniqueCategories.map(category => {
-    return {
-      name: category,
-      count: products.filter(p => p.category === category).length
-    };
-  });
 
   useEffect(() => {
     // Filter products based on search term and selected category
@@ -49,25 +43,29 @@ const ProductList = ({ products, onAddProduct, dialogOpen, selectedProduct, onCl
   }, [searchTerm, products, selectedCategory]);
 
   const TableView = () => (
-    <TableContainer sx={{ height: 'calc(100vh - 250px)', overflowY: 'auto' }}>
+    <TableContainer sx={{ maxHeight:'800px', overflowY: 'auto' }}>
       <Table stickyHeader size="small">
         <TableHead>
           <TableRow>
             <TableCell>Code</TableCell>
             <TableCell>Name</TableCell>
-            <TableCell align="right">Price</TableCell>
+            <TableCell align="right">Regular $</TableCell>
+            <TableCell align="right">Walk In $</TableCell>
+            <TableCell align="right">Whole sale $</TableCell>
             <TableCell align="right">Available</TableCell>
-            <TableCell align="right">Action</TableCell>
+            <TableCell align="right"> </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {filteredProducts.map((product) => (
-            <TableRow key={product.id}>
-              <TableCell>{product.code}</TableCell>
-              <TableCell>{product.name}</TableCell>
-              <TableCell align="right">₱{product.price}</TableCell>
-              <TableCell align="right">{product.quantity}</TableCell>
-              <TableCell align="right">
+            <TableRow key={product.id}  >
+              <TableCell sx={{padding:"0px!important"}}>{product.code}</TableCell>
+              <TableCell sx={{padding:"0px!important"}}>{product.name}</TableCell>
+              <TableCell align="right" sx={{padding:"0px!important"}}>₱{product.regular_price}</TableCell>
+              <TableCell align="right" sx={{padding:"0px!important"}}>₱{product.walk_in_price}</TableCell>
+              <TableCell align="right" sx={{padding:"0px!important"}}>₱{product.wholesale_price}</TableCell>
+              <TableCell align="right" sx={{padding:"0px!important"}}>{parseInt(product.quantity, 10)}</TableCell>
+              <TableCell align="right" sx={{padding:"0px!important"}}>
                 <IconButton 
                   color="success" 
                   onClick={() => onAddProduct(product)} 
@@ -93,11 +91,26 @@ const ProductList = ({ products, onAddProduct, dialogOpen, selectedProduct, onCl
   );
 
   const CardView = () => (
-    <Box sx={{ height: 'calc(100vh - 250px)', overflowY: 'auto', p: 1 }}>
+    <Box sx={{ height: 'calc(100vh - 100px)', overflowY: 'auto', p: 1 }}>
       <Grid container spacing={2}>
         {filteredProducts.map((product) => (
           <Grid item xs={12} sm={6} md={4} key={product.id}>
             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            {product.product_image ? (
+              <CardMedia
+                component="img"
+                image={getFileUrl(product.product_image)} 
+                sx={{
+                  height: 100,
+                  bgcolor: product.quantity > 0 ? 'primary.white' : 'grey.300',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                }}
+              />
+            ) : (
+
               <CardMedia
                 component="div"
                 sx={{
@@ -107,17 +120,17 @@ const ProductList = ({ products, onAddProduct, dialogOpen, selectedProduct, onCl
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: 'white',
-                }}
-              >
+                }}>
                 <Typography variant="h6">{product.code}</Typography>
-              </CardMedia>
+                </CardMedia>
+                )}
               <CardContent sx={{ flexGrow: 1 }}>
                 <Typography gutterBottom variant="subtitle1" component="div">
                   {product.name}
                 </Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
                   <Typography variant="body2" color="text.secondary">
-                    Price: ₱{product.price}
+                    Price: ₱{product.regular_price}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Stock: {product.quantity}
@@ -150,11 +163,10 @@ const ProductList = ({ products, onAddProduct, dialogOpen, selectedProduct, onCl
     </Box>
   );
 
-  return (
-    <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Typography variant="h6" gutterBottom>Product List</Typography>
-      
-      <Box sx={{ mb: 2 }}>
+  // Main component to render when not minimized
+  const FullProductList = () => (
+    <Box sx={{ p: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
         <TextField
           fullWidth
           variant="outlined"
@@ -170,14 +182,19 @@ const ProductList = ({ products, onAddProduct, dialogOpen, selectedProduct, onCl
             ),
           }}
         />
+        <Tooltip title="Minimize">
+          <IconButton onClick={onMinimize} color="primary">
+            <MenuFoldOutlined />
+          </IconButton>
+        </Tooltip>
       </Box>
       
       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-          {categoryCounts.map((category) => (
+          {categories.map((category) => (
             <Chip 
               key={category.name}
-              label={`${category.name} (${category.count})`}
+              label={`${category.name}`}
               onClick={() => setSelectedCategory(selectedCategory === category.name ? null : category.name)}
               color={selectedCategory === category.name ? "primary" : "default"}
               variant={selectedCategory === category.name ? "filled" : "outlined"}
@@ -213,7 +230,49 @@ const ProductList = ({ products, onAddProduct, dialogOpen, selectedProduct, onCl
           <Button onClick={onCloseDialog}>OK</Button>
         </DialogActions>
       </Dialog>
-    </Paper>
+    </Box>
+  );
+
+  return isMinimized ? (
+    <Zoom in={isMinimized}>
+      <Paper 
+        elevation={6}
+        sx={{
+          position: 'absolute',
+          top: 25,
+          left: 35,
+          zIndex: 20,
+          borderRadius: '50%',
+          overflow: 'visible',
+          width: 40,
+          height: 40,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'primary.main',
+          color: 'white',
+          '&:hover': {
+            opacity: 0.9,
+          }
+        }}
+      >
+        <Tooltip title="Expand Products">
+          <IconButton 
+            onClick={onMinimize} 
+            color="inherit"
+            sx={{ width: '100%', height: '100%' }}
+          >
+            <MenuUnfoldOutlined />
+          </IconButton>
+        </Tooltip>
+      </Paper>
+    </Zoom>
+  ) : (
+    <Fade in={!isMinimized}>
+      <Paper sx={{ p: 2, height: '100%' }}>
+        <FullProductList />
+      </Paper>
+    </Fade>
   );
 };
 
