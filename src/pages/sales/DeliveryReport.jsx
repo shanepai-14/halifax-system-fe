@@ -10,6 +10,7 @@ import {
 import { DeleteOutlined, PlusCircleOutlined, MinusCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
+import cities from '@/utils/cities';
 
 // Format date to YYYY-MM-DD for input
 const formatDateForInput = (date) => {
@@ -119,7 +120,9 @@ const DeliveryReport = forwardRef(({
                       setFieldValue('customer', value);
                       setFieldValue('phone', value ? value.contact_number : '');
                       setFieldValue('address', value ? value.address : '');
-                      setFieldValue('city', value ? value.city : '');
+                      const selectedCity = cities.find(city => city.name === value?.city);
+                      setFieldValue('city', selectedCity?.name || '');
+                      console.log(selectedCity?.name);
                       setFieldValue('business', value ? value.business_name ? value.business_name : 'N/A' : '');
                     }}
                   />
@@ -199,22 +202,33 @@ const DeliveryReport = forwardRef(({
                 
                 <Grid item xs={12} md={6} sx={{paddingTop: "0!important"}}>
                   <Box>
-                    <Field
-                    
-                     size="small"
-                     slotProps={{
+                  <Autocomplete
+                size="small"
+                options={cities}
+                getOptionLabel={(option) => `${option.name}`}
+                isOptionEqualToValue={(option, value) => option.name === value?.name}
+                value={cities.find(city => city.name === values.city) || null}
+                onChange={(event, newValue) => {
+                  setFieldValue("city", newValue ? newValue.name : ""); // Store only the city name
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    slotProps={{
                       inputLabel: {
                         sx: { top: '1px' }, 
                       },
                     }}
-                      as={TextField}
-                      name="city"
-                      label="City"
-                      fullWidth
-                      margin="normal"
-                      error={touched.city && !!errors.city}
-                      helperText={touched.city && errors.city}
-                    />
+                    label="City"
+                    error={touched.city && !!errors.city}
+                    helperText={touched.city && errors.city}
+                    fullWidth
+                    margin="normal"
+                  />
+                )}
+              />
+
+
                   </Box>
                   <Box>
                     <Field
@@ -298,7 +312,7 @@ const DeliveryReport = forwardRef(({
                       <TableCell>Product</TableCell>
                       <TableCell>Price Type</TableCell>
                       <TableCell align="right">Price</TableCell>
-                      <TableCell align="center">Quantity</TableCell>
+                      <TableCell align="center">Qty</TableCell>
                       <TableCell align="right">Discount (%)</TableCell>
                       <TableCell align="right">Subtotal</TableCell>
                       <TableCell align="right"></TableCell>

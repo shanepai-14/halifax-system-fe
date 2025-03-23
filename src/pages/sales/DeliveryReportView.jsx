@@ -227,6 +227,13 @@ const DeliveryReportView = ({ report }) => {
                 <Typography variant="subtitle2">
                   <strong>DR #:</strong> {report.invoice_number}
                 </Typography>
+                {report.term_days !== 0 && report.term_days && (
+              <>
+                <Typography variant="subtitle2">
+                  <strong>Term :</strong> {report.term_days}
+                </Typography>
+                </>
+                )}
               </Box>
             </Grid>
         </Grid>
@@ -243,7 +250,7 @@ const DeliveryReportView = ({ report }) => {
                   <TableCell>Item</TableCell>
                   <TableCell>Code</TableCell>
                   <TableCell align="right">Price</TableCell>
-                  <TableCell align="center">Quantity</TableCell>
+                  <TableCell align="center">Qty</TableCell>
                   <TableCell align="right">Discount (%)</TableCell>
                   <TableCell align="right">Subtotal</TableCell>
                 </TableRow>

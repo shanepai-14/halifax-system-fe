@@ -52,7 +52,7 @@ const ProductList = ({ products, categories, onAddProduct, dialogOpen, selectedP
             <TableCell align="right">Regular $</TableCell>
             <TableCell align="right">Walk In $</TableCell>
             <TableCell align="right">Whole sale $</TableCell>
-            <TableCell align="right">Available</TableCell>
+            <TableCell align="right">Qty</TableCell>
             <TableCell align="right"> </TableCell>
           </TableRow>
         </TableHead>

@@ -9,12 +9,14 @@ import {
   Grid,
   CircularProgress,
   IconButton,
-  Typography
+  Typography,
+  Autocomplete
 } from '@mui/material';
 import { CloseOutlined } from '@ant-design/icons';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useSelector } from 'react-redux';
 import { selectCustomersLoading } from '@/store/slices/customerSlice';
+import cities from '@/utils/cities';
 
 const CustomerModal = ({ open, handleClose, customer = null, handleSuccess }) => {
   const initialFormData = {
@@ -213,15 +215,33 @@ const CustomerModal = ({ open, handleClose, customer = null, handleSuccess }) =>
           </Grid>
           
           <Grid item xs={12} md={6}>
-            <TextField
+            <Autocomplete
               fullWidth
-              label="City"
-              name="city"
-              value={formData.city}
-              onChange={handleChange}
-              error={!!errors.city}
-              helperText={errors.city}
-              disabled={isLoading}
+              options={cities}
+              getOptionLabel={(option) => `${option.name}`} // Display city name
+              value={cities.find((city) => city.name === formData.city) || null}
+              onChange={(event, newValue) => {
+                handleChange({
+                  target: { name: "city", value: newValue ? newValue.name : "" }
+                });
+              }}
+              isOptionEqualToValue={(option, value) => option.name === value.name}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="City"
+                  name="city"
+                  size="normal"
+                  slotProps={{
+                    inputLabel: {
+                      sx: { top: '1px' }, 
+                    },
+                  }}
+                  error={!!errors.city}
+                  helperText={errors.city}
+                  disabled={isLoading}
+                />
+              )}
             />
           </Grid>
         </Grid>
