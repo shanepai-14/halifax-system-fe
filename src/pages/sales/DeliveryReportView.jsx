@@ -187,11 +187,11 @@ const DeliveryReportView = ({ report }) => {
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                   <Typography variant="h6">Halifax Glass & Aluminum Supply</Typography>
                 <Typography variant="body2">Malagamot Road, Panacan</Typography>
-                <Typography variant="body2">halifax@gmail.com</Typography>
-                <Typography variant="body2">0912345667</Typography>
+                <Typography variant="body2">glasshalifax@gmail.com</Typography>
+                <Typography variant="body2">0939 924 3876</Typography>
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                <Typography variant="subtitle2">INV-20250300014</Typography>
+          
                 <Typography variant="body2">
                   <strong>Order Date:</strong> {formatDate(report.order_date)}
                 </Typography>
@@ -209,22 +209,30 @@ const DeliveryReportView = ({ report }) => {
           </Grid>
 
           {/* Customer & Order Info */}
-          <Grid container spacing={2}>
-            <Grid item xs={9} md={9}>
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2">Delivered to: {report.customer?.business_name  || report.customer?.customer_name }</Typography>
-                <Typography variant="body2">Address: {report.customer?.business_address || report.address }</Typography>
-                <Typography variant="body2">City: {report.city}</Typography>
-                <Typography variant="body2">Phone: {report.phone}</Typography>
+          <Grid container spacing={2} justifyContent="space-between" alignItems="flex-start">
+
+            <Grid item xs={6} md={6}>
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="subtitle2">
+                <strong> Delivered to:</strong>  {report.customer?.business_name || report.customer?.customer_name}
+                </Typography>
+                <Typography variant="body2"><strong>Address:</strong>  {report.customer?.business_address || report.address}</Typography>
+                <Typography variant="body2"><strong>City:</strong>  {report.city}</Typography>
+                <Typography variant="body2"><strong>Phone:</strong>  {report.phone}</Typography>
               </Box>
             </Grid>
-            
-            <Grid item xs={3} md={3}>
-         
-            </Grid>
-          </Grid>
 
-          <Divider sx={{ my: 2 }} />
+            <Grid item xs={6} md={6}>
+              <Box sx={{ textAlign: 'right' }}>
+                <Typography variant="subtitle2">
+                  <strong>DR #:</strong> {report.invoice_number}
+                </Typography>
+              </Box>
+            </Grid>
+        </Grid>
+
+
+          <Divider sx={{ my: 1 }} />
 
           {/* Items Table */}
           <Typography variant="subtitle1" gutterBottom>Order Items</Typography>
@@ -294,10 +302,18 @@ const DeliveryReportView = ({ report }) => {
             </>
           )}
 
-          {/* Payment Summary */}
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-            <Grid container spacing={1} sx={{ maxWidth: '400px' }}>
-              <Grid item xs={6}>
+       <Box sx={{ display: 'flex',justifyContent: 'space-between' }}>
+       <Box sx={{  display: 'flex', flexDirection:'column',justifyContent: 'flex-start' }}>
+            <Typography variant="body2">
+              <strong>Delivery Status:</strong> {report.is_delivered ? 'Delivered' : 'Pending Delivery'}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Encoded By:</strong> {report.user?.name}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Grid container spacing={0} sx={{ maxWidth: '400px' }}>
+              <Grid item xs={6} >
                 <Typography variant="body2" align="right">Subtotal:</Typography>
               </Grid>
               <Grid item xs={6}>
@@ -317,23 +333,33 @@ const DeliveryReportView = ({ report }) => {
               <Grid item xs={6}>
                 <Typography variant="body1" fontWeight="bold" align="right">₱{totalAmount.toFixed(2)}</Typography>
               </Grid>
-
-              <Grid item xs={6}>
-                <Typography variant="body2" align="right">Amount Received:</Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="body2" align="right">₱{parseFloat(report.amount_received).toFixed(2)}</Typography>
-              </Grid>
-
+              {report.amount_received !== '0.00' && report.amount_received && (
+              <>
+                <Grid item xs={6}>
+                  <Typography variant="body2" align="right">Amount Received:</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" align="right">
+                    ₱{parseFloat(report.amount_received).toFixed(2)}
+                  </Typography>
+                </Grid>
+              </>
+            )}
+         {report.change !== '0.00' && report.change && (
+           <>
               <Grid item xs={6}>
                 <Typography variant="body2" align="right">Change:</Typography>
               </Grid>
               <Grid item xs={6}>
-                <Typography variant="body2" align="right">₱{parseFloat(report.change).toFixed(2)}</Typography>
+                <Typography variant="body2" align="right">₱{parseFloat(report.change).toFixed(2)} {typeof(report.change)}</Typography>
               </Grid>
-            </Grid>
-          </Box>
-
+           
+            </>
+        
+        )}
+         </Grid>
+      </Box>
+       </Box>
           {/* Additional Information */}
           {report.remarks && (
             <Box sx={{ mt: 3 }}>
@@ -342,18 +368,9 @@ const DeliveryReportView = ({ report }) => {
             </Box>
           )}
           
-          {/* Delivery Status */}
-          <Box sx={{ mt: 3, mb: 4, display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body2">
-              <strong>Delivery Status:</strong> {report.is_delivered ? 'Delivered' : 'Pending Delivery'}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Encoded By:</strong> {report.user?.name}
-            </Typography>
-          </Box>
 
           {/* Signature Lines */}
-          <Grid container spacing={2} sx={{ mt: 4 }}>
+          <Grid container spacing={2} sx={{ mt: 4,px:2,display:'flex',justifyContent:'space-between' }} >
             <Grid item xs={2.4}>
               <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
                 <Typography variant="caption">Prepared By</Typography>
@@ -369,7 +386,10 @@ const DeliveryReportView = ({ report }) => {
                 <Typography variant="caption">Released By</Typography>
               </Box>
             </Grid>
-            <Grid item xs={2.4}>
+           
+          </Grid>
+          <Grid container spacing={2} sx={{ mt: 4,px:2,display:'flex',justifyContent:'center',gap:30 }} >
+          <Grid item xs={2.4}>
               <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
                 <Typography variant="caption">Delivered By</Typography>
               </Box>
@@ -379,7 +399,7 @@ const DeliveryReportView = ({ report }) => {
                 <Typography variant="caption">Received By</Typography>
               </Box>
             </Grid>
-          </Grid>
+            </Grid>
         </Box>
       </Paper>
 
