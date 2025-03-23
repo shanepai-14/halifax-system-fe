@@ -2,14 +2,12 @@ import React, { useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import {
   Typography, Box, Paper, Grid, Divider, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Button, Dialog, DialogActions,
-  DialogContent, DialogContentText, DialogTitle, TextField, Snackbar, Alert
+  TableContainer, TableHead, TableRow, Button, Snackbar, Alert
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { FileTextOutlined, PrinterOutlined, RollbackOutlined, HomeOutlined } from '@ant-design/icons';
-import { getFileUrl } from '@/utils/fileHelper';
+import { PrinterOutlined, RollbackOutlined, HomeOutlined } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
-import { formatDateForDisplay } from '@/utils/dateUtils';
+import CreditMemoModal from './CreditMemoModal';
 
 // Format date for display - if not provided in utils
 const formatDate = (dateString) => {
@@ -177,27 +175,23 @@ const DeliveryReportView = ({ report }) => {
         </Box>
 
         <Box ref={contentRef} sx={{ p: 2 }}>
-          {/* Report Header */}
-          <Box sx={{ textAlign: 'center', mb: 2 }}>
-            <Typography variant="h4">DELIVERY REPORT</Typography>
-            <Typography variant="h6">{report.invoice_number}</Typography>
-          </Box>
-
-          {/* Customer & Order Info */}
-          <Grid container spacing={2}>
-            <Grid item xs={9} md={9}>
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2">Customer Information</Typography>
-                <Typography variant="body1">{report.customer?.customer_name || 'Walk-in Customer'}</Typography>
-                <Typography variant="body2">{report.address}</Typography>
-                <Typography variant="body2">{report.city}</Typography>
-                <Typography variant="body2">Phone: {report.phone}</Typography>
+          {/* Company Header with Logo */}
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid item xs={12} md={12}>
+              <Box sx={{ textAlign: 'center', mb: 2 }}>
+                <Typography variant="h4">DELIVERY REPORT</Typography>
+                {/* <Typography variant="h6">{report.invoice_number}</Typography> */}
               </Box>
             </Grid>
-            
-            <Grid item xs={3} md={3}>
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2">Order Details</Typography>
+            <Grid item xs={12} md={12} sx={{ display: 'flex', justifyContent:'space-between'}}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <Typography variant="h6">Halifax Glass & Aluminum Supply</Typography>
+                <Typography variant="body2">Malagamot Road, Panacan</Typography>
+                <Typography variant="body2">halifax@gmail.com</Typography>
+                <Typography variant="body2">0912345667</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                <Typography variant="subtitle2">INV-20250300014</Typography>
                 <Typography variant="body2">
                   <strong>Order Date:</strong> {formatDate(report.order_date)}
                 </Typography>
@@ -205,12 +199,28 @@ const DeliveryReportView = ({ report }) => {
                   <strong>Delivery Date:</strong> {formatDate(report.delivery_date)}
                 </Typography>
                 <Typography variant="body2">
-                  <strong>Payment Method:</strong> {report.payment_method.charAt(0).toUpperCase() + report.payment_method.slice(1)}
+                  <strong>Payment Method:</strong> {report.payment_method.toUpperCase()}
                 </Typography>
                 <Typography variant="body2">
-                  <strong>Status:</strong> {report.status.charAt(0).toUpperCase() + report.status.slice(1)}
+                  <strong>Status:</strong> {report.status.toUpperCase()}
                 </Typography>
               </Box>
+            </Grid>
+          </Grid>
+
+          {/* Customer & Order Info */}
+          <Grid container spacing={2}>
+            <Grid item xs={9} md={9}>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2">Delivered to: {report.customer?.business_name  || report.customer?.customer_name }</Typography>
+                <Typography variant="body2">Address: {report.customer?.business_address || report.address }</Typography>
+                <Typography variant="body2">City: {report.city}</Typography>
+                <Typography variant="body2">Phone: {report.phone}</Typography>
+              </Box>
+            </Grid>
+            
+            <Grid item xs={3} md={3}>
+         
             </Grid>
           </Grid>
 
@@ -333,89 +343,56 @@ const DeliveryReportView = ({ report }) => {
           )}
           
           {/* Delivery Status */}
-          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
+          <Box sx={{ mt: 3, mb: 4, display: 'flex', justifyContent: 'space-between' }}>
             <Typography variant="body2">
               <strong>Delivery Status:</strong> {report.is_delivered ? 'Delivered' : 'Pending Delivery'}
             </Typography>
             <Typography variant="body2">
-              <strong>Created By:</strong> {report.user?.name}
+              <strong>Encoded By:</strong> {report.user?.name}
             </Typography>
           </Box>
+
+          {/* Signature Lines */}
+          <Grid container spacing={2} sx={{ mt: 4 }}>
+            <Grid item xs={2.4}>
+              <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
+                <Typography variant="caption">Prepared By</Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={2.4}>
+              <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
+                <Typography variant="caption">Checked By</Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={2.4}>
+              <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
+                <Typography variant="caption">Released By</Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={2.4}>
+              <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
+                <Typography variant="caption">Delivered By</Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={2.4}>
+              <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
+                <Typography variant="caption">Received By</Typography>
+              </Box>
+            </Grid>
+          </Grid>
         </Box>
       </Paper>
 
-      {/* Credit Memo Dialog */}
-      <Dialog 
-        open={createMemoOpen} 
+      {/* Credit Memo Modal Component */}
+      <CreditMemoModal 
+        open={createMemoOpen}
         onClose={handleCloseCreateMemo}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Create Credit Memo</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Specify the items and quantities to be returned. Only items that are part of this delivery 
-            report can be returned.
-          </DialogContentText>
-          
-          <TableContainer sx={{ mt: 2 }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Item</TableCell>
-                  <TableCell>Code</TableCell>
-                  <TableCell align="right">Price</TableCell>
-                  <TableCell align="center">Available</TableCell>
-                  <TableCell align="center">Return Quantity</TableCell>
-                  <TableCell align="right">Total</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {returnItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.product?.product_name}</TableCell>
-                    <TableCell>{item.product?.product_code}</TableCell>
-                    <TableCell align="right">₱{parseFloat(item.sold_price).toFixed(2)}</TableCell>
-                    <TableCell align="center">{item.max_quantity}</TableCell>
-                    <TableCell align="center">
-                      <TextField
-                        type="number"
-                        InputProps={{ inputProps: { min: 0, max: item.max_quantity } }}
-                        value={item.return_quantity}
-                        onChange={(e) => handleReturnQuantityChange(item.id, e.target.value)}
-                        size="small"
-                        sx={{ width: '80px' }}
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      ₱{(parseFloat(item.sold_price) * item.return_quantity).toFixed(2)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          
-          <TextField
-            margin="dense"
-            id="returnReason"
-            label="Reason for Return"
-            multiline
-            rows={3}
-            fullWidth
-            variant="outlined"
-            value={returnReason}
-            onChange={(e) => setReturnReason(e.target.value)}
-            sx={{ mt: 3 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseCreateMemo}>Cancel</Button>
-          <Button onClick={handleSubmitCreditMemo} variant="contained" color="primary">
-            Create Credit Memo
-          </Button>
-        </DialogActions>
-      </Dialog>
+        returnItems={returnItems}
+        handleReturnQuantityChange={handleReturnQuantityChange}
+        returnReason={returnReason}
+        setReturnReason={setReturnReason}
+        handleSubmitCreditMemo={handleSubmitCreditMemo}
+      />
 
       {/* Alert Snackbar */}
       <Snackbar

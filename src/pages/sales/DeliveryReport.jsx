@@ -4,10 +4,10 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, 
   TableRow, IconButton, InputAdornment, Button,
   Radio, RadioGroup, FormControlLabel, FormControl, FormLabel,
-  Paper, Divider, Grid, Select, MenuItem, InputLabel,
-  CircularProgress, Checkbox, FormControlLabel as MuiFormControlLabel
+  Paper, Divider, Grid, Select, MenuItem,
+  CircularProgress
 } from '@mui/material';
-import { DeleteOutlined, PlusCircleOutlined, MinusCircleOutlined, PrinterOutlined, SaveOutlined } from '@ant-design/icons';
+import { DeleteOutlined, PlusCircleOutlined, MinusCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 
@@ -18,7 +18,6 @@ const formatDateForInput = (date) => {
   return d.toISOString().split('T')[0];
 };
 
-
 const validationSchema = Yup.object().shape({
   customer: Yup.object().nullable().required('Customer is required'),
   phone: Yup.string().required('Phone is required'),
@@ -28,7 +27,6 @@ const validationSchema = Yup.object().shape({
   deliveryDate: Yup.date().required('Delivery date is required')
     .min(Yup.ref('orderDate'), 'Delivery date must be after order date'),
   paymentMethod: Yup.string().required('Payment method is required'),
-  customerType: Yup.string().required('Customer type is required')
 });
 
 const DeliveryReport = forwardRef(({ 
@@ -39,7 +37,7 @@ const DeliveryReport = forwardRef(({
   onRemoveProduct, 
   onQuantityChange, 
   onDiscountChange,
-  onPrint,
+  onPriceTypeChange,
   isSubmitting = false
 }, ref) => {
   const initialValues = {
@@ -47,14 +45,16 @@ const DeliveryReport = forwardRef(({
     phone: '',
     address: '',
     city: '',
+    business: '',
     orderDate: formatDateForInput(new Date()),
     deliveryDate: formatDateForInput(new Date(Date.now() + 86400000)), // today + 1 day
-    paymentMethod: 'cash',
-    customerType: 'walkin', // Default to regular pricing
+    paymentMethod: '',
+    term_days: null,
   };
 
-  const getPriceByCustomerType = (item, customerType) => {
-    switch(customerType) {
+  // Get the appropriate price based on the selected price type for the item
+  const getPriceByPriceType = (item) => {
+    switch(item.price_type || 'regular') {
       case 'walkin':
         return item.walk_in_price || item.regular_price;
       case 'wholesale':
@@ -65,14 +65,13 @@ const DeliveryReport = forwardRef(({
     }
   };
 
-  const calculateItemSubtotal = (item, customerType) => {
-    const price = getPriceByCustomerType(item, customerType);
+  const calculateItemSubtotal = (item) => {
+    const price = getPriceByPriceType(item);
     const subtotal = Number(price) * item.quantity;
     const discountPercentage = parseFloat(item.discount) || 0;
     const discountAmount = subtotal * (discountPercentage / 100);
     return subtotal - discountAmount;
   };
-
 
   return (
     <Formik
@@ -80,7 +79,6 @@ const DeliveryReport = forwardRef(({
       validationSchema={validationSchema}
       onSubmit={(values, { setSubmitting }) => {
         onSubmit(values);
-        // Don't set submitting to false here, let the parent component handle it
       }}
     >
       {({ errors, touched, setFieldValue, values, isValid, dirty }) => (
@@ -92,7 +90,6 @@ const DeliveryReport = forwardRef(({
                 <Typography variant="h5" gutterBottom>
                   DELIVERY REPORT
                 </Typography>
-          
               </Box>
               
               <Grid container spacing={2} sx={{paddingTop: "0!important"}}>
@@ -107,6 +104,11 @@ const DeliveryReport = forwardRef(({
                       <TextField
                         {...params}
                         label="Customer"
+                        slotProps={{
+                          inputLabel: {
+                            sx: { top: '1px' }, 
+                          },
+                        }}
                         error={touched.customer && !!errors.customer}
                         helperText={touched.customer && errors.customer}
                         fullWidth
@@ -118,35 +120,37 @@ const DeliveryReport = forwardRef(({
                       setFieldValue('phone', value ? value.contact_number : '');
                       setFieldValue('address', value ? value.address : '');
                       setFieldValue('city', value ? value.city : '');
+                      setFieldValue('business', value ? value.business_name ? value.business_name : 'N/A' : '');
                     }}
                   />
                 </Grid>
 
                 <Grid item xs={12} md={6} sx={{paddingTop: "0!important"}}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel id="customer-type-label">Customer Type</InputLabel>
-                    <Field
-                      size="small" 
-                      as={Select}
-                      labelId="customer-type-label"
-                      id="customerType"
-                      name="customerType"
-                      label="Customer Type"
-                      value={values.customerType}
-                      onChange={(e) => setFieldValue('customerType', e.target.value)}
-                    >
-                      <MenuItem value="regular">Regular</MenuItem>
-                      <MenuItem value="walkin">Walk-in</MenuItem>
-                      <MenuItem value="wholesale">Wholesale</MenuItem>
-                    </Field>
-                    {touched.customerType && errors.customerType && (
-                      <Typography color="error" variant="caption">{errors.customerType}</Typography>
-                    )}
-                  </FormControl>
+                <Field
+                   size="small"
+                   slotProps={{
+                    inputLabel: {
+                      sx: { top: '1px' }, 
+                    },
+                  }}
+                    as={TextField}
+                    name="business"
+                    label="Business"
+                    fullWidth
+                    margin="normal"
+                    error={touched.business && !!errors.business}
+                    helperText={touched.business && errors.business}
+                  />
                 </Grid>
 
                 <Grid item xs={12} md={12} sx={{paddingTop: "0!important"}}>
                   <Field
+                     size="small"
+                     slotProps={{
+                      inputLabel: {
+                        sx: { top: '1px' }, 
+                      },
+                    }}
                     as={TextField}
                     name="address"
                     label="Address"
@@ -159,6 +163,12 @@ const DeliveryReport = forwardRef(({
                
                 <Grid item xs={12} md={6} sx={{paddingTop: "0!important"}}>
                   <Field
+                     size="small"
+                     slotProps={{
+                      inputLabel: {
+                        sx: { top: '1px' }, 
+                      },
+                    }}
                     as={TextField}
                     name="phone"
                     label="Phone"
@@ -169,6 +179,12 @@ const DeliveryReport = forwardRef(({
                   />
 
                   <Field
+                     size="small"
+                     slotProps={{
+                      inputLabel: {
+                        sx: { top: '1px' }, 
+                      },
+                    }}
                     as={TextField}
                     name="orderDate"
                     label="Order Date"
@@ -184,6 +200,13 @@ const DeliveryReport = forwardRef(({
                 <Grid item xs={12} md={6} sx={{paddingTop: "0!important"}}>
                   <Box>
                     <Field
+                    
+                     size="small"
+                     slotProps={{
+                      inputLabel: {
+                        sx: { top: '1px' }, 
+                      },
+                    }}
                       as={TextField}
                       name="city"
                       label="City"
@@ -195,6 +218,12 @@ const DeliveryReport = forwardRef(({
                   </Box>
                   <Box>
                     <Field
+                       size="small"
+                       slotProps={{
+                        inputLabel: {
+                          sx: { top: '1px' }, 
+                        },
+                      }}
                       as={TextField}
                       name="deliveryDate"
                       label="Delivery Date"
@@ -226,18 +255,48 @@ const DeliveryReport = forwardRef(({
                       <Typography color="error" variant="caption">{errors.paymentMethod}</Typography>
                     )}
                   </FormControl>
+                  
                 </Grid>
+              
               </Grid>
 
-              <Divider sx={{ my: 2 }} />
+              <Divider sx={{ mb: 1 }} />
               
-              <Typography variant="h6" gutterBottom>Order Items</Typography>
+            <Box sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+            <Typography variant="h6" gutterBottom>Order Items</Typography>
+              {values.paymentMethod === 'term' && (
+   
+                  <Field
+                    size="small"
+                    as={TextField}
+                    name="term_days"
+                    label="Term"
+                    type="number"
+                    width={50}
+                    sx={{
+                      mb: 1,
+                   
+                    }}
+                    slotProps={{
+                      inputLabel: {
+                        sx: { top: '1px' }, 
+                      },
+                    }}
+                    margin="small"
+                    InputProps={{ min: 0 }}
+                    error={touched.term_days && !!errors.term_days}
+                    helperText={touched.term_days && errors.term_days}
+                  />
+         
+              )}
+            </Box>
               
               <TableContainer component={Paper} sx={{ mb: 2, maxHeight: '300px', overflow: 'auto' }}>
                 <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell>Product</TableCell>
+                      <TableCell>Price Type</TableCell>
                       <TableCell align="right">Price</TableCell>
                       <TableCell align="center">Quantity</TableCell>
                       <TableCell align="right">Discount (%)</TableCell>
@@ -248,13 +307,25 @@ const DeliveryReport = forwardRef(({
                   <TableBody>
                     {orderItems.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} align="center">No items added to order</TableCell>
+                        <TableCell colSpan={7} align="center">No items added to order</TableCell>
                       </TableRow>
                     ) : (
                       orderItems.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell>{item.name}</TableCell>
-                          <TableCell align="right">₱{Number(getPriceByCustomerType(item, values.customerType)).toFixed(2)}</TableCell>
+                          <TableCell>
+                            <Select
+                              value={item.price_type || 'regular'}
+                              onChange={(e) => onPriceTypeChange(item.id, e.target.value)}
+                              size="small"
+                              fullWidth
+                            >
+                              <MenuItem value="regular">Regular</MenuItem>
+                              <MenuItem value="walkin">Walk-in</MenuItem>
+                              <MenuItem value="wholesale">Wholesale</MenuItem>
+                            </Select>
+                          </TableCell>
+                          <TableCell align="right">₱{Number(getPriceByPriceType(item)).toFixed(2)}</TableCell>
                           <TableCell align="center" sx={{ display: 'flex', justifyContent: 'center', alignItems: "center"}} >
                             <IconButton size="small" onClick={() => onQuantityChange(item.id, -1)}>
                               <MinusCircleOutlined />
@@ -286,7 +357,7 @@ const DeliveryReport = forwardRef(({
                               size="small"
                             />
                           </TableCell>
-                          <TableCell align="right">₱{calculateItemSubtotal(item, values.customerType).toFixed(2)}</TableCell>
+                          <TableCell align="right">₱{calculateItemSubtotal(item).toFixed(2)}</TableCell>
                           <TableCell align="right">
                             <IconButton onClick={() => onRemoveProduct(item.id)}>
                               <DeleteOutlined />
@@ -304,26 +375,15 @@ const DeliveryReport = forwardRef(({
                   Payment Method: {values.paymentMethod.charAt(0).toUpperCase() + values.paymentMethod.slice(1)}
                 </Typography>
                 <Typography variant="h6">
-                  Total Amount: ₱{orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item, values.customerType), 0).toFixed(2)}
+                  Total Amount: ₱{orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0).toFixed(2)}
                 </Typography>
               </Box>
             </Box>
           </div>
           
-          {/* Action buttons and options */}
+          {/* Action buttons */}
           <Box sx={{ mt: 3 }}>
-           
-            
             <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-              {/* <Button
-                variant="outlined"
-                color="primary"
-                startIcon={<PrinterOutlined />}
-                onClick={() => onPrint(values)}
-                disabled={orderItems.length === 0 || isSubmitting}
-              >
-                Print Preview
-              </Button> */}
               <Button
                 type="submit"
                 variant="contained"

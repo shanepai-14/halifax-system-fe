@@ -53,7 +53,6 @@ const TableRowSkeleton = () => (
 );
 
 const CustomerPage = () => {
-  const dispatch = useDispatch();
   const customers = useSelector(selectCustomers);
   const isLoading = useSelector(selectCustomersLoading);
   const { getAllCustomers, deleteCustomer } = useCustomers();
@@ -122,6 +121,7 @@ const CustomerPage = () => {
   const filteredCustomers = customers.filter(customer => {
     return (
       customer.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (customer.business_name && customer.business_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (customer.contact_number && customer.contact_number.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (customer.city && customer.city.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -173,6 +173,8 @@ const CustomerPage = () => {
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
+              <TableCell>Business Name</TableCell>
+              <TableCell>Business Address</TableCell>
               <TableCell>Contact Number</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Address</TableCell>
@@ -196,6 +198,8 @@ const CustomerPage = () => {
                         {customer.customer_name}
                       </Typography>
                     </TableCell>
+                    <TableCell>{customer.business_name || 'N/A'}</TableCell>
+                    <TableCell>{customer.business_address || 'N/A'}</TableCell>
                     <TableCell>{customer.contact_number || 'N/A'}</TableCell>
                     <TableCell>{customer.email || 'N/A'}</TableCell>
                     <TableCell>{customer.address || 'N/A'}</TableCell>
