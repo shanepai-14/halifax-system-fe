@@ -43,6 +43,8 @@ const TableRowSkeleton = () => (
     <TableCell><Skeleton animation="wave" /></TableCell>
     <TableCell><Skeleton animation="wave" /></TableCell>
     <TableCell><Skeleton animation="wave" /></TableCell>
+    <TableCell><Skeleton animation="wave" /></TableCell>
+    <TableCell><Skeleton animation="wave" /></TableCell>
     <TableCell align="right">
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
         <Skeleton animation="wave" variant="circular" width={32} height={32} />
