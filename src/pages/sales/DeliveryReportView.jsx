@@ -21,7 +21,7 @@ const formatDate = (dateString) => {
   });
 };
 
-const DeliveryReportView = ({ report }) => {
+const DeliveryReportView = ({ refresh , report }) => {
   const [createMemoOpen, setCreateMemoOpen] = useState(false);
   const [creditMemoReportOpen, setCreditMemoReportOpen] = useState(false);
   const [returnItems, setReturnItems] = useState([]);
@@ -37,7 +37,7 @@ const DeliveryReportView = ({ report }) => {
         report.items.map(item => ({
           ...item,
           return_quantity: 0,
-          max_quantity: item.quantity
+          max_quantity: item.quantity,
         }))
       );
     }
@@ -63,20 +63,25 @@ const DeliveryReportView = ({ report }) => {
     setCreditMemoReportOpen(false);
   };
 
-  const handleReturnQuantityChange = (itemId, value) => {
-    const quantity = parseInt(value) || 0;
+  const handleReturnQuantityChange = (itemId, value,returned_quantity) => {
+    const quantity = Math.max(0, parseInt(value) || 0);
+  
     setReturnItems(
       returnItems.map(item => {
         if (item.id === itemId) {
+          const availableQuantity = item.max_quantity - returned_quantity; // Correct available quantity
+          
           return {
             ...item,
-            return_quantity: Math.min(Math.max(0, quantity), item.max_quantity)
+            return_quantity: Math.min(quantity, availableQuantity) // Restrict to available stock
           };
         }
         return item;
       })
     );
   };
+  
+  
 
   const handleSubmitCreditMemo = async () => {
     // Filter items that have return quantity > 0
@@ -110,6 +115,7 @@ const DeliveryReportView = ({ report }) => {
       
       if (result) {
         handleCloseCreateMemo();
+        refresh(report.id);
       }
     } catch (error) {
       // Error handling
@@ -117,9 +123,14 @@ const DeliveryReportView = ({ report }) => {
   };
 
   // Calculate total credit memo amount
-  const totalCreditMemoAmount = report?.returns?.reduce((total, returnRecord) => {
-    return total + parseFloat(returnRecord.refund_amount || 0);
+  const totalCreditMemoAmount = report?.returns?.reduce((total, returnItem) => {
+    const returnTotal = returnItem.items?.reduce((sum, item) => {
+      return sum + parseFloat(item.quantity || 0) * parseFloat(item.price || 0);
+    }, 0) || 0;
+  
+    return total + returnTotal;
   }, 0) || 0;
+  
 
   if (!report) {
     return (
@@ -170,7 +181,7 @@ const DeliveryReportView = ({ report }) => {
               color="secondary"
               startIcon={<RollbackOutlined />}
               onClick={handleOpenCreateMemo}
-              disabled={report.status == 'pending'}
+              disabled={false}
             >
               Create Credit Memo
             </Button>
@@ -427,6 +438,7 @@ const DeliveryReportView = ({ report }) => {
         returnReason={returnReason}
         setReturnReason={setReturnReason}
         handleSubmitCreditMemo={handleSubmitCreditMemo}
+        returns={report.returns}
       />
 
       {/* Credit Memo Report Modal - Only rendered when returns exist */}

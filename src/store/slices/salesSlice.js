@@ -5,7 +5,14 @@ const initialState = {
   currentSale: null,
   loading: false,
   error: null,
-  stats: null
+  stats: null,
+  filters: {
+    searchTerm: '',
+    statusFilter: 'all',
+    deliveredFilter: 'all',
+    startDate: new Date().toISOString().split('T')[0], // Today's date as YYYY-MM-DD
+    endDate: new Date().toISOString().split('T')[0]    // Today's date as YYYY-MM-DD
+  }
 };
 
 const salesSlice = createSlice({
@@ -65,6 +72,28 @@ const salesSlice = createSlice({
     },
     clearCurrentSale: (state) => {
       state.currentSale = null;
+    },
+    setSearchTerm: (state, action) => {
+      state.filters.searchTerm = action.payload;
+    },
+    setStatusFilter: (state, action) => {
+      state.filters.statusFilter = action.payload;
+    },
+    setDeliveredFilter: (state, action) => {
+      state.filters.deliveredFilter = action.payload;
+    },
+    setDateRange: (state, action) => {
+      state.filters.startDate = action.payload.startDate;
+      state.filters.endDate = action.payload.endDate;
+    },
+    resetFilters: (state) => {
+      state.filters = {
+        searchTerm: '',
+        statusFilter: 'all',
+        deliveredFilter: 'all',
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date().toISOString().split('T')[0]
+      };
     }
   }
 });
@@ -81,7 +110,12 @@ export const {
   updateSaleSuccess,
   updateSaleFailed,
   setCurrentSale,
-  clearCurrentSale
+  clearCurrentSale,
+  setSearchTerm,
+  setStatusFilter,
+  setDeliveredFilter,
+  setDateRange,
+  resetFilters
 } = salesSlice.actions;
 
 // Selectors
@@ -89,5 +123,6 @@ export const selectSales = state => state.sales.sales;
 export const selectCurrentSale = state => state.sales.currentSale;
 export const selectSalesLoading = state => state.sales.loading;
 export const selectSalesError = state => state.sales.error;
+export const selectSalesFilters = state => state.sales.filters;
 
 export default salesSlice.reducer;

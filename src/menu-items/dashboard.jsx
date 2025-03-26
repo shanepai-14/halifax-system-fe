@@ -47,7 +47,7 @@ const dashboard = {
       id: 'sales',
       title: 'Sales',
       type: 'item',
-      url: '/app/sales',
+      url: '/app/sales-list',
       icon: ShoppingCartOutlined ,
       breadcrumbs: false
     },

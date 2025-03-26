@@ -93,14 +93,6 @@ const CreditMemoReportModal = ({ open, onClose, returns, report }) => {
                 <Typography variant="body2">
                   <strong>Date:</strong> {formatDate(new Date())}
                 </Typography>
-              </Box>
-            </Grid>
-          </Grid>
-
-          {/* Customer Info */}
-          <Grid container spacing={2} justifyContent="space-between" alignItems="flex-start">
-            <Grid item xs={6} md={6}>
-              <Box sx={{ mb: 1 }}>
                 <Typography variant="subtitle2">
                   <strong>Customer:</strong> {report?.customer?.business_name || report?.customer?.customer_name}
                 </Typography>
@@ -113,6 +105,8 @@ const CreditMemoReportModal = ({ open, onClose, returns, report }) => {
               </Box>
             </Grid>
           </Grid>
+
+     
 
           <Divider sx={{ my: 2 }} />
 

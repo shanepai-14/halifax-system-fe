@@ -10,7 +10,7 @@ import Box from '@mui/material/Box';
 import Drawer from './Drawer';
 import Header from './Header';
 import navigation from '@menu-items';
-import Loader from '@components/Loader';
+import Loader from '@/components/loader/Loader';
 import Breadcrumbs from '@components/@extended/Breadcrumbs';
 import {  useSelector , useDispatch } from 'react-redux';
 import {

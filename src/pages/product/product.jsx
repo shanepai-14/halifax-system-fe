@@ -21,7 +21,7 @@ import EditProductModal from './editProductModal';
 import { useProducts, useCategories ,useDeleteProduct } from '@/hooks/useProducts';
 import { getFileUrl } from '@/utils/fileHelper';
 import CardSkeleton from '@/components/CardSkeleton';
-import TableRowSkeleton from '@/components/TableRowSkeleton';
+import TableRowSkeleton from '@/components/loader/TableRowSkeleton';
 import CategoryChip from '@/components/CategoryChip';
 import Swal from 'sweetalert2';
 
