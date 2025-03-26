@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { PrinterOutlined, RollbackOutlined, HomeOutlined } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
 import CreditMemoModal from './CreditMemoModal';
+import CreditMemoReportModal from './CreditMemoReportModal';
 
 // Format date for display - if not provided in utils
 const formatDate = (dateString) => {
@@ -22,10 +23,9 @@ const formatDate = (dateString) => {
 
 const DeliveryReportView = ({ report }) => {
   const [createMemoOpen, setCreateMemoOpen] = useState(false);
+  const [creditMemoReportOpen, setCreditMemoReportOpen] = useState(false);
   const [returnItems, setReturnItems] = useState([]);
   const [returnReason, setReturnReason] = useState('');
-  const [alertInfo, setAlertInfo] = useState({ open: false, message: '', type: 'info' });
-  
   const navigate = useNavigate();
   const contentRef = useRef();
   const { createCreditMemo } = useSales();
@@ -44,7 +44,7 @@ const DeliveryReportView = ({ report }) => {
   }, [report]);
 
   const handlePrint = useReactToPrint({
-    contentRef
+   contentRef
   });
 
   const handleOpenCreateMemo = () => {
@@ -53,6 +53,14 @@ const DeliveryReportView = ({ report }) => {
 
   const handleCloseCreateMemo = () => {
     setCreateMemoOpen(false);
+  };
+
+  const handleOpenCreditMemoReport = () => {
+    setCreditMemoReportOpen(true);
+  };
+
+  const handleCloseCreditMemoReport = () => {
+    setCreditMemoReportOpen(false);
   };
 
   const handleReturnQuantityChange = (itemId, value) => {
@@ -75,19 +83,22 @@ const DeliveryReportView = ({ report }) => {
     const itemsToReturn = returnItems.filter(item => item.return_quantity > 0);
     
     if (itemsToReturn.length === 0) {
-      setAlertInfo({
-        open: true,
-        message: 'Please specify at least one item to return',
-        type: 'error'
-      });
+      alert('Please specify at least one item to return');
       return;
     }
+
+    const refund_amount = itemsToReturn.reduce((total, item) => {
+      return total + item.return_quantity * item.sold_price;
+    }, 0);
 
     try {
       const memoData = {
         sale_id: report.id,
-        reason: returnReason,
+        remarks: returnReason,
+        refund_method:'cash',
+        refund_amount: refund_amount,
         items: itemsToReturn.map(item => ({
+          sale_item_id : item.id,
           product_id: item.product_id,
           quantity: item.return_quantity,
           price: item.sold_price
@@ -98,25 +109,17 @@ const DeliveryReportView = ({ report }) => {
       const result = await createCreditMemo(memoData);
       
       if (result) {
-        setAlertInfo({
-          open: true,
-          message: 'Credit memo created successfully!',
-          type: 'success'
-        });
         handleCloseCreateMemo();
       }
     } catch (error) {
-      setAlertInfo({
-        open: true,
-        message: error.message || 'Failed to create credit memo',
-        type: 'error'
-      });
+      // Error handling
     }
   };
 
-  const handleCloseAlert = () => {
-    setAlertInfo(prev => ({ ...prev, open: false }));
-  };
+  // Calculate total credit memo amount
+  const totalCreditMemoAmount = report?.returns?.reduce((total, returnRecord) => {
+    return total + parseFloat(returnRecord.refund_amount || 0);
+  }, 0) || 0;
 
   if (!report) {
     return (
@@ -167,7 +170,7 @@ const DeliveryReportView = ({ report }) => {
               color="secondary"
               startIcon={<RollbackOutlined />}
               onClick={handleOpenCreateMemo}
-              disabled={report.status === 'cancelled' || report.returns?.length > 0}
+              disabled={report.status == 'pending'}
             >
               Create Credit Memo
             </Button>
@@ -276,38 +279,7 @@ const DeliveryReportView = ({ report }) => {
             </Table>
           </TableContainer>
 
-          {/* Returns Table (if any) */}
-          {report.returns && report.returns.length > 0 && (
-            <>
-              <Typography variant="subtitle1" gutterBottom sx={{ mt: 3 }}>Returns</Typography>
-              <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Item</TableCell>
-                      <TableCell>Code</TableCell>
-                      <TableCell align="right">Price</TableCell>
-                      <TableCell align="center">Quantity</TableCell>
-                      <TableCell align="right">Total</TableCell>
-                      <TableCell>Reason</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {report.returns.map((returnItem) => (
-                      <TableRow key={returnItem.id}>
-                        <TableCell>{returnItem.product?.product_name}</TableCell>
-                        <TableCell>{returnItem.product?.product_code}</TableCell>
-                        <TableCell align="right">₱{parseFloat(returnItem.price).toFixed(2)}</TableCell>
-                        <TableCell align="center">{returnItem.quantity}</TableCell>
-                        <TableCell align="right">₱{(parseFloat(returnItem.price) * returnItem.quantity).toFixed(2)}</TableCell>
-                        <TableCell>{returnItem.reason}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </>
-          )}
+      
 
        <Box sx={{ display: 'flex',justifyContent: 'space-between' }}>
        <Box sx={{  display: 'flex', flexDirection:'column',justifyContent: 'flex-start' }}>
@@ -334,11 +306,47 @@ const DeliveryReportView = ({ report }) => {
                 <Typography variant="body2" align="right">₱{totalDiscount.toFixed(2)}</Typography>
               </Grid>
 
+              {/* Credit Memo Total - Only show when returns exist */}
+              {report.returns && report.returns.length > 0 && (
+                <>
+                  <Grid item xs={6}>
+                    <Typography 
+                      variant="body2" 
+                      align="right"
+                      onClick={handleOpenCreditMemoReport}
+                      sx={{ 
+                        cursor: 'pointer', 
+                        color: 'primary.main',
+                        '&:hover': { textDecoration: 'underline' } 
+                      }}
+                    >
+                      Credit Memo Total:
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography 
+                      variant="body2" 
+                      align="right"
+                      onClick={handleOpenCreditMemoReport}
+                      sx={{ 
+                        cursor: 'pointer', 
+                        color: 'primary.main',
+                        '&:hover': { textDecoration: 'underline' } 
+                      }}
+                    >
+                      ₱{totalCreditMemoAmount.toFixed(2)}
+                    </Typography>
+                  </Grid>
+                </>
+              )}
+
               <Grid item xs={6}>
                 <Typography variant="body1" fontWeight="bold" align="right">Total Amount:</Typography>
               </Grid>
               <Grid item xs={6}>
-                <Typography variant="body1" fontWeight="bold" align="right">₱{totalAmount.toFixed(2)}</Typography>
+              <Typography variant="body1" fontWeight="bold" align="right">
+                ₱{(totalAmount - (totalCreditMemoAmount || 0)).toFixed(2)}
+              </Typography>
               </Grid>
               {report.amount_received !== '0.00' && report.amount_received && (
               <>
@@ -421,19 +429,17 @@ const DeliveryReportView = ({ report }) => {
         handleSubmitCreditMemo={handleSubmitCreditMemo}
       />
 
-      {/* Alert Snackbar */}
-      <Snackbar
-        open={alertInfo.open}
-        autoHideDuration={6000}
-        onClose={handleCloseAlert}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert onClose={handleCloseAlert} severity={alertInfo.type} sx={{ width: '100%' }}>
-          {alertInfo.message}
-        </Alert>
-      </Snackbar>
+      {/* Credit Memo Report Modal - Only rendered when returns exist */}
+      {report.returns && report.returns.length > 0 && (
+        <CreditMemoReportModal
+          open={creditMemoReportOpen}
+          onClose={handleCloseCreditMemoReport}
+          returns={report.returns}
+          report={report}
+        />
+      )}
     </>
   );
-};
+  }
 
 export default DeliveryReportView;
