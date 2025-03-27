@@ -7,6 +7,7 @@ import {
 import { HomeOutlined, FileTextOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
 import DeliveryReportView from './DeliveryReportView';
+import DeliveryReportSkeleton from '@/components/loader/DeliveryReportSkeleton';
 
 const DeliveryReportPage = () => {
   const { id } = useParams();
@@ -17,41 +18,46 @@ const DeliveryReportPage = () => {
   
   const { getSaleById } = useSales();
   
-  // Try to get report data from location state (passed from the new order page)
-  useEffect(() => {
-    const fetchData = async () => {
-      // If data was passed via navigation state
-      if (location.state?.reportData) {
-        setReportData(location.state.reportData);
-        setIsLoading(false);
-        return;
-      }
-      
-      // Otherwise fetch the data
-      if (id) {
-        try {
-          const data = await getSaleById(id);
-          if (data) {
-            setReportData(data);
-          } else {
-            // Handle case where report wasn't found
-            console.error('Delivery report not found');
-          }
-        } catch (error) {
-          console.error('Error fetching delivery report:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      } else {
-        setIsLoading(false);
-      }
-    };
+// Define the fetch function outside of useEffect
+const fetchReportData = async (reportId) => {
+  setIsLoading(true)
+  try {
+    const data = await getSaleById(reportId);
+    if (data) {
+      setReportData(data);
+    } else {
+      console.error('Delivery report not found');
+      return null;
+    }
+  } catch (error) {
+    console.error('Error fetching delivery report:', error);
+    return null;
+  }
+  setIsLoading(false);
+};
+
+// In your component:
+useEffect(() => {
+  const loadData = async () => {
+
+    if (location.state?.reportData) {
+      setReportData(location.state.reportData);
+      setIsLoading(false);
+      return;
+    }
     
-    fetchData();
-  }, [id, location.state]);
+    // Otherwise fetch the data
+    if (id) {
+      fetchReportData(id);
+    }
+    
+  };
+  
+  loadData();
+}, [id, location.state]);
 
   const handleBackToSales = () => {
-    navigate('/app/sales');
+    navigate('/app/sales-list');
   };
 
   return (
@@ -71,7 +77,7 @@ const DeliveryReportPage = () => {
           underline="hover"
           color="inherit"
           sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-          onClick={() => navigate('/app/sales')}
+          onClick={() => navigate('/app/sales-list')}
         >
           <FileTextOutlined style={{ marginRight: 8 }} />
           Sales
@@ -91,11 +97,9 @@ const DeliveryReportPage = () => {
       </Box>
       
       {isLoading ? (
-        <Backdrop open={isLoading} sx={{ color: '#fff', zIndex: 9999 }}>
-          <CircularProgress color="inherit" />
-        </Backdrop>
+         <DeliveryReportSkeleton />
       ) : reportData ? (
-        <DeliveryReportView report={reportData} />
+        <DeliveryReportView refresh={fetchReportData} report={reportData} />
       ) : (
         <Paper sx={{ p: 3, textAlign: 'center' }}>
           <Typography variant="h6" color="error">

@@ -194,6 +194,19 @@ export const useSales = () => {
     }
   };
 
+  const createCreditMemo = async (data) => {
+    try {
+      const response = await api.post('/sale-returns', data);
+      toast.success('Credit memo created successfully');
+      return response.data.data;
+    } catch (err) {
+      console.error('Error creating sale:', err);
+
+      toast.error(err.response?.data?.message || 'Failed to create sale');
+      return null;
+    }
+  };
+
   // Clear current sale
   const resetCurrentSale = () => {
     dispatch(clearCurrentSale());
@@ -220,6 +233,7 @@ export const useSales = () => {
     cancelSale,
     markAsDelivered,
     getSalesStats,
-    resetCurrentSale
+    resetCurrentSale,
+    createCreditMemo
   };
 };

@@ -4,13 +4,12 @@ import {
   Grid, Paper, Backdrop, CircularProgress, Snackbar, Alert, Typography, Box
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { useReactToPrint } from 'react-to-print';
 import { selectCustomers } from '@/store/slices/customerSlice';
 import { selectCategories } from '@/store/slices/productsSlice';
 import { useSales } from '@/hooks/useSales';
 import ProductList from './ProductList';
 import DeliveryReport from './DeliveryReport';
-import PrintableDR from './PrintableDR';
+
 
 const NewOrderPage = () => {
   const customers = useSelector(selectCustomers); 
@@ -28,13 +27,11 @@ const NewOrderPage = () => {
   const [totalPrice, setTotalPrice] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [currentDR, setCurrentDR] = useState(null);
   const [isProductListMinimized, setIsProductListMinimized] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [alertInfo, setAlertInfo] = useState({ open: false, message: '', type: 'info' });
   
   const deliveryReportRef = useRef();
-  const contentRef = useRef();
   const navigate = useNavigate();
 
   // Load inventory data on component mount
@@ -52,7 +49,21 @@ const NewOrderPage = () => {
   // Calculate total price whenever orderItems changes
   useEffect(() => {
     const newTotal = orderItems.reduce((sum, item) => {
-      const subtotal = Number(item.regular_price) * item.quantity;
+      // Get price based on the item's price_type
+      let price;
+      switch(item.price_type || 'regular') {
+        case 'walkin':
+          price = item.walk_in_price || item.regular_price;
+          break;
+        case 'wholesale':
+          price = item.wholesale_price || item.regular_price;
+          break;
+        case 'regular':
+        default:
+          price = item.regular_price;
+      }
+      
+      const subtotal = Number(price) * item.quantity;
       const discountPercentage = parseFloat(item.discount) || 0;
       const discountAmount = subtotal * (discountPercentage / 100);
       return sum + (subtotal - discountAmount);
@@ -64,9 +75,7 @@ const NewOrderPage = () => {
     setIsProductListMinimized(!isProductListMinimized);
   };
 
-  const handlePrint = useReactToPrint({
-    contentRef
-  });
+
 
   const handleAddProduct = (product) => {
     if (product.quantity > 0) {
@@ -80,7 +89,8 @@ const NewOrderPage = () => {
           ...product, 
           quantity: 1, 
           discount: 0,
-          distribution_price: product.distribution_price || product.cost_price || 0 
+          distribution_price: product.distribution_price || product.cost_price || 0,
+          price_type: 'regular' // Default price type for each item
         }]);
       }
       // Update the product quantity in the product list
@@ -127,6 +137,26 @@ const NewOrderPage = () => {
     ));
   };
 
+  // New handler for price type change
+  const handlePriceTypeChange = (productId, priceType) => {
+    setOrderItems(orderItems.map(item =>
+      item.id === productId ? { ...item, price_type: priceType } : item
+    ));
+  };
+
+  // Get price based on item's price type
+  const getPriceByPriceType = (item) => {
+    switch(item.price_type || 'regular') {
+      case 'walkin':
+        return item.walk_in_price || item.regular_price;
+      case 'wholesale':
+        return item.wholesale_price || item.regular_price;
+      case 'regular':
+      default:
+        return item.regular_price;
+    }
+  };
+
   const handleSubmitOrder = async (formData) => {
     if (orderItems.length === 0) {
       setAlertInfo({
@@ -144,27 +174,28 @@ const NewOrderPage = () => {
       const saleData = {
         customer_id: formData.customer?.id,
         customer: {
-          id :formData.customer?.id,
+          id: formData.customer?.id,
           customer_name: formData.customer?.customer_name || 'Walk-in Customer',
           contact_number: formData.phone || '',
           email: formData.customer?.email || '',
           address: formData.address || '',
           city: formData.city || ''
         },
-        customer_type: formData.customerType,
         payment_method: formData.paymentMethod,
         order_date: formData.orderDate,
         delivery_date: formData.deliveryDate,
         address: formData.address,
         city: formData.city,
         phone: formData.phone,
-        amount_received: 0, // Will be updated later if payment is received
+        amount_received: 0, 
+        term_days : formData.term_days,
         items: orderItems.map(item => ({
           product_id: item.id,
           quantity: item.quantity,
           distribution_price: item.distribution_price || item.cost_price || 0,
-          sold_price: getPriceByCustomerType(item, formData.customerType),
-          discount: item.discount || 0
+          sold_price: getPriceByPriceType(item),
+          discount: item.discount || 0,
+          price_type: item.price_type || 'regular' // Include price type for each item
         }))
       };
 
@@ -172,23 +203,13 @@ const NewOrderPage = () => {
       const result = await createSale(saleData);
       
       if (result) {
-        setCurrentDR({
-          ...formData,
-          invoice_number: result.invoice_number,
-          id: result.id,
-          orderItems: orderItems.map(item => ({
-            ...item,
-            price: getPriceByCustomerType(item, formData.customerType)
-          }))
-        });
-        
+   
+  
         setAlertInfo({
           open: true,
           message: 'Sale created successfully!',
           type: 'success'
         });
-
-
         
         // Clear order items
         setOrderItems([]);
@@ -198,12 +219,9 @@ const NewOrderPage = () => {
 
         navigate(`/app/delivery-report/${result.id}`, { 
             state: { reportData: result }
-          });
-        
-        // Print the invoice if requested
-        if (formData.printAfterSubmit) {
-          handlePrintDR(currentDR || formData);
-        }
+        });
+      
+
       }
     } catch (error) {
       console.error('Error creating sale:', error);
@@ -217,41 +235,6 @@ const NewOrderPage = () => {
     }
   };
 
-  // Get price based on customer type
-  const getPriceByCustomerType = (item, customerType) => {
-    switch(customerType) {
-      case 'walkin':
-        return item.walk_in_price || item.regular_price;
-      case 'wholesale':
-        return item.wholesale_price || item.regular_price;
-      case 'regular':
-      default:
-        return item.regular_price;
-    }
-  };
-
-  // Function to prepare and trigger printing
-  const handlePrintDR = (formData) => {
-    // Create temporary DR data for printing
-    const drData = {
-      customer: formData.customer,
-      orderDate: formData.orderDate,
-      deliveryDate: formData.deliveryDate,
-      paymentMethod: formData.paymentMethod,
-      orderItems: orderItems.map(item => ({
-        ...item,
-        price: getPriceByCustomerType(item, formData.customerType)
-      })),
-      totalPrice,
-      invoiceNumber: formData.invoice_number || currentDR?.invoice_number || "DR-" + Math.floor(100000 + Math.random() * 900000),
-    };
-    
-    setCurrentDR(drData);
-    // Delay slightly to ensure the state is updated
-    setTimeout(() => {
-      handlePrint();
-    }, 100);
-  };
 
   const handleCloseAlert = () => {
     setAlertInfo(prev => ({ ...prev, open: false }));
@@ -293,7 +276,7 @@ const NewOrderPage = () => {
               onRemoveProduct={handleRemoveProduct}
               onQuantityChange={handleQuantityChange}
               onDiscountChange={handleDiscountChange}
-              onPrint={handlePrintDR}
+              onPriceTypeChange={handlePriceTypeChange}
               isSubmitting={isSubmitting}
             />
           </Paper>
@@ -314,21 +297,6 @@ const NewOrderPage = () => {
         )}
       </Grid>
 
-      {/* Hidden component for printing */}
-      <div style={{ display: 'none' }}>
-        <PrintableDR 
-          deliveryReportData={currentDR}
-          contentRef={contentRef}
-        />
-      </div>
-
-      {/* Loading indicator */}
-      <Backdrop
-        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        open={isInventoryLoading || isSalesLoading || isSubmitting}
-      >
-        <CircularProgress color="inherit" />
-      </Backdrop>
 
       {/* Alert for notifications */}
       <Snackbar
