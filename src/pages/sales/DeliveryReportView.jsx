@@ -69,7 +69,7 @@ const DeliveryReportView = ({ refresh , report }) => {
     setReturnItems(
       returnItems.map(item => {
         if (item.id === itemId) {
-          const availableQuantity = item.max_quantity - returned_quantity; // Correct available quantity
+          const availableQuantity = item.max_quantity - (returned_quantity || 0); // Correct available quantity
           
           return {
             ...item,
