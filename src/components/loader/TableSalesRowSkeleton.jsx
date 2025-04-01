@@ -46,6 +46,11 @@ const TableRowSkeleton = ({ key }) => {
       <TableCell align="right">
         <Skeleton width={80} height={24} variant="text" sx={{ ml: 'auto' }} />
       </TableCell>
+
+      {/* Received */}
+      <TableCell align="right">
+        <Skeleton width={80} height={24} variant="text" sx={{ ml: 'auto' }} />
+      </TableCell>
       
       {/* Delivered */}
       <TableCell>
