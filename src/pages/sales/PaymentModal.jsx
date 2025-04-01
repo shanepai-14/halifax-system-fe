@@ -170,13 +170,11 @@ const PaymentModal = ({ open, handleClose, sale, onSuccess }) => {
                 label="Payment Method *"
                 disabled={isSubmitting}
               >
+                <MenuItem value="cod">Cash</MenuItem>
                 <MenuItem value="cash">Cash</MenuItem>
                 <MenuItem value="cheque">Cheque</MenuItem>
-                <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
                 <MenuItem value="online">Online Payment</MenuItem>
-                <MenuItem value="mobile_payment">Mobile Payment</MenuItem>
-                <MenuItem value="credit_card">Credit Card</MenuItem>
-                <MenuItem value="debit_card">Debit Card</MenuItem>
+
               </Select>
               {errors.payment_method && (
                 <Typography variant="caption" color="error">

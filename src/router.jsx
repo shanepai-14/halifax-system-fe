@@ -21,6 +21,8 @@ const SalesPage = Loadable(lazy(() => import('@/pages/sales/NewOrderPage')));
 const SalesTablePage = Loadable(lazy(() => import('@/pages/sales/SalesTablePage')));
 const InventoryProductDetail = Loadable(lazy(() => import('@pages/inventory/InventoryProductDetail')));
 const DeliveryReportPage = Loadable(lazy(() => import('@pages/sales/DeliveryReportPage')));
+const PaymentsIndex = Loadable(lazy(() => import('@/pages/payments/index')));
+const PaymentsPage = Loadable(lazy(() => import('@/pages/payments/PaymentsPage')));
 
 const AuthLogin = Loadable(lazy(() => import('@pages/authentication/login')));
 
@@ -120,6 +122,16 @@ const router = [   // Changed from object to array
           {
             path: 'delivery-report/:id',
             element: <DeliveryReportPage />,
+          },
+          {
+            path: 'payments',
+            element: <PaymentsIndex />,
+            children: [
+              {
+                index: true,
+                element: <PaymentsPage />
+              },
+            ]
           }
 
           

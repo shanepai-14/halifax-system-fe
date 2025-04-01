@@ -23,9 +23,9 @@ const PaymentReceipt = ({ receipt, onClose }) => {
     contentRef
   });
    console.log(receipt);
-  // if (!receipt || !receipt.payment || !receipt.sale) {
-  //   return null;
-  // }
+  if (!receipt || !receipt.payment || !receipt.sale) {
+    return null;
+  }
 
   const { payment, sale } = receipt;
   

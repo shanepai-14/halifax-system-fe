@@ -383,7 +383,7 @@ const DeliveryReportView = ({ refresh , report }) => {
               </Grid>
               <Grid item xs={6}>
               <Typography  fontWeight="bold" align="right">
-                ₱{(totalAmount - (totalCreditMemoAmount || 0)).toFixed(2)}
+                ₱{totalAmount.toFixed(2)}
               </Typography>
               </Grid>
               {report.amount_received !== '0.00' && report.amount_received && (

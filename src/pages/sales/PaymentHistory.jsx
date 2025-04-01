@@ -22,7 +22,6 @@ import {
 import { 
   ContainerOutlined ,
   DeleteOutlined,
-  PrinterOutlined 
 } from '@ant-design/icons';
 import { usePayments } from '@/hooks/usePayments';
 import { useSelector } from 'react-redux';
