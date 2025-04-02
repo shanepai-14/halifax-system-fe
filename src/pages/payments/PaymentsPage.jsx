@@ -374,6 +374,11 @@ const PaymentsPage = () => {
               inputProps={{ min: filters.startDate }}
             />
           </Grid>
+          <Grid item xs={6} md={1}>
+            <Button variant="contained"  size="small">
+             Export
+            </Button>
+          </Grid>
         </Grid>
       </Box>
       

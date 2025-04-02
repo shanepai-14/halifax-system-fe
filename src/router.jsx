@@ -23,6 +23,7 @@ const InventoryProductDetail = Loadable(lazy(() => import('@pages/inventory/Inve
 const DeliveryReportPage = Loadable(lazy(() => import('@pages/sales/DeliveryReportPage')));
 const PaymentsIndex = Loadable(lazy(() => import('@/pages/payments/index')));
 const PaymentsPage = Loadable(lazy(() => import('@/pages/payments/PaymentsPage')));
+const PettyCashManagement = Loadable(lazy(() => import('@pages/pettyCash/index')));
 
 const AuthLogin = Loadable(lazy(() => import('@pages/authentication/login')));
 
@@ -132,6 +133,10 @@ const router = [   // Changed from object to array
                 element: <PaymentsPage />
               },
             ]
+          },
+          {
+            path: 'petty-cash',
+            element: <PettyCashManagement />,
           }
 
           

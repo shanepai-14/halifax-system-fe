@@ -4,7 +4,7 @@ import { Outlet } from 'react-router-dom';
 
 const InventoryIndex = () => {
     return (
-        <MainCard title="Inventory Management">
+        <MainCard >
            <Outlet/>
        </MainCard>
     )

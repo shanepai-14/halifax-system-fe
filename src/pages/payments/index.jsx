@@ -4,7 +4,7 @@ import { Outlet } from 'react-router-dom';
 
 const PaymentsIndex = () => {
     return (
-        <MainCard title="Payments">
+        <MainCard>
            <Outlet/>
        </MainCard>
     )
