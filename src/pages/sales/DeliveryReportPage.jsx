@@ -19,8 +19,8 @@ const DeliveryReportPage = () => {
   const { getSaleById } = useSales();
   
 // Define the fetch function outside of useEffect
-const fetchReportData = async (reportId) => {
-  setIsLoading(true)
+const fetchReportData = async (reportId, silent = false) => {
+  if (!silent) setIsLoading(true); // Only set loading state if it's not a silent refresh
   try {
     const data = await getSaleById(reportId);
     if (data) {
@@ -33,8 +33,9 @@ const fetchReportData = async (reportId) => {
     console.error('Error fetching delivery report:', error);
     return null;
   }
-  setIsLoading(false);
+  if (!silent) setIsLoading(false); // Only set loading state to false if it's not a silent refresh
 };
+
 
 // In your component:
 useEffect(() => {

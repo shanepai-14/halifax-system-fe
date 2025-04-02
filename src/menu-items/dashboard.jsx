@@ -1,5 +1,5 @@
 // assets
-import { DashboardOutlined ,SmileOutlined , ShoppingCartOutlined ,DropboxOutlined ,AreaChartOutlined ,UserOutlined ,ProductOutlined ,ShoppingOutlined , AuditOutlined } from '@ant-design/icons';
+import { DashboardOutlined ,SmileOutlined , ShoppingCartOutlined ,DropboxOutlined ,AreaChartOutlined ,UserOutlined ,ProductOutlined ,ShoppingOutlined , AuditOutlined ,RedEnvelopeOutlined , AccountBookOutlined  } from '@ant-design/icons';
 
 
 
@@ -52,6 +52,14 @@ const dashboard = {
       breadcrumbs: false
     },
     {
+      id: 'payments',
+      title: 'Payments',
+      type: 'item',
+      url: '/app/payments',
+      icon: AccountBookOutlined  ,
+      breadcrumbs: false
+    },
+    {
       id: 'supplier',
       title: 'Supplier',
       type: 'item',
@@ -81,6 +89,14 @@ const dashboard = {
       type: 'item',
       url: '/app/inventory',
       icon: DropboxOutlined ,
+      breadcrumbs: false
+    },
+    {
+      id: 'pettyCash',
+      title: 'Petty Cash',
+      type: 'item',
+      url: '/app/petty-cash',
+      icon: RedEnvelopeOutlined  ,
       breadcrumbs: false
     },
  

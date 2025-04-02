@@ -2,13 +2,16 @@ import React, { useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import {
   Typography, Box, Paper, Grid, Divider, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Button, Snackbar, Alert
+  TableContainer, TableHead, TableRow, Button, Dialog,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { PrinterOutlined, RollbackOutlined, HomeOutlined } from '@ant-design/icons';
+import { PrinterOutlined, RollbackOutlined, HomeOutlined , DownOutlined , UpOutlined } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
 import CreditMemoModal from './CreditMemoModal';
 import CreditMemoReportModal from './CreditMemoReportModal';
+import PaymentButton from './PaymentButton';
+import PaymentHistory from './PaymentHistory';
+import PaymentReceipt from './PaymentReceipt';
 
 // Format date for display - if not provided in utils
 const formatDate = (dateString) => {
@@ -28,7 +31,11 @@ const DeliveryReportView = ({ refresh , report }) => {
   const [returnReason, setReturnReason] = useState('');
   const navigate = useNavigate();
   const contentRef = useRef();
+  const [showPaymentHistory, setShowPaymentHistory] = useState(false);
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
   const { createCreditMemo } = useSales();
+
+  
 
   // Initialize return items from report items
   React.useEffect(() => {
@@ -130,6 +137,21 @@ const DeliveryReportView = ({ refresh , report }) => {
   
     return total + returnTotal;
   }, 0) || 0;
+
+  const handlePaymentUpdate = async (result) => {
+    refresh(report.id , true);
+    const combinedData = {
+      ...report,
+      ...result.sale, 
+    };
+
+    setSelectedReceipt({ payment: { ...result },  sale: { ...combinedData } });
+  };
+  
+  // Add togglePaymentHistory function
+  const togglePaymentHistory = () => {
+    setShowPaymentHistory(!showPaymentHistory);
+  };
   
 
   if (!report) {
@@ -167,6 +189,11 @@ const DeliveryReportView = ({ refresh , report }) => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h5">Delivery Report Details</Typography>
           <Box>
+          <PaymentButton 
+            sale={report}
+            onPaymentSuccess={handlePaymentUpdate}
+            disabled={report.status == 'cancelled' || report.status == 'completed'}
+          />
             <Button
               variant="outlined"
               color="primary"
@@ -199,23 +226,23 @@ const DeliveryReportView = ({ refresh , report }) => {
             </Grid>
             <Grid item xs={12} md={12} sx={{ display: 'flex', justifyContent:'space-between'}}>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                  <Typography variant="h6">Halifax Glass & Aluminum Supply</Typography>
-                <Typography variant="body2">Malagamot Road, Panacan</Typography>
-                <Typography variant="body2">glasshalifax@gmail.com</Typography>
-                <Typography variant="body2">0939 924 3876</Typography>
+                <Typography variant="h5">Halifax Glass & Aluminum Supply</Typography>
+                <Typography >Malagamot Road, Panacan</Typography>
+                <Typography >glasshalifax@gmail.com</Typography>
+                <Typography >0939 924 3876</Typography>
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
           
-                <Typography variant="body2">
+                <Typography >
                   <strong>Order Date:</strong> {formatDate(report.order_date)}
                 </Typography>
-                <Typography variant="body2">
+                <Typography >
                   <strong>Delivery Date:</strong> {formatDate(report.delivery_date)}
                 </Typography>
-                <Typography variant="body2">
+                <Typography >
                   <strong>Payment Method:</strong> {report.payment_method.toUpperCase()}
                 </Typography>
-                <Typography variant="body2">
+                <Typography >
                   <strong>Status:</strong> {report.status.toUpperCase()}
                 </Typography>
               </Box>
@@ -227,23 +254,23 @@ const DeliveryReportView = ({ refresh , report }) => {
 
             <Grid item xs={6} md={6}>
               <Box sx={{ mb: 1 }}>
-                <Typography variant="subtitle2">
+                <Typography >
                 <strong> Delivered to:</strong>  {report.customer?.business_name || report.customer?.customer_name}
                 </Typography>
-                <Typography variant="body2"><strong>Address:</strong>  {report.customer?.business_address || report.address}</Typography>
-                <Typography variant="body2"><strong>City:</strong>  {report.city}</Typography>
-                <Typography variant="body2"><strong>Phone:</strong>  {report.phone}</Typography>
+                <Typography ><strong>Address:</strong>  {report.customer?.business_address || report.address}</Typography>
+                <Typography ><strong>City:</strong>  {report.city}</Typography>
+                <Typography ><strong>Phone:</strong>  {report.phone}</Typography>
               </Box>
             </Grid>
 
             <Grid item xs={6} md={6}>
               <Box sx={{ textAlign: 'right' }}>
-                <Typography variant="subtitle2">
+                <Typography variant="h6">
                   <strong>DR #:</strong> {report.invoice_number}
                 </Typography>
                 {report.term_days !== 0 && report.term_days && (
               <>
-                <Typography variant="subtitle2">
+                <Typography variant="h6">
                   <strong>Term :</strong> {report.term_days}
                 </Typography>
                 </>
@@ -294,27 +321,27 @@ const DeliveryReportView = ({ refresh , report }) => {
 
        <Box sx={{ display: 'flex',justifyContent: 'space-between' }}>
        <Box sx={{  display: 'flex', flexDirection:'column',justifyContent: 'flex-start' }}>
-            <Typography variant="body2">
+            <Typography >
               <strong>Delivery Status:</strong> {report.is_delivered ? 'Delivered' : 'Pending Delivery'}
             </Typography>
-            <Typography variant="body2">
+            <Typography >
               <strong>Encoded By:</strong> {report.user?.name}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Grid container spacing={0} sx={{ maxWidth: '400px' }}>
               <Grid item xs={6} >
-                <Typography variant="body2" align="right">Subtotal:</Typography>
+                <Typography  align="right">Subtotal:</Typography>
               </Grid>
               <Grid item xs={6}>
-                <Typography variant="body2" align="right">₱{subtotal.toFixed(2)}</Typography>
+                <Typography  align="right">₱{subtotal.toFixed(2)}</Typography>
               </Grid>
 
               <Grid item xs={6}>
-                <Typography variant="body2" align="right">Discount:</Typography>
+                <Typography  align="right">Discount:</Typography>
               </Grid>
               <Grid item xs={6}>
-                <Typography variant="body2" align="right">₱{totalDiscount.toFixed(2)}</Typography>
+                <Typography  align="right">₱{totalDiscount.toFixed(2)}</Typography>
               </Grid>
 
               {/* Credit Memo Total - Only show when returns exist */}
@@ -352,20 +379,20 @@ const DeliveryReportView = ({ refresh , report }) => {
               )}
 
               <Grid item xs={6}>
-                <Typography variant="body1" fontWeight="bold" align="right">Total Amount:</Typography>
+                <Typography  fontWeight="bold" align="right">Total Amount:</Typography>
               </Grid>
               <Grid item xs={6}>
-              <Typography variant="body1" fontWeight="bold" align="right">
-                ₱{(totalAmount - (totalCreditMemoAmount || 0)).toFixed(2)}
+              <Typography  fontWeight="bold" align="right">
+                ₱{totalAmount.toFixed(2)}
               </Typography>
               </Grid>
               {report.amount_received !== '0.00' && report.amount_received && (
               <>
                 <Grid item xs={6}>
-                  <Typography variant="body2" align="right">Amount Received:</Typography>
+                  <Typography  align="right">Amount Received:</Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  <Typography variant="body2" align="right">
+                  <Typography  align="right">
                     ₱{parseFloat(report.amount_received).toFixed(2)}
                   </Typography>
                 </Grid>
@@ -374,10 +401,10 @@ const DeliveryReportView = ({ refresh , report }) => {
          {report.change !== '0.00' && report.change && (
            <>
               <Grid item xs={6}>
-                <Typography variant="body2" align="right">Change:</Typography>
+                <Typography  align="right">Change:</Typography>
               </Grid>
               <Grid item xs={6}>
-                <Typography variant="body2" align="right">₱{parseFloat(report.change).toFixed(2)} {typeof(report.change)}</Typography>
+                <Typography  align="right">₱{parseFloat(report.change).toFixed(2)} {typeof(report.change)}</Typography>
               </Grid>
            
             </>
@@ -389,7 +416,7 @@ const DeliveryReportView = ({ refresh , report }) => {
           {/* Additional Information */}
           {report.remarks && (
             <Box sx={{ mt: 3 }}>
-              <Typography variant="subtitle2">Remarks:</Typography>
+              <Typography >Remarks:</Typography>
               <Typography variant="body2">{report.remarks}</Typography>
             </Box>
           )}
@@ -399,17 +426,17 @@ const DeliveryReportView = ({ refresh , report }) => {
           <Grid container spacing={2} sx={{ mt: 4,px:2,display:'flex',justifyContent:'space-between' }} >
             <Grid item xs={2.4}>
               <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
-                <Typography variant="caption">Prepared By</Typography>
+                <Typography >Prepared By</Typography>
               </Box>
             </Grid>
             <Grid item xs={2.4}>
               <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
-                <Typography variant="caption">Checked By</Typography>
+                <Typography >Checked By</Typography>
               </Box>
             </Grid>
             <Grid item xs={2.4}>
               <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
-                <Typography variant="caption">Released By</Typography>
+                <Typography >Released By</Typography>
               </Box>
             </Grid>
            
@@ -417,17 +444,54 @@ const DeliveryReportView = ({ refresh , report }) => {
           <Grid container spacing={2} sx={{ mt: 4,px:2,display:'flex',justifyContent:'center',gap:30 }} >
           <Grid item xs={2.4}>
               <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
-                <Typography variant="caption">Delivered By</Typography>
+                <Typography >Delivered By</Typography>
               </Box>
             </Grid>
             <Grid item xs={2.4}>
               <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
-                <Typography variant="caption">Received By</Typography>
+                <Typography >Received By</Typography>
               </Box>
             </Grid>
             </Grid>
         </Box>
       </Paper>
+
+      <Box sx={{ mt: 3, mb: 2 }}>
+  <Button 
+    variant="text" 
+    color="primary"
+    onClick={togglePaymentHistory}
+    startIcon={showPaymentHistory ? <UpOutlined /> : <DownOutlined />}
+  >
+    {showPaymentHistory ? 'Hide Payment History' : 'Show Payment History'}
+  </Button>
+</Box>
+
+
+    {showPaymentHistory && (
+      <Box sx={{ mt: 2 }}>
+        <PaymentHistory 
+          sale={report} 
+          onPaymentUpdate={handlePaymentUpdate}
+          setSelectedReceipt={setSelectedReceipt}
+        />
+      </Box>
+    )}
+    {selectedReceipt && (
+
+      <Dialog 
+        open={!!selectedReceipt}
+        onClose={() => setSelectedReceipt(null)}
+        maxWidth="md"
+        fullWidth
+      >
+        <PaymentReceipt 
+          receipt={selectedReceipt} 
+          onClose={() => setSelectedReceipt(null)}
+        />
+      </Dialog>
+       )}
+    
 
       {/* Credit Memo Modal Component */}
       <CreditMemoModal 

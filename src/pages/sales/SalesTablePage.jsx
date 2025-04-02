@@ -351,6 +351,7 @@ const SalesTablePage = () => {
               <TableCell>Delivery Date</TableCell>
               <TableCell>City</TableCell>
               <TableCell align="right">Total</TableCell>
+              <TableCell align="right">Received</TableCell>
               <TableCell>Delivered</TableCell>
             </TableRow>
           </TableHead>
@@ -396,6 +397,7 @@ const SalesTablePage = () => {
                     <TableCell>{formatDate(sale.delivery_date)}</TableCell>
                     <TableCell>{sale.city || '-'}</TableCell>
                     <TableCell align="right">{formatCurrency(sale.total)}</TableCell>
+                    <TableCell align="right">{formatCurrency(sale.amount_received)}</TableCell>
                     <TableCell>
                       <Chip 
                         label={sale.is_delivered ? 'YES' : 'NO'}

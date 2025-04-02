@@ -4,7 +4,7 @@ import { Outlet } from 'react-router-dom';
 
 const CustomersIndex = () => {
   return (
-    <MainCard title="Customers">
+    <MainCard >
       <Outlet />
     </MainCard>
   );
