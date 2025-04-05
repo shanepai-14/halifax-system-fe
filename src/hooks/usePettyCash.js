@@ -77,9 +77,17 @@ export const usePettyCash = () => {
     try {
       dispatch(fetchStart());
       const response = await api.post('/petty-cash/funds', fundData);
-      dispatch(addFundSuccess(response.data.data));
+      
+      // Add the full response data to the store with more details for receipt
+      const fundWithDetails = {
+        ...response.data.data,
+        creator: { name: 'Current User' }, // You can replace this with actual user data if available
+        created_at: new Date().toISOString()
+      };
+      
+      dispatch(addFundSuccess(fundWithDetails));
       toast.success('Petty cash fund created successfully');
-      return response.data.data;
+      return fundWithDetails;
     } catch (err) {
       console.error('Error creating petty cash fund:', err);
       dispatch(fetchFailed(err.message));
@@ -93,9 +101,17 @@ export const usePettyCash = () => {
     try {
       dispatch(fetchStart());
       const response = await api.put(`/petty-cash/funds/${id}/approve`);
-      dispatch(updateFundSuccess(response.data.data));
+      
+      // Add more details to the response for receipt
+      const approvedFund = {
+        ...response.data.data,
+        approver: { name: 'Current Approver' }, // You can replace this with actual user data if available
+        updated_at: new Date().toISOString()
+      };
+      
+      dispatch(updateFundSuccess(approvedFund));
       toast.success('Petty cash fund approved successfully');
-      return response.data.data;
+      return approvedFund;
     } catch (err) {
       console.error('Error approving petty cash fund:', err);
       dispatch(fetchFailed(err.message));
@@ -146,9 +162,16 @@ export const usePettyCash = () => {
         response = await api.post('/petty-cash/transactions', transactionData);
       }
       
-      dispatch(addTransactionSuccess(response.data.data));
+      // Add more details to the transaction for receipt
+      const transactionWithDetails = {
+        ...response.data.data,
+        issuer: { name: 'Current User' }, // You can replace with actual user data
+        created_at: new Date().toISOString()
+      };
+      
+      dispatch(addTransactionSuccess(transactionWithDetails));
       toast.success('Petty cash transaction created successfully');
-      return response.data.data;
+      return transactionWithDetails;
     } catch (err) {
       console.error('Error creating petty cash transaction:', err);
       dispatch(fetchFailed(err.message));
@@ -174,9 +197,15 @@ export const usePettyCash = () => {
         response = await api.put(`/petty-cash/transactions/${id}/settle`, settlementData);
       }
       
-      dispatch(updateTransactionSuccess(response.data.data));
+      // Add more details for receipt
+      const settledTransaction = {
+        ...response.data.data,
+        updated_at: new Date().toISOString()
+      };
+      
+      dispatch(updateTransactionSuccess(settledTransaction));
       toast.success('Petty cash transaction settled successfully');
-      return response.data.data;
+      return settledTransaction;
     } catch (err) {
       console.error('Error settling petty cash transaction:', err);
       dispatch(fetchFailed(err.message));
@@ -190,9 +219,17 @@ export const usePettyCash = () => {
     try {
       dispatch(fetchStart());
       const response = await api.put(`/petty-cash/transactions/${id}/approve`);
-      dispatch(updateTransactionSuccess(response.data.data));
+      
+      // Add more details for receipt
+      const approvedTransaction = {
+        ...response.data.data,
+        approver: { name: 'Current Approver' }, // Replace with actual user data
+        updated_at: new Date().toISOString()
+      };
+      
+      dispatch(updateTransactionSuccess(approvedTransaction));
       toast.success('Petty cash transaction approved successfully');
-      return response.data.data;
+      return approvedTransaction;
     } catch (err) {
       console.error('Error approving petty cash transaction:', err);
       dispatch(fetchFailed(err.message));

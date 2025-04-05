@@ -82,15 +82,16 @@ const AddTransactionModal = ({ open, onClose, onSuccess, employees, balance }) =
         ...formData,
         amount_issued: parseFloat(formData.amount_issued)
       };
-      
-      await createTransaction(data);
-      handleClose(true);
+
+      const result =  await createTransaction(data);
+
+      handleClose(true ,result);
     } catch (error) {
       console.error('Error adding transaction:', error);
     }
   };
 
-  const handleClose = (success = false) => {
+  const handleClose = (success = false, result = null) => {
     setFormData({
       employee_id: '',
       date: new Date().toISOString().split('T')[0],
@@ -99,7 +100,7 @@ const AddTransactionModal = ({ open, onClose, onSuccess, employees, balance }) =
       amount_issued: ''
     });
     setErrors({});
-    success ? onSuccess() : onClose();
+    success ? onSuccess(result) : onClose();
   };
 
   return (

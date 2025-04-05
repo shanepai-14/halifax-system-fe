@@ -1,15 +1,8 @@
 import React, { useState, useEffect , useRef } from 'react';
 import {
   Box,
-  Typography,
   Tabs,
   Tab,
-  Container,
-  Divider,
-  Paper,
-  Button,
-  Backdrop,
-  CircularProgress
 } from '@mui/material';
 import { WalletOutlined, TeamOutlined, BarChartOutlined } from '@ant-design/icons';
 
@@ -70,15 +63,6 @@ const PettyCashManagement = () => {
     setActiveTab(newValue);
   };
 
-  const handleRefreshData = async () => {
-    if (activeTab === 0) {
-      await Promise.all([getBalance(), getStats()]);
-    } else if (activeTab === 1) {
-      await getEmployeeStats();
-    } else if (activeTab === 2) {
-      await Promise.all([getBalance(), getStats(), getEmployeeStats()]);
-    }
-  };
 
   return (
     <MainCard >

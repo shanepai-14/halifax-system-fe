@@ -23,7 +23,8 @@ import {
   FormControl,
   InputLabel,
   Select,
-  InputAdornment
+  InputAdornment,
+  CircularProgress
 } from '@mui/material';
 import {
   WalletOutlined,
@@ -34,14 +35,19 @@ import {
   EditOutlined,
   FilterOutlined,
   ReloadOutlined,
-  DownloadOutlined
+  DownloadOutlined,
+  EyeOutlined,
+  PrinterOutlined
 } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
+import { toast } from 'sonner';
 import { usePettyCash } from '@/hooks/usePettyCash';
 import { useEmployees } from '@/hooks/useEmployees';
 import AddFundModal from './modals/AddFundModal';
 import AddTransactionModal from './modals/AddTransactionModal';
 import SettleTransactionModal from './modals/SettleTransactionModal';
+import TransactionReceiptModal from './modals/TransactionReceiptModal';
+import FundReceiptModal from './modals/FundReceiptModal';
 
 // Helper function to format currency
 const formatCurrency = (amount) => {
@@ -49,7 +55,7 @@ const formatCurrency = (amount) => {
     style: 'currency', 
     currency: 'PHP',
     minimumFractionDigits: 2
-  }).format(amount);
+  }).format(amount || 0);
 };
 
 // Helper function to format date
@@ -68,7 +74,10 @@ const PettyCashTab = () => {
   const [addFundModalOpen, setAddFundModalOpen] = useState(false);
   const [addTransactionModalOpen, setAddTransactionModalOpen] = useState(false);
   const [settleTransactionModalOpen, setSettleTransactionModalOpen] = useState(false);
+  const [transactionReceiptModalOpen, setTransactionReceiptModalOpen] = useState(false);
+  const [fundReceiptModalOpen, setFundReceiptModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [selectedFund, setSelectedFund] = useState(null);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -78,6 +87,11 @@ const PettyCashTab = () => {
   const [endDate, setEndDate] = useState(
     new Date().toISOString().split('T')[0] // Today
   );
+  const [showNewFundReceipt, setShowNewFundReceipt] = useState(false);
+  const [showNewTransactionReceipt, setShowNewTransactionReceipt] = useState(false);
+  const [newlyCreatedFund, setNewlyCreatedFund] = useState(null);
+  const [newlyCreatedTransaction, setNewlyCreatedTransaction] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Custom hooks
   const { 
@@ -90,6 +104,9 @@ const PettyCashTab = () => {
     approveFund,
     approveTransaction,
     cancelTransaction,
+    createFund,
+    createTransaction,
+    settleTransaction,
     loading: pettyCashLoading 
   } = usePettyCash();
   
@@ -98,7 +115,7 @@ const PettyCashTab = () => {
   useEffect(() => {
     loadData();
     getAllEmployees();
-  }, [subTab]);
+  }, [subTab, refreshKey]);
 
   const loadData = async () => {
     try {
@@ -115,9 +132,16 @@ const PettyCashTab = () => {
       } else {
         await getAllFunds(filters);
       }
+      
+      // Also refresh the balance
+      await getBalance();
     } catch (error) {
       console.error('Error loading data:', error);
     }
+  };
+
+  const handleRefreshData = () => {
+    setRefreshKey(prevKey => prevKey + 1);
   };
 
   const handleSearch = () => {
@@ -131,9 +155,17 @@ const PettyCashTab = () => {
   const handleApprove = async (id, type) => {
     try {
       if (type === 'fund') {
-        await approveFund(id);
+        const result = await approveFund(id);
+        if (result) {
+          setSelectedFund(result);
+          setFundReceiptModalOpen(true);
+        }
       } else {
-        await approveTransaction(id);
+        const result = await approveTransaction(id);
+        if (result) {
+          setSelectedTransaction(result);
+          setTransactionReceiptModalOpen(true);
+        }
       }
       loadData();
     } catch (error) {
@@ -156,6 +188,47 @@ const PettyCashTab = () => {
   const handleSettleTransaction = (transaction) => {
     setSelectedTransaction(transaction);
     setSettleTransactionModalOpen(true);
+  };
+
+  const handleSettleSuccess = async (data) => {
+    try {
+      const result = await settleTransaction(selectedTransaction.id, data);
+      if (result) {
+        setSettleTransactionModalOpen(false);
+        setSelectedTransaction(result);
+        setTransactionReceiptModalOpen(true);
+        loadData();
+      }
+    } catch (error) {
+      console.error('Error settling transaction:', error);
+    }
+  };
+
+  const handleViewTransaction = (transaction) => {
+    setSelectedTransaction(transaction);
+    setTransactionReceiptModalOpen(true);
+  };
+
+  const handleViewFund = (fund) => {
+    setSelectedFund(fund);
+    setFundReceiptModalOpen(true);
+  };
+
+  const handleAddFund = (result) => {
+
+        setAddFundModalOpen(false);
+        setNewlyCreatedFund(result);
+        setShowNewFundReceipt(true);
+        loadData();
+        
+  };
+
+  const handleAddTransaction =  (result) => {
+
+        setAddTransactionModalOpen(false);
+        setNewlyCreatedTransaction(result);
+        setShowNewTransactionReceipt(true);
+        loadData();
   };
 
   const getStatusChip = (status) => {
@@ -270,6 +343,16 @@ const PettyCashTab = () => {
             <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <Box>
                 <Button
+                  variant="outlined"
+                  color="primary"
+                  startIcon={<ReloadOutlined />}
+                  onClick={handleRefreshData}
+                  sx={{ mr: 2 }}
+                  disabled={pettyCashLoading}
+                >
+                  Refresh
+                </Button>
+                <Button
                   variant="contained"
                   color="primary"
                   startIcon={<PlusOutlined />}
@@ -305,15 +388,35 @@ const PettyCashTab = () => {
             <Tab label="Funds" id="petty-cash-subtab-1" />
           </Tabs>
         </Box>
-        <Button
-          variant="outlined"
-          color="primary"
-          startIcon={<DownloadOutlined />}
-          onClick={exportToExcel}
-          disabled={pettyCashLoading || (subTab === 0 ? transactions.length === 0 : funds.length === 0)}
-        >
-          Export to Excel
-        </Button>
+        <Box>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<PrinterOutlined />}
+            onClick={() => {
+              if (subTab === 0 && transactions.length > 0) {
+                handleViewTransaction(transactions[0]);
+              } else if (subTab === 1 && funds.length > 0) {
+                handleViewFund(funds[0]);
+              } else {
+                toast.info('No records available to view');
+              }
+            }}
+            sx={{ mr: 2 }}
+            disabled={pettyCashLoading || (subTab === 0 ? transactions.length === 0 : funds.length === 0)}
+          >
+            View Latest
+          </Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<DownloadOutlined />}
+            onClick={exportToExcel}
+            disabled={pettyCashLoading || (subTab === 0 ? transactions.length === 0 : funds.length === 0)}
+          >
+            Export to Excel
+          </Button>
+        </Box>
       </Box>
 
       {/* Filters */}
@@ -362,26 +465,26 @@ const PettyCashTab = () => {
           </Grid>
           
           {subTab === 0 && (
-        <Grid item xs={12} md={2}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Employee</InputLabel>
-            <Select
-              value={selectedEmployeeId}
-              onChange={(e) => setSelectedEmployeeId(e.target.value)}
-              label="Employee"
-            >
-              <MenuItem value="">All Employees</MenuItem>
-              {[
-                ...employees.map((employee) => (
-                  <MenuItem key={employee.id} value={employee.id}>
-                    {employee.full_name}
-                  </MenuItem>
-                ))
-              ]}
-            </Select>
-          </FormControl>
-        </Grid>
-      )}
+            <Grid item xs={12} md={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Employee</InputLabel>
+                <Select
+                  value={selectedEmployeeId}
+                  onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                  label="Employee"
+                >
+                  <MenuItem value="">All Employees</MenuItem>
+                  {[
+                    ...employees.map((employee) => (
+                      <MenuItem key={employee.id} value={employee.id}>
+                        {employee.full_name}
+                      </MenuItem>
+                    ))
+                  ]}
+                </Select>
+              </FormControl>
+            </Grid>
+          )}
           
           <Grid item xs={6} md={2}>
             <TextField
@@ -440,7 +543,9 @@ const PettyCashTab = () => {
             <TableBody>
               {pettyCashLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">Loading...</TableCell>
+                  <TableCell colSpan={7} align="center">
+                    <CircularProgress size={24} />
+                  </TableCell>
                 </TableRow>
               ) : funds.length === 0 ? (
                 <TableRow>
@@ -449,13 +554,34 @@ const PettyCashTab = () => {
               ) : (
                 funds.map((fund) => (
                   <TableRow key={fund.id}>
-                    <TableCell>{fund.transaction_reference}</TableCell>
+                    <TableCell>
+                      <Typography
+                        component="span"
+                        sx={{ 
+                          cursor: 'pointer', 
+                          color: 'primary.main',
+                          '&:hover': { textDecoration: 'underline' } 
+                        }}
+                        onClick={() => handleViewFund(fund)}
+                      >
+                        {fund.transaction_reference}
+                      </Typography>
+                    </TableCell>
                     <TableCell>{formatDate(fund.date)}</TableCell>
                     <TableCell>{fund.description}</TableCell>
                     <TableCell align="right">{formatCurrency(fund.amount)}</TableCell>
                     <TableCell>{getStatusChip(fund.status)}</TableCell>
                     <TableCell>{fund.creator?.name || '-'}</TableCell>
                     <TableCell>
+                      <Tooltip title="View Receipt">
+                        <IconButton
+                          color="primary"
+                          size="small"
+                          onClick={() => handleViewFund(fund)}
+                        >
+                          <EyeOutlined />
+                        </IconButton>
+                      </Tooltip>
                       {fund.status === 'pending' && (
                         <Tooltip title="Approve">
                           <IconButton 
@@ -493,7 +619,9 @@ const PettyCashTab = () => {
             <TableBody>
               {pettyCashLoading ? (
                 <TableRow>
-                  <TableCell colSpan={9} align="center">Loading...</TableCell>
+                  <TableCell colSpan={9} align="center">
+                    <CircularProgress size={24} />
+                  </TableCell>
                 </TableRow>
               ) : transactions.length === 0 ? (
                 <TableRow>
@@ -502,7 +630,19 @@ const PettyCashTab = () => {
               ) : (
                 transactions.map((transaction) => (
                   <TableRow key={transaction.id}>
-                    <TableCell>{transaction.transaction_reference}</TableCell>
+                    <TableCell>
+                      <Typography
+                        component="span"
+                        sx={{ 
+                          cursor: 'pointer', 
+                          color: 'primary.main',
+                          '&:hover': { textDecoration: 'underline' } 
+                        }}
+                        onClick={() => handleViewTransaction(transaction)}
+                      >
+                        {transaction.transaction_reference}
+                      </Typography>
+                    </TableCell>
                     <TableCell>{formatDate(transaction.date)}</TableCell>
                     <TableCell>{transaction.employee?.full_name || '-'}</TableCell>
                     <TableCell>{transaction.purpose}</TableCell>
@@ -511,6 +651,15 @@ const PettyCashTab = () => {
                     <TableCell align="right">{formatCurrency(transaction.amount_returned || 0)}</TableCell>
                     <TableCell>{getStatusChip(transaction.status)}</TableCell>
                     <TableCell>
+                      <Tooltip title="View Receipt">
+                        <IconButton
+                          color="primary"
+                          size="small"
+                          onClick={() => handleViewTransaction(transaction)}
+                        >
+                          <EyeOutlined />
+                        </IconButton>
+                      </Tooltip>
                       {transaction.status === 'issued' && (
                         <Tooltip title="Settle">
                           <IconButton 
@@ -557,20 +706,13 @@ const PettyCashTab = () => {
       <AddFundModal
         open={addFundModalOpen}
         onClose={() => setAddFundModalOpen(false)}
-        onSuccess={() => {
-          setAddFundModalOpen(false);
-          loadData();
-        }}
+        onSuccess={handleAddFund}
       />
 
       <AddTransactionModal
         open={addTransactionModalOpen}
         onClose={() => setAddTransactionModalOpen(false)}
-        onSuccess={() => {
-          setAddTransactionModalOpen(false);
-          loadData();
-          getBalance();
-        }}
+        onSuccess={handleAddTransaction}
         employees={employees}
         balance={balance || 0}
       />
@@ -581,13 +723,50 @@ const PettyCashTab = () => {
           setSettleTransactionModalOpen(false);
           setSelectedTransaction(null);
         }}
-        onSuccess={() => {
-          setSettleTransactionModalOpen(false);
+        onSuccess={handleSettleSuccess}
+        transaction={selectedTransaction}
+      />
+
+      {/* Fund Receipt Modal */}
+      <FundReceiptModal
+        open={fundReceiptModalOpen}
+        onClose={() => {
+          setFundReceiptModalOpen(false);
+          setSelectedFund(null);
+        }}
+        fund={selectedFund}
+      />
+
+      {/* Transaction Receipt Modal */}
+      <TransactionReceiptModal
+        open={transactionReceiptModalOpen}
+        onClose={() => {
+          setTransactionReceiptModalOpen(false);
           setSelectedTransaction(null);
-          loadData();
-          getBalance();
         }}
         transaction={selectedTransaction}
+      />
+
+      {/* New Fund Receipt Modal */}
+      <FundReceiptModal
+        open={showNewFundReceipt}
+        onClose={() => {
+          setShowNewFundReceipt(false);
+          setNewlyCreatedFund(null);
+        }}
+        fund={newlyCreatedFund}
+        isNew={true}
+      />
+
+      {/* New Transaction Receipt Modal */}
+      <TransactionReceiptModal
+        open={showNewTransactionReceipt}
+        onClose={() => {
+          setShowNewTransactionReceipt(false);
+          setNewlyCreatedTransaction(null);
+        }}
+        transaction={newlyCreatedTransaction}
+        isNew={true}
       />
     </Box>
   );

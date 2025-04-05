@@ -69,21 +69,21 @@ const AddFundModal = ({ open, onClose, onSuccess }) => {
         amount: parseFloat(formData.amount)
       };
       
-      await createFund(data);
-      handleClose(true);
+      const result = await createFund(data);
+      handleClose(true, result);
     } catch (error) {
       console.error('Error adding fund:', error);
     }
   };
 
-  const handleClose = (success = false) => {
+  const handleClose = (success = false, result = null) => {
     setFormData({
       date: new Date().toISOString().split('T')[0],
       amount: '',
       description: ''
     });
     setErrors({});
-    success ? onSuccess() : onClose();
+    success ? onSuccess(result) : onClose();
   };
 
   return (
