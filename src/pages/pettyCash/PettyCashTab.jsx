@@ -33,9 +33,10 @@ import {
   CloseCircleOutlined,
   EditOutlined,
   FilterOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  DownloadOutlined
 } from '@ant-design/icons';
-import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 import { usePettyCash } from '@/hooks/usePettyCash';
 import { useEmployees } from '@/hooks/useEmployees';
 import AddFundModal from './modals/AddFundModal';
@@ -62,7 +63,7 @@ const formatDate = (dateString) => {
   });
 };
 
-const PettyCashTab = ({ refresh }) => {
+const PettyCashTab = () => {
   const [subTab, setSubTab] = useState(0);
   const [addFundModalOpen, setAddFundModalOpen] = useState(false);
   const [addTransactionModalOpen, setAddTransactionModalOpen] = useState(false);
@@ -83,6 +84,7 @@ const PettyCashTab = ({ refresh }) => {
     funds, 
     transactions, 
     balance, 
+    getBalance,
     getAllFunds, 
     getAllTransactions, 
     approveFund,
@@ -113,7 +115,6 @@ const PettyCashTab = ({ refresh }) => {
       } else {
         await getAllFunds(filters);
       }
-      refresh();
     } catch (error) {
       console.error('Error loading data:', error);
     }
@@ -176,6 +177,82 @@ const PettyCashTab = ({ refresh }) => {
     }
   };
 
+  const exportToExcel = () => {
+    try {
+      const dataToExport = subTab === 0 ? transactions : funds;
+      
+      // Prepare the data based on which tab is active
+      let sheetData = [];
+      
+      if (subTab === 0) { // Transactions
+        // Header row
+        sheetData.push([
+          'Reference',
+          'Date',
+          'Employee',
+          'Purpose',
+          'Issued Amount',
+          'Spent Amount',
+          'Returned Amount',
+          'Status',
+        ]);
+        
+        // Data rows
+        dataToExport.forEach(item => {
+          sheetData.push([
+            item.transaction_reference || '',
+            formatDate(item.date) || '',
+            item.employee?.full_name || '',
+            item.purpose || '',
+            item.amount_issued || 0,
+            item.amount_spent || 0,
+            item.amount_returned || 0,
+            item.status || '',
+          ]);
+        });
+      } else { // Funds
+        // Header row
+        sheetData.push([
+          'Reference',
+          'Date',
+          'Description',
+          'Amount',
+          'Status',
+        ]);
+        
+        // Data rows
+        dataToExport.forEach(item => {
+          sheetData.push([
+            item.transaction_reference || '',
+            formatDate(item.date) || '',
+            item.description || '',
+            item.amount || 0,
+            item.status || '',
+          ]);
+        });
+      }
+      
+      // Create a worksheet
+      const ws = XLSX.utils.aoa_to_sheet(sheetData);
+      
+      // Create a workbook
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, subTab === 0 ? 'Transactions' : 'Funds');
+      
+      // Generate filename
+      const fileName = `PettyCash_${subTab === 0 ? 'Transactions' : 'Funds'}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      
+      // Write the file and download
+      XLSX.writeFile(wb, fileName);
+      
+      // Show success notification
+      toast.success(`${subTab === 0 ? 'Transactions' : 'Funds'} exported successfully`);
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      toast.error('Failed to export data');
+    }
+  };
+
   return (
     <Box>
       {/* Summary Card */}
@@ -215,18 +292,28 @@ const PettyCashTab = ({ refresh }) => {
         </CardContent>
       </Card>
 
-      {/* Tabs for Funds and Transactions */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs 
-          value={subTab} 
-          onChange={handleChangeSubTab} 
-          aria-label="petty cash sub-tabs"
-          textColor="primary"
-          indicatorColor="primary"
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs 
+            value={subTab} 
+            onChange={handleChangeSubTab} 
+            aria-label="petty cash sub-tabs"
+            textColor="primary"
+            indicatorColor="primary"
+          >
+            <Tab label="Transactions" id="petty-cash-subtab-0" />
+            <Tab label="Funds" id="petty-cash-subtab-1" />
+          </Tabs>
+        </Box>
+        <Button
+          variant="outlined"
+          color="primary"
+          startIcon={<DownloadOutlined />}
+          onClick={exportToExcel}
+          disabled={pettyCashLoading || (subTab === 0 ? transactions.length === 0 : funds.length === 0)}
         >
-          <Tab label="Transactions" id="petty-cash-subtab-0" />
-          <Tab label="Funds" id="petty-cash-subtab-1" />
-        </Tabs>
+          Export to Excel
+        </Button>
       </Box>
 
       {/* Filters */}
@@ -261,13 +348,12 @@ const PettyCashTab = ({ refresh }) => {
                 <MenuItem value="all">All Status</MenuItem>
                 <MenuItem value="pending">Pending</MenuItem>
                 <MenuItem value="approved">Approved</MenuItem>
-                {subTab === 0 && (
-                  <>
-                    <MenuItem value="issued">Issued</MenuItem>
-                    <MenuItem value="settled">Settled</MenuItem>
-                    <MenuItem value="cancelled">Cancelled</MenuItem>
-                  </>
-                )}
+            
+              {subTab === 0 && [
+                <MenuItem key="issued" value="issued">Issued</MenuItem>,
+                <MenuItem key="settled" value="settled">Settled</MenuItem>,
+                <MenuItem key="cancelled" value="cancelled">Cancelled</MenuItem>,
+              ]}
                 {subTab === 1 && (
                   <MenuItem value="rejected">Rejected</MenuItem>
                 )}
@@ -276,24 +362,26 @@ const PettyCashTab = ({ refresh }) => {
           </Grid>
           
           {subTab === 0 && (
-            <Grid item xs={12} md={2}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Employee</InputLabel>
-                <Select
-                  value={selectedEmployeeId}
-                  onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                  label="Employee"
-                >
-                  <MenuItem value="">All Employees</MenuItem>
-                  {employees.map((employee) => (
-                    <MenuItem key={employee.id} value={employee.id}>
-                      {employee.full_name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          )}
+        <Grid item xs={12} md={2}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Employee</InputLabel>
+            <Select
+              value={selectedEmployeeId}
+              onChange={(e) => setSelectedEmployeeId(e.target.value)}
+              label="Employee"
+            >
+              <MenuItem value="">All Employees</MenuItem>
+              {[
+                ...employees.map((employee) => (
+                  <MenuItem key={employee.id} value={employee.id}>
+                    {employee.full_name}
+                  </MenuItem>
+                ))
+              ]}
+            </Select>
+          </FormControl>
+        </Grid>
+      )}
           
           <Grid item xs={6} md={2}>
             <TextField
@@ -481,6 +569,7 @@ const PettyCashTab = ({ refresh }) => {
         onSuccess={() => {
           setAddTransactionModalOpen(false);
           loadData();
+          getBalance();
         }}
         employees={employees}
         balance={balance || 0}
@@ -496,6 +585,7 @@ const PettyCashTab = ({ refresh }) => {
           setSettleTransactionModalOpen(false);
           setSelectedTransaction(null);
           loadData();
+          getBalance();
         }}
         transaction={selectedTransaction}
       />

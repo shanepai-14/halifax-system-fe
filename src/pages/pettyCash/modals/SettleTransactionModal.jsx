@@ -66,7 +66,7 @@ const SettleTransactionModal = ({ open, onClose, onSuccess, transaction }) => {
       if (remainder >= 0) {
         setFormData(prev => ({
           ...prev,
-          amount_returned: remainder
+          amount_returned: Number(remainder)
         }));
       }
     }
@@ -113,7 +113,9 @@ const SettleTransactionModal = ({ open, onClose, onSuccess, transaction }) => {
       newErrors.amount_spent = 'Amount spent cannot exceed issued amount';
     }
 
-    if (!formData.amount_returned) {
+    if (formData.amount_returned === null || 
+      formData.amount_returned === '' || 
+      formData.amount_returned === undefined) {
       newErrors.amount_returned = 'Amount returned is required';
     } else if (parseFloat(formData.amount_returned) < 0) {
       newErrors.amount_returned = 'Amount returned cannot be negative';
