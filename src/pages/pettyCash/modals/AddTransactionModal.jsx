@@ -12,10 +12,7 @@ import {
   IconButton,
   InputAdornment,
   FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormHelperText,
+  Autocomplete,
   Alert
 } from '@mui/material';
 import { CloseOutlined, DollarOutlined, UserOutlined } from '@ant-design/icons';
@@ -24,7 +21,6 @@ import { usePettyCash } from '@/hooks/usePettyCash';
 const AddTransactionModal = ({ open, onClose, onSuccess, employees, balance }) => {
   const [formData, setFormData] = useState({
     employee_id: '',
-    date: new Date().toISOString().split('T')[0],
     purpose: '',
     description: '',
     amount_issued: ''
@@ -50,9 +46,7 @@ const AddTransactionModal = ({ open, onClose, onSuccess, employees, balance }) =
       newErrors.employee_id = 'Employee is required';
     }
 
-    if (!formData.date) {
-      newErrors.date = 'Date is required';
-    }
+
 
     if (!formData.purpose.trim()) {
       newErrors.purpose = 'Purpose is required';
@@ -94,7 +88,6 @@ const AddTransactionModal = ({ open, onClose, onSuccess, employees, balance }) =
   const handleClose = (success = false, result = null) => {
     setFormData({
       employee_id: '',
-      date: new Date().toISOString().split('T')[0],
       purpose: '',
       description: '',
       amount_issued: ''
@@ -123,48 +116,48 @@ const AddTransactionModal = ({ open, onClose, onSuccess, employees, balance }) =
           </Alert>
           
           <FormControl 
-            fullWidth 
-            margin="dense" 
-            error={!!errors.employee_id}
-          >
-            <InputLabel id="employee-label">Employee *</InputLabel>
-            <Select
-              labelId="employee-label"
-              name="employee_id"
-              value={formData.employee_id}
-              onChange={handleChange}
-              label="Employee *"
-              startAdornment={
-                <InputAdornment position="start">
-                  <UserOutlined />
-                </InputAdornment>
-              }
-            >
-              {employees.length === 0 ? (
-                <MenuItem disabled>No employees available</MenuItem>
-              ) : (
-                employees.map((employee) => (
-                  <MenuItem key={employee.id} value={employee.id}>
-                    {employee.full_name} - {employee.position}
-                  </MenuItem>
-                ))
-              )}
-            </Select>
-            {errors.employee_id && <FormHelperText>{errors.employee_id}</FormHelperText>}
-          </FormControl>
+  fullWidth 
+  margin="dense" 
+  error={!!errors.employee_id}
+>
+  <Autocomplete
+    id="employee-autocomplete"
+    options={employees || []}
+    getOptionLabel={(option) => `${option.full_name} - ${option.position}`}
+    value={employees.find(employee => employee.id === formData.employee_id) || null}
+    onChange={(event, newValue) => {
+      handleChange({
+        target: {
+          name: 'employee_id',
+          value: newValue ? newValue.id : ''
+        }
+      });
+    }}
+    renderInput={(params) => (
+      <TextField
+        {...params}
+        label="Employee *"
+        error={!!errors.employee_id}
+        helperText={errors.employee_id}
+        InputProps={{
+          ...params.InputProps,
+          startAdornment: (
+            <>
+              <InputAdornment position="start">
+                <UserOutlined />
+              </InputAdornment>
+              {params.InputProps.startAdornment}
+            </>
+          )
+        }}
+      />
+    )}
+    noOptionsText="No employees available"
+    loading={employees.length === 0}
+    loadingText="Loading employees..."
+  />
+</FormControl>
           
-          <TextField
-            margin="dense"
-            fullWidth
-            label="Date *"
-            type="date"
-            name="date"
-            value={formData.date}
-            onChange={handleChange}
-            error={!!errors.date}
-            helperText={errors.date}
-            InputLabelProps={{ shrink: true }}
-          />
           
           <TextField
             margin="dense"

@@ -130,8 +130,6 @@ export const usePettyCash = () => {
         employee_id: filters.employeeId || customFilters.employeeId,
         date_from: filters.startDate || customFilters.startDate,
         date_to: filters.endDate || customFilters.endDate,
-        sort_by: customFilters.sort_by || 'date',
-        sort_order: customFilters.sort_order || 'desc'
       };
 
       const response = await api.get('/petty-cash/transactions', { params: queryParams });

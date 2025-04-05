@@ -104,8 +104,6 @@ const PettyCashTab = () => {
     approveFund,
     approveTransaction,
     cancelTransaction,
-    createFund,
-    createTransaction,
     settleTransaction,
     loading: pettyCashLoading 
   } = usePettyCash();
@@ -220,7 +218,7 @@ const PettyCashTab = () => {
         setNewlyCreatedFund(result);
         setShowNewFundReceipt(true);
         loadData();
-        
+
   };
 
   const handleAddTransaction =  (result) => {
