@@ -136,6 +136,7 @@ const TransactionReceiptModal = ({ open, onClose, transaction, isNew = false }) 
             <Grid item xs={6} sx={{ textAlign: 'right' }}>
               <Typography><strong>Date:</strong> {formatDateTime(transaction.created_at)}</Typography>
               <Typography><strong>Purpose:</strong> {transaction.purpose}</Typography>
+              <Typography><strong>Expense:</strong> {transaction.expense}</Typography>
               {transaction.status === 'settled' || transaction.status === 'approved' ? (
                 <Typography><strong>Settled on:</strong> {formatDate(transaction.updated_at)}</Typography>
               ) : null}

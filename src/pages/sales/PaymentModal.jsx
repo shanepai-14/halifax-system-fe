@@ -56,9 +56,12 @@ const PaymentModal = ({ open, handleClose, sale, onSuccess }) => {
       newErrors.amount = 'Amount must be greater than 0';
     } else if (parseFloat(formData.amount) > parseFloat(sale?.total|| 0)) {
       newErrors.amount = 'Amount cannot exceed the due amount';
-    
     }
 
+    // Make reference number required when payment method is cheque
+    if (formData.payment_method === 'cheque' && !formData.reference_number) {
+      newErrors.reference_number = 'Reference number is required for cheque payments';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -96,7 +99,6 @@ const PaymentModal = ({ open, handleClose, sale, onSuccess }) => {
       const result = await createPayment(sale.id, payload);
       
       if (result) {
-        toast.success('Payment recorded successfully');
         if (onSuccess) {
           onSuccess(result);
         }
@@ -219,7 +221,8 @@ const PaymentModal = ({ open, handleClose, sale, onSuccess }) => {
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              label="Reference Number"
+              required={formData.payment_method === 'cheque'}
+              label={formData.payment_method === 'cheque' ? "Reference Number *" : "Reference Number"}
               name="reference_number"
               value={formData.reference_number}
               onChange={handleChange}

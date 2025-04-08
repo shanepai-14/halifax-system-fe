@@ -81,8 +81,6 @@ export const usePettyCash = () => {
       // Add the full response data to the store with more details for receipt
       const fundWithDetails = {
         ...response.data.data,
-        creator: { name: 'Current User' }, // You can replace this with actual user data if available
-        created_at: new Date().toISOString()
       };
       
       dispatch(addFundSuccess(fundWithDetails));
@@ -105,8 +103,6 @@ export const usePettyCash = () => {
       // Add more details to the response for receipt
       const approvedFund = {
         ...response.data.data,
-        approver: { name: 'Current Approver' }, // You can replace this with actual user data if available
-        updated_at: new Date().toISOString()
       };
       
       dispatch(updateFundSuccess(approvedFund));
@@ -163,7 +159,6 @@ export const usePettyCash = () => {
       // Add more details to the transaction for receipt
       const transactionWithDetails = {
         ...response.data.data,
-        issuer: { name: 'Current User' }, // You can replace with actual user data
         created_at: new Date().toISOString()
       };
       
@@ -198,7 +193,6 @@ export const usePettyCash = () => {
       // Add more details for receipt
       const settledTransaction = {
         ...response.data.data,
-        updated_at: new Date().toISOString()
       };
       
       dispatch(updateTransactionSuccess(settledTransaction));
@@ -221,8 +215,6 @@ export const usePettyCash = () => {
       // Add more details for receipt
       const approvedTransaction = {
         ...response.data.data,
-        approver: { name: 'Current Approver' }, // Replace with actual user data
-        updated_at: new Date().toISOString()
       };
       
       dispatch(updateTransactionSuccess(approvedTransaction));

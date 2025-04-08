@@ -78,7 +78,7 @@ const PettyCashTab = () => {
   const [fundReceiptModalOpen, setFundReceiptModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [selectedFund, setSelectedFund] = useState(null);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [startDate, setStartDate] = useState(
@@ -122,7 +122,7 @@ const PettyCashTab = () => {
         status: statusFilter !== 'all' ? statusFilter : undefined,
         startDate: startDate,
         endDate: endDate,
-        employeeId: selectedEmployeeId || undefined
+        employeeId: selectedEmployeeId !== 'all' ? selectedEmployeeId : undefined,
       };
 
       if (subTab === 0) {
@@ -262,6 +262,7 @@ const PettyCashTab = () => {
           'Date',
           'Employee',
           'Purpose',
+          'Expense',
           'Issued Amount',
           'Spent Amount',
           'Returned Amount',
@@ -275,6 +276,7 @@ const PettyCashTab = () => {
             formatDate(item.date) || '',
             item.employee?.full_name || '',
             item.purpose || '',
+            item.expense || '',
             item.amount_issued || 0,
             item.amount_spent || 0,
             item.amount_returned || 0,
@@ -464,14 +466,15 @@ const PettyCashTab = () => {
           
           {subTab === 0 && (
             <Grid item xs={12} md={2}>
-              <FormControl fullWidth size="small">
+              <FormControl fullWidth size="small" >
                 <InputLabel>Employee</InputLabel>
                 <Select
                   value={selectedEmployeeId}
                   onChange={(e) => setSelectedEmployeeId(e.target.value)}
                   label="Employee"
+                  
                 >
-                  <MenuItem value="">All Employees</MenuItem>
+                  <MenuItem value="all">All Employees</MenuItem>
                   {[
                     ...employees.map((employee) => (
                       <MenuItem key={employee.id} value={employee.id}>
@@ -495,6 +498,7 @@ const PettyCashTab = () => {
               size="small"
             />
           </Grid>
+
           
           <Grid item xs={6} md={2}>
             <TextField
@@ -607,6 +611,7 @@ const PettyCashTab = () => {
                 <TableCell>Date</TableCell>
                 <TableCell>Employee</TableCell>
                 <TableCell>Purpose</TableCell>
+                <TableCell>Expense</TableCell>
                 <TableCell align="right">Issued</TableCell>
                 <TableCell align="right">Spent</TableCell>
                 <TableCell align="right">Returned</TableCell>
@@ -644,6 +649,7 @@ const PettyCashTab = () => {
                     <TableCell>{formatDate(transaction.date)}</TableCell>
                     <TableCell>{transaction.employee?.full_name || '-'}</TableCell>
                     <TableCell>{transaction.purpose}</TableCell>
+                    <TableCell>{transaction.expense}</TableCell>
                     <TableCell align="right">{formatCurrency(transaction.amount_issued)}</TableCell>
                     <TableCell align="right">{formatCurrency(transaction.amount_spent || 0)}</TableCell>
                     <TableCell align="right">{formatCurrency(transaction.amount_returned || 0)}</TableCell>

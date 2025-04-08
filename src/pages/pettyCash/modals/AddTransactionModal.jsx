@@ -17,11 +17,14 @@ import {
 } from '@mui/material';
 import { CloseOutlined, DollarOutlined, UserOutlined } from '@ant-design/icons';
 import { usePettyCash } from '@/hooks/usePettyCash';
+import DynamicPurposeField from './DynamicPurposeField';
+import DynamicExpenseField from './DynamicExpenseField';
 
 const AddTransactionModal = ({ open, onClose, onSuccess, employees, balance }) => {
   const [formData, setFormData] = useState({
     employee_id: '',
     purpose: '',
+    expense: '',
     description: '',
     amount_issued: ''
   });
@@ -50,6 +53,9 @@ const AddTransactionModal = ({ open, onClose, onSuccess, employees, balance }) =
 
     if (!formData.purpose.trim()) {
       newErrors.purpose = 'Purpose is required';
+    }
+    if (!formData.expense.trim()) {
+      newErrors.expense = 'Expense is required';
     }
 
     if (!formData.amount_issued) {
@@ -89,6 +95,7 @@ const AddTransactionModal = ({ open, onClose, onSuccess, employees, balance }) =
     setFormData({
       employee_id: '',
       purpose: '',
+      expense : '',
       description: '',
       amount_issued: ''
     });
@@ -159,16 +166,22 @@ const AddTransactionModal = ({ open, onClose, onSuccess, employees, balance }) =
 </FormControl>
           
           
-          <TextField
-            margin="dense"
-            fullWidth
-            label="Purpose *"
-            name="purpose"
+          <DynamicPurposeField
             value={formData.purpose}
             onChange={handleChange}
             error={!!errors.purpose}
             helperText={errors.purpose}
+            name="purpose"
+            label="Purpose *"
           />
+          <DynamicExpenseField
+          value={formData.expense}
+          onChange={handleChange}
+          error={!!errors.expense}
+          helperText={errors.expense}
+          name="expense"
+          label="Expense Type *"
+        />
           
           <TextField
             margin="dense"

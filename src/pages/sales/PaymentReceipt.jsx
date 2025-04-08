@@ -146,6 +146,9 @@ const PaymentReceipt = ({ receipt, onClose }) => {
               <Typography >
                 <strong>Received By:</strong> {payment.received_by?.customer_name || 'System'}
               </Typography>
+              <Typography >
+                <strong>Receipt Status:</strong> {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+              </Typography>
             </Grid>
           </Grid>
 

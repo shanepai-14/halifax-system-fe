@@ -39,7 +39,6 @@ const paymentsSlice = createSlice({
       state.error = null;
     },
     createPaymentSuccess: (state, action) => {
-      state.payments.push(action.payload);
       state.currentPayment = action.payload;
       state.loading = false;
     },

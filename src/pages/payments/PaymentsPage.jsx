@@ -391,7 +391,7 @@ const PaymentsPage = () => {
               <TableCell>Reference #</TableCell>
               <TableCell>Invoice #</TableCell>
               <TableCell>Customer</TableCell>
-              <TableCell>Payment Method</TableCell>
+              <TableCell>Method</TableCell>
               <TableCell align="right">Amount</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Received By</TableCell>
@@ -453,7 +453,7 @@ const PaymentsPage = () => {
                         <ContainerOutlined  />
                       </IconButton>
 
-                      {payment.status === 'completed' && (
+                      {(payment.status === 'pending' || payment.status === 'completed') && (
                         <IconButton 
                           size="small" 
                           color="error" 

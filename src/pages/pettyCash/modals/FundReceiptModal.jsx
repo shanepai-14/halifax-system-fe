@@ -101,7 +101,6 @@ const FundReceiptModal = ({ open, onClose, fund, isNew = false }) => {
           <Box sx={{ textAlign: 'center', mb: 3 }}>
             <Typography variant="h4">PETTY CASH FUND</Typography>
             <Typography variant="h6">{fund.transaction_reference}</Typography>
-            <Typography variant="body2" color="textSecondary">{formatDateTime(fund.created_at)}</Typography>
             <Box sx={{ mt: 1 }}>
               {getStatusChip(fund.status)}
             </Box>
@@ -116,8 +115,6 @@ const FundReceiptModal = ({ open, onClose, fund, isNew = false }) => {
               <Typography>0939 924 3876</Typography>
             </Grid>
             <Grid item xs={6} sx={{ textAlign: 'right' }}>
-              <Typography variant="h6">Fund Details</Typography>
-              <Typography><strong>Date:</strong> {formatDate(fund.date)}</Typography>
               <Typography><strong>Created on:</strong> {formatDateTime(fund.created_at)}</Typography>
               {fund.status === 'approved' && (
                 <Typography><strong>Approved on:</strong> {formatDateTime(fund.updated_at)}</Typography>
