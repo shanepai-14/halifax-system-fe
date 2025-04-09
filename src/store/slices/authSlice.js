@@ -22,6 +22,8 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       localStorage.removeItem('token');
+      localStorage.removeItem('userData');
+      window.location.href = '/';
     }
   }
 });

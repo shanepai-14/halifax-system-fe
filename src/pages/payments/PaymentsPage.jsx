@@ -7,11 +7,11 @@ import {
   InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem,
   IconButton, Card, CardContent, Dialog
 } from '@mui/material';
+import * as XLSX from 'xlsx';
 
 import { 
   SearchOutlined, 
   FilterOutlined, 
-  EyeOutlined,
   ContainerOutlined,
   DeleteOutlined
 } from '@ant-design/icons';
@@ -27,28 +27,8 @@ import {
 import { usePayments } from '@/hooks/usePayments';
 import TablePaymentRowSkeleton from '@/components/loader/TablePaymentRowSkeleton';
 import PaymentReceipt from '@/pages/sales/PaymentReceipt';
-
-// Helper function to format currency
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-PH', { 
-    style: 'currency', 
-    currency: 'PHP',
-    minimumFractionDigits: 2
-  }).format(amount);
-};
-
-// Helper function to format date
-const formatDate = (dateString) => {
-  if (!dateString) return '-';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-PH', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
+import { formatDate } from '@/utils/dateUtils';
+import { formatCurrency } from '@/utils/currencyFormat';
 
 // Map payment methods to display names
 const paymentMethodDisplay = (method) => {
@@ -83,7 +63,6 @@ const PaymentsPage = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   
-  const [tempSearchTerm, setTempSearchTerm] = useState(filters.searchTerm);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
   const [voidDialogOpen, setVoidDialogOpen] = useState(false);
@@ -137,11 +116,10 @@ const PaymentsPage = () => {
   };
 
   const handleSearchChange = (e) => {
-    setTempSearchTerm(e.target.value);
+    dispatch(setSearchTerm(e.target.value));
   };
 
   const handleSearch = () => {
-    dispatch(setSearchTerm(tempSearchTerm));
     setPage(0); // Reset to first page when searching
     fetchPayments();
   };
@@ -217,7 +195,6 @@ const PaymentsPage = () => {
     }
   };
 
-  console.log(payments);
   const getStatusChip = (status) => {
     if (status === 'completed') {
       return <Chip label="Completed" color="success" size="small" />;
@@ -225,6 +202,44 @@ const PaymentsPage = () => {
       return <Chip label="Voided" color="error" size="small" />;
     }
     return <Chip label={status} size="small" />;
+  };
+
+  const handleExportToExcel = () => {
+    if (!payments || !payments.data || payments.data.length === 0) {
+      return; // Don't export if no data
+    }
+    
+    // Transform data for export - include only the fields you want in the Excel file
+    const dataToExport = payments.data.map(payment => ({
+      'Date & Time': formatDate(payment.payment_date),
+      'Reference #': payment.reference_number,
+      'Invoice #': payment.sale?.invoice_number || '',
+      'Customer': payment.sale?.customer ? 
+        (typeof payment.sale.customer === 'object' ? 
+          payment.sale.customer.customer_name : 
+          payment.sale.customer) : 
+        'Walk-in Customer',
+      'Method': paymentMethodDisplay(payment.payment_method),
+      'Amount': payment.amount,
+      'Status': payment.status,
+      'Received By': typeof payment.received_by === 'object' ? 
+        payment.received_by.customer_name : 
+        payment.received_by || 'System'
+    }));
+    
+    // Create worksheet
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Payments');
+    
+    // Generate filename with current date
+    const dateStr = new Date().toISOString().split('T')[0];
+    const fileName = `Payments_Export_${dateStr}.xlsx`;
+    
+    // Export to file
+    XLSX.writeFile(workbook, fileName);
   };
 
   return (
@@ -295,7 +310,7 @@ const PaymentsPage = () => {
               placeholder="Search by reference or invoice"
               variant="outlined"
               size="small"
-              value={tempSearchTerm}
+              value={filters.searchTerm}
               onChange={handleSearchChange}
               onKeyPress={handleKeyPress}
               InputProps={{
@@ -375,8 +390,13 @@ const PaymentsPage = () => {
             />
           </Grid>
           <Grid item xs={6} md={1}>
-            <Button variant="contained"  size="small">
-             Export
+            <Button 
+              variant="contained" 
+              size="small" 
+              fullWidth
+              onClick={handleExportToExcel}
+            >
+              Export
             </Button>
           </Grid>
         </Grid>
@@ -391,7 +411,7 @@ const PaymentsPage = () => {
               <TableCell>Reference #</TableCell>
               <TableCell>Invoice #</TableCell>
               <TableCell>Customer</TableCell>
-              <TableCell>Payment Method</TableCell>
+              <TableCell>Method</TableCell>
               <TableCell align="right">Amount</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Received By</TableCell>
@@ -453,7 +473,7 @@ const PaymentsPage = () => {
                         <ContainerOutlined  />
                       </IconButton>
 
-                      {payment.status === 'completed' && (
+                      {(payment.status === 'pending' || payment.status === 'completed') && (
                         <IconButton 
                           size="small" 
                           color="error" 
@@ -499,7 +519,7 @@ const PaymentsPage = () => {
         fullWidth
       >
         <PaymentReceipt 
-          receipt={selectedPayment} 
+          paymentRecord={selectedPayment} 
           onClose={handleCloseReceiptDialog}
         />
       </Dialog>

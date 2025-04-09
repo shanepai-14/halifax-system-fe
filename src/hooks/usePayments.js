@@ -176,6 +176,24 @@ export const usePayments = () => {
     }
   };
 
+  const completePayment = async (id) => {
+    try {
+      const response = await api.put(`/payments/${id}/complete`);
+      
+      if (response.data.status === 'success') {
+        toast.success('Payment marked as completed');
+        return response.data.data;
+      } else if (response.data.status === 'info') {
+        toast.info(response.data.message);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error completing payment:', error);
+      toast.error(error.response?.data?.message || 'Failed to complete payment');
+      throw error; // Re-throw to handle in the calling function
+    }
+  };
+
   /**
    * Reset current payment selection
    */
@@ -184,15 +202,13 @@ export const usePayments = () => {
   };
 
   return {
-    // State - both new Redux state and backward compatible state
     payments,
     currentPayment,
     isLoading,
     error,
     filters,
     stats,
-    
-    // Methods
+    completePayment,
     getAllPayments,
     getPaymentById,
     createPayment,

@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { useRef, useState } from 'react';
-
+import { useSelector , useDispatch } from 'react-redux';
 // material-ui
 import { useTheme } from '@mui/material/styles';
 import ButtonBase from '@mui/material/ButtonBase';
@@ -29,7 +29,7 @@ import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
 import SettingOutlined from '@ant-design/icons/SettingOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
 import avatar1 from '@assets/images/users/avatar-1.png';
-
+import { selectCurrentUser , logout } from '@/store/slices/authSlice';
 // tab panel wrapper
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -49,7 +49,10 @@ function a11yProps(index) {
 // ==============================|| HEADER CONTENT - PROFILE ||============================== //
 
 export default function Profile() {
+  const dispatch = useDispatch();
   const theme = useTheme();
+  const reduxUser = useSelector(selectCurrentUser);
+  const currentUser = reduxUser ?? JSON.parse(localStorage.getItem('userData'));
 
   const anchorRef = useRef(null);
   const [open, setOpen] = useState(false);
@@ -91,7 +94,7 @@ export default function Profile() {
         <Stack direction="row" spacing={1.25} alignItems="center" sx={{ p: 0.5 }}>
           <Avatar alt="profile user" src={avatar1} size="sm" />
           <Typography variant="subtitle1" sx={{ textTransform: 'capitalize' }}>
-            John Doe
+            {currentUser?.name}
           </Typography>
         </Stack>
       </ButtonBase>
@@ -124,21 +127,22 @@ export default function Profile() {
                         <Stack direction="row" spacing={1.25} alignItems="center">
                           <Avatar alt="profile user" src={avatar1} sx={{ width: 32, height: 32 }} />
                           <Stack>
-                            <Typography variant="h6">John Doe</Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              ADMIN
+                            <Typography variant="h6">{currentUser?.name}</Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ textTransform:'capitalize'}}>
+                            {currentUser?.role}
                             </Typography>
                           </Stack>
                         </Stack>
                       </Grid>
                       <Grid item>
                         <Tooltip title="Logout">
-                          <IconButton size="large" sx={{ color: 'text.primary' }}
-                          component={RouterLink}
-                          to="/"
-                          >
-                            <LogoutOutlined />
-                          </IconButton>
+                        <IconButton 
+                        size="large" 
+                        sx={{ color: 'text.primary' }}
+                        onClick={() => dispatch(logout())}
+                      >
+                        <LogoutOutlined />
+                      </IconButton>
                         </Tooltip>
                       </Grid>
                     </Grid>

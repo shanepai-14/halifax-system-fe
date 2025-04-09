@@ -26,15 +26,9 @@ import {
   CloseCircleOutlined,
   WarningOutlined
 } from '@ant-design/icons';
+import { formatCurrency } from '@/utils/currencyFormat';
 
-// Helper function to format currency
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-PH', { 
-    style: 'currency', 
-    currency: 'PHP',
-    minimumFractionDigits: 2
-  }).format(amount);
-};
+
 
 const StatisticsTab = ({ pettyCashStats, employeeStats, balance }) => {
   return (

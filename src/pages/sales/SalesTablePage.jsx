@@ -21,29 +21,10 @@ import {
     setDateRange 
   } from '@/store/slices/salesSlice'
 import { useSales } from '@/hooks/useSales';
-
+import { formatDate } from '@/utils/dateUtils';
+import { formatCurrency } from '@/utils/currencyFormat';
 import TableSalesRowSkeleton from '@/components/loader/TableSalesRowSkeleton';
 
-
-// Helper function to format currency
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-PH', { 
-    style: 'currency', 
-    currency: 'PHP',
-    minimumFractionDigits: 2
-  }).format(amount);
-};
-
-// Helper function to format date
-const formatDate = (dateString) => {
-  if (!dateString) return '-';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-PH', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
-};
 
 const SalesTablePage = () => {
     const navigate = useNavigate();
@@ -58,8 +39,6 @@ const SalesTablePage = () => {
   // State for table pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  
-  const [tempSearchTerm, setTempSearchTerm] = useState(filters.searchTerm);
   const [loading , setLoading] = useState(true);
   
   // State for sales statistics
@@ -110,12 +89,11 @@ const SalesTablePage = () => {
   };
 
   const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
+    dispatch(setSearchTerm(e.target.value));
   };
 
   const handleSearch = () => {
-    dispatch(setSearchTerm(tempSearchTerm));
-    setPage(0); // Reset to first page when searching
+    setPage(0);
     fetchSales();
   };
 
@@ -242,7 +220,7 @@ const SalesTablePage = () => {
               placeholder="Search by invoice number"
               variant="outlined"
               size="small"
-              value={tempSearchTerm}
+              value={filters.searchTerm}
               onChange={handleSearchChange}
               onKeyPress={handleKeyPress}
               InputProps={{
@@ -346,7 +324,7 @@ const SalesTablePage = () => {
               <TableCell>Invoice #</TableCell>
               <TableCell>Customer</TableCell>
               <TableCell>Status</TableCell>
-              <TableCell>Payment Method</TableCell>
+              <TableCell>Method</TableCell>
               <TableCell>Order Date</TableCell>
               <TableCell>Delivery Date</TableCell>
               <TableCell>City</TableCell>

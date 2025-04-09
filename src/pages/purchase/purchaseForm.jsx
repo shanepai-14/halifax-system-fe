@@ -102,14 +102,6 @@ const CreatePurchaseOrder = () => {
       
     });
 
-    // formData.additional_costs.forEach((cost, index) => {
-    //   if (!cost.cost_type_id) {
-    //     newErrors[`additional_costs.${index}.cost_type_id`] = 'Cost type is required';
-    //   }
-    //   if (!cost.amount || Number(cost.amount) <= 0) {
-    //     newErrors[`additional_costs.${index}.amount`] = 'Amount must be greater than 0';
-    //   }
-    // });
   
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -142,61 +134,6 @@ const CreatePurchaseOrder = () => {
     setOpenAddSupplierModal(true);
   };
 
-  const handleAddCost = () => {
-    setFormData(prev => ({
-      ...prev,
-      additional_costs: [
-        ...prev.additional_costs,
-        { cost_type_id: '', amount: '', remarks: '' }
-      ]
-    }));
-  };
-
-  const handleCostChange = (index, field, value) => {
-    if (field === 'cost_type_id' && value) {
-      // Check for duplicate cost type
-      const isDuplicate = formData.additional_costs.some(
-        (cost, i) => i !== index && cost.cost_type_id === value
-      );
-      
-      if (isDuplicate) {
-        setErrors(prev => ({
-          ...prev,
-          [`additional_costs.${index}.cost_type_id`]: 'This cost type is already added'
-        }));
-        return;
-      }
-    }
-  
-    const updatedCosts = [...formData.additional_costs];
-    updatedCosts[index] = {
-      ...updatedCosts[index],
-      [field]: value
-    };
-    setFormData(prev => ({ ...prev, additional_costs: updatedCosts }));
-    
-    // Clear error for this field if it exists
-    if (errors[`additional_costs.${index}.${field}`]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[`additional_costs.${index}.${field}`];
-        return newErrors;
-      });
-    }
-  };
-
-  const removeCost = (index) => {
-    const updatedCosts = formData.additional_costs.filter((_, i) => i !== index);
-    setFormData(prev => ({ ...prev, additional_costs: updatedCosts }));
-  };
-
-  const calculateTotalWithCosts = () => {
-    const itemsTotal = calculateTotal();
-    const costsTotal = formData.additional_costs.reduce((sum, cost) => 
-      sum + (Number(cost.amount) || 0), 0
-    );
-    return itemsTotal + costsTotal;
-  };
 
   const handleCloseAddSupplierModal = () => {
     setOpenAddSupplierModal(false);
@@ -297,6 +234,11 @@ const CreatePurchaseOrder = () => {
                     },
                     '& .MuiFormLabel-root': {
                       fontSize: '0.875rem',
+                    },
+                  }}
+                  slotProps={{
+                    inputLabel: {
+                      sx: { top: '1px' }, 
                     },
                   }}
                 />
@@ -452,99 +394,6 @@ const CreatePurchaseOrder = () => {
               </Typography>
             </Box>
           </Grid>
-          {/* <Grid item xs={12}>
-        <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
-          Additional Costs            
-           <IconButton sx={{marginLeft:"0px !important"}} onClick={() => setOpenCostTypeModal(true)}>
-            <PlusOutlined />
-            </IconButton>
-        </Typography>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Cost Type</TableCell>
-                <TableCell>Amount</TableCell>
-                <TableCell>Remarks</TableCell>
-                <TableCell width={50} />
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {formData.additional_costs.map((cost, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    <Autocomplete
-                    size='small'
-                      value={costTypes?.find(type => type.cost_type_id === cost.cost_type_id) || null}
-                      onChange={(e, newValue) => handleCostChange(index, 'cost_type_id', newValue ? newValue.cost_type_id : '')}
-                      options={costTypes?.filter(type => 
-                        type.is_active && !formData.additional_costs.some(
-                          (c, i) => i !== index && c.cost_type_id === type.cost_type_id
-                        )
-                      ) || []}
-                      getOptionLabel={(option) => option.name || ''}
-                      isOptionEqualToValue={(option, value) => option.cost_type_id === value}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          fullWidth
-                          sx={{
-                            '& .MuiInputBase-root': {
-                              padding: '4px 8px',
-                            },
-                            '& .MuiFormLabel-root': {
-                              fontSize: '0.875rem',
-                            }
-                          }}
-                          error={!!errors[`additional_costs.${index}.cost_type_id`]}
-                          helperText={errors[`additional_costs.${index}.cost_type_id`] || 'Required'}
-                        />
-                      )}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <TextField
-                     size='small'
-                      type="number"
-                      value={cost.amount}
-                      onChange={(e) => handleCostChange(index, 'amount', e.target.value)}
-                      error={!!errors[`additional_costs.${index}.amount`]}
-                      helperText={errors[`additional_costs.${index}.amount`] || 'Required'}
-                      inputProps={{ min: 0, step: 0.01 }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <TextField
-                     size='small'
-                      value={cost.remarks || ''}
-                      onChange={(e) => handleCostChange(index, 'remarks', e.target.value)}
-                      fullWidth
-                      helperText={'Not Required'}
-                    />
-                  </TableCell>
-                  <TableCell sx={{verticalAlign:"top"}} >
-                    <IconButton  size='large' onClick={() => removeCost(index)}>
-                      <DeleteOutlined />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
-          <Button
-            startIcon={<PlusOutlined />}
-            onClick={handleAddCost}
-          >
-            Add Additional Cost
-          </Button>
-          <Typography variant="h6">
-            Total with Costs: ₱{calculateTotalWithCosts().toFixed(2)}
-          </Typography>
-        </Box>
-      </Grid> */}
 
           <Grid item xs={12}>
             <TextField

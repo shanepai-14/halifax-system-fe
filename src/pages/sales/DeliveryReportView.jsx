@@ -7,22 +7,12 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { PrinterOutlined, RollbackOutlined, HomeOutlined , DownOutlined , UpOutlined } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
+import { formatDate } from '@/utils/dateUtils';
 import CreditMemoModal from './CreditMemoModal';
 import CreditMemoReportModal from './CreditMemoReportModal';
 import PaymentButton from './PaymentButton';
 import PaymentHistory from './PaymentHistory';
 import PaymentReceipt from './PaymentReceipt';
-
-// Format date for display - if not provided in utils
-const formatDate = (dateString) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-};
 
 const DeliveryReportView = ({ refresh , report }) => {
   const [createMemoOpen, setCreateMemoOpen] = useState(false);
@@ -486,7 +476,7 @@ const DeliveryReportView = ({ refresh , report }) => {
         fullWidth
       >
         <PaymentReceipt 
-          receipt={selectedReceipt} 
+          paymentRecord={selectedReceipt} 
           onClose={() => setSelectedReceipt(null)}
         />
       </Dialog>

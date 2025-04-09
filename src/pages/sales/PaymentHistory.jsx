@@ -26,6 +26,7 @@ import {
 import { usePayments } from '@/hooks/usePayments';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@/store/slices/authSlice';
+import { formatCurrency } from '@/utils/currencyFormat';
 import { toast } from 'sonner';
 
 const PaymentHistory = ({ sale, onPaymentUpdate , setSelectedReceipt }) => {
@@ -103,9 +104,6 @@ const PaymentHistory = ({ sale, onPaymentUpdate , setSelectedReceipt }) => {
     return new Date(dateString).toLocaleString();
   };
 
-  const formatCurrency = (amount) => {
-    return `₱${parseFloat(amount).toFixed(2)}`;
-  };
 
   const getStatusChip = (status) => {
     if (status === 'completed') {

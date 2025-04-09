@@ -6,18 +6,7 @@ import {
   IconButton
 } from '@mui/material';
 import { PrinterOutlined, CloseOutlined } from '@ant-design/icons';
-
-// Format date for display
-const formatDate = (dateString) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-};
-
+import { formatDate } from '@/utils/dateUtils';
 const CreditMemoReportModal = ({ open, onClose, returns, report }) => {
   const contentRef = useRef();
 

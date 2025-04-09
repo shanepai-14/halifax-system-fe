@@ -35,26 +35,8 @@ import {
 } from '@ant-design/icons';
 import { usePettyCash } from '@/hooks/usePettyCash';
 import SettleTransactionModal from './SettleTransactionModal';
-
-// Helper function to format currency
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-PH', { 
-    style: 'currency', 
-    currency: 'PHP',
-    minimumFractionDigits: 2
-  }).format(amount || 0);
-};
-
-// Helper function to format date
-const formatDate = (dateString) => {
-  if (!dateString) return '-';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
-};
+import { formatDate } from '@/utils/dateUtils';
+import { formatCurrency } from '@/utils/currencyFormat';
 
 const EmployeeTransactionsModal = ({ open, onClose, employee }) => {
   const [startDate, setStartDate] = useState(
