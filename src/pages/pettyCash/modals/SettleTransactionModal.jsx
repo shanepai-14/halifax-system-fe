@@ -17,15 +17,7 @@ import {
 } from '@mui/material';
 import { CloseOutlined, DollarOutlined, FileOutlined } from '@ant-design/icons';
 import { usePettyCash } from '@/hooks/usePettyCash';
-
-// Helper function to format currency
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-PH', { 
-    style: 'currency', 
-    currency: 'PHP',
-    minimumFractionDigits: 2
-  }).format(amount);
-};
+import { formatCurrency } from '@/utils/currencyFormat';
 
 const SettleTransactionModal = ({ open, onClose, onSuccess, transaction }) => {
   const [formData, setFormData] = useState({

@@ -21,7 +21,7 @@ import {
     setDateRange 
   } from '@/store/slices/salesSlice'
 import { useSales } from '@/hooks/useSales';
-
+import { formatDate } from '@/utils/dateUtils';
 import TableSalesRowSkeleton from '@/components/loader/TableSalesRowSkeleton';
 
 
@@ -34,16 +34,6 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-// Helper function to format date
-const formatDate = (dateString) => {
-  if (!dateString) return '-';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-PH', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
-};
 
 const SalesTablePage = () => {
     const navigate = useNavigate();
@@ -346,7 +336,7 @@ const SalesTablePage = () => {
               <TableCell>Invoice #</TableCell>
               <TableCell>Customer</TableCell>
               <TableCell>Status</TableCell>
-              <TableCell>Payment Method</TableCell>
+              <TableCell>Method</TableCell>
               <TableCell>Order Date</TableCell>
               <TableCell>Delivery Date</TableCell>
               <TableCell>City</TableCell>

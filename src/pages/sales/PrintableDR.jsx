@@ -11,6 +11,7 @@ import React from 'react';
     Grid,
     Paper,
   } from '@mui/material';
+  import { formatDate } from '@/utils/dateUtils';
 
 const PrintableDR = ({ deliveryReportData, contentRef }) => {
     if (!deliveryReportData || !deliveryReportData.orderItems) return null;
@@ -27,22 +28,7 @@ const PrintableDR = ({ deliveryReportData, contentRef }) => {
     const calculateTotal = () => {
       return deliveryReportData.orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0);
     };
-  
-  // Format date for display
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    } catch (error) {
-      return '-';
-    }
-  };
-  
+    
     return (
       <Box 
         ref={contentRef} 

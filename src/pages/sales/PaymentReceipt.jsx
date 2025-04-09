@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef , useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import {
   Box,
@@ -15,38 +15,23 @@ import {
   TableRow
 } from '@mui/material';
 import { PrinterOutlined, CloseOutlined } from '@ant-design/icons';
-
-const PaymentReceipt = ({ receipt, onClose }) => {
+import CompletePaymentButton from '../payments/CompletePaymentButton';
+import { formatDate } from '@/utils/dateUtils';
+import { formatCurrency } from '@/utils/currencyFormat';
+const PaymentReceipt = ({ paymentRecord, onClose }) => {
   const contentRef = useRef();
 
+  const [receipt, setReceipt] = useState(paymentRecord);
   const handlePrint = useReactToPrint({
     contentRef
   });
-   console.log(receipt);
+
   if (!receipt || !receipt.payment || !receipt.sale) {
     return null;
   }
 
   const { payment, sale } = receipt;
   
-  // Format date for display
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  // Format currency
-  const formatCurrency = (amount) => {
-    return `₱${parseFloat(amount).toFixed(2)}`;
-  };
-
   // Map payment methods to display names
   const paymentMethodDisplay = (method) => {
     const methodMap = {
@@ -63,11 +48,21 @@ const PaymentReceipt = ({ receipt, onClose }) => {
     return methodMap[method] || method;
   };
 
+  const handlePaymentUpdated = (result) => {
+    console.log('handlePaymentUpdated', result);
+    setReceipt(result);
+  }
+
   return (
     <Box sx={{ p: 2 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h5">Payment Receipt</Typography>
         <Box>
+        <CompletePaymentButton 
+          payment={payment} 
+          onSuccess={handlePaymentUpdated}
+          size="medium"
+        />
           <Button
             variant="outlined"
             startIcon={<PrinterOutlined />}

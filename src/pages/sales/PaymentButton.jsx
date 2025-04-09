@@ -4,6 +4,7 @@ import { MoneyCollectOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@/store/slices/authSlice';
 import PaymentModal from './PaymentModal';
+import { formatCurrency } from '@/utils/currencyFormat';
 
 const PaymentButton = ({ sale, onPaymentSuccess, disabled = false }) => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -29,10 +30,6 @@ const PaymentButton = ({ sale, onPaymentSuccess, disabled = false }) => {
     }
   };
 
-  // Format currency
-  const formatCurrency = (amount) => {
-    return `₱${parseFloat(amount).toFixed(2)}`;
-  };
 
   if (!canCreatePayments) {
     return null; // Don't render the button if user doesn't have permission
