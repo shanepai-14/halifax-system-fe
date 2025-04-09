@@ -116,9 +116,6 @@ const HalifaxSupplierPage = () => {
     }
   };
 
-  const handleOpenAddSupplierModal = () => {
-    setOpenAddSupplierModal(true);
-  };
 
   const handleCloseAddSupplierModal = () => {
     setOpenAddSupplierModal(false);

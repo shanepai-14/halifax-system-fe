@@ -63,7 +63,6 @@ const PaymentsPage = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   
-  const [tempSearchTerm, setTempSearchTerm] = useState(filters.searchTerm);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
   const [voidDialogOpen, setVoidDialogOpen] = useState(false);
@@ -117,11 +116,10 @@ const PaymentsPage = () => {
   };
 
   const handleSearchChange = (e) => {
-    setTempSearchTerm(e.target.value);
+    dispatch(setSearchTerm(e.target.value));
   };
 
   const handleSearch = () => {
-    dispatch(setSearchTerm(tempSearchTerm));
     setPage(0); // Reset to first page when searching
     fetchPayments();
   };
@@ -312,7 +310,7 @@ const PaymentsPage = () => {
               placeholder="Search by reference or invoice"
               variant="outlined"
               size="small"
-              value={tempSearchTerm}
+              value={filters.searchTerm}
               onChange={handleSearchChange}
               onKeyPress={handleKeyPress}
               InputProps={{
