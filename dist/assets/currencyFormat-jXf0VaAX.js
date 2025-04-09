@@ -1,0 +1,1 @@
+const t=r=>r?new Date(r).toLocaleDateString("en-PH",{year:"numeric",month:"long",day:"numeric"}):"",n=r=>new Intl.NumberFormat("en-PH",{style:"currency",currency:"PHP",minimumFractionDigits:2}).format(r);export{t as a,n as f};
