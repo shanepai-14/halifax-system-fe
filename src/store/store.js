@@ -7,6 +7,7 @@ import saleReducer from './slices/salesSlice';
 import paymentsReducer from './slices/paymentsSlice';
 import pettyCashReducer from './slices/pettyCashSlice';
 import employeeReducer from './slices/employeeSlice';
+import userReducer from './slices/userSlice';
 
 
 export const store = configureStore({
@@ -18,6 +19,7 @@ export const store = configureStore({
     sales: saleReducer,
     payments: paymentsReducer,
     pettyCash: pettyCashReducer,
-    employees: employeeReducer
+    employees: employeeReducer,
+    users: userReducer
   },
 });

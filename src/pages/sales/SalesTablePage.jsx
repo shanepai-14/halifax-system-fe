@@ -217,7 +217,7 @@ const SalesTablePage = () => {
           <Grid item xs={12} md={3}>
             <TextField
               fullWidth
-              placeholder="Search by invoice number"
+              placeholder="Search by DR number"
               variant="outlined"
               size="small"
               value={filters.searchTerm}
@@ -321,7 +321,7 @@ const SalesTablePage = () => {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Invoice #</TableCell>
+              <TableCell>DR #</TableCell>
               <TableCell>Customer</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Method</TableCell>

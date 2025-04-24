@@ -13,6 +13,7 @@ import CreditMemoReportModal from './CreditMemoReportModal';
 import PaymentButton from './PaymentButton';
 import PaymentHistory from './PaymentHistory';
 import PaymentReceipt from './PaymentReceipt';
+import SaleKebabMenu from './SaleKebabMenu';
 
 const DeliveryReportView = ({ refresh , report }) => {
   const [createMemoOpen, setCreateMemoOpen] = useState(false);
@@ -202,6 +203,10 @@ const DeliveryReportView = ({ refresh , report }) => {
             >
               Create Credit Memo
             </Button>
+
+            <SaleKebabMenu 
+            sale={report}
+            />
           </Box>
         </Box>
 
