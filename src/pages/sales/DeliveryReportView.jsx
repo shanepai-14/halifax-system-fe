@@ -448,6 +448,13 @@ const DeliveryReportView = ({ refresh , report }) => {
               </Box>
             </Grid>
             </Grid>
+            <Grid container>
+            <Grid item xs={12} mt={5}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography fontWeight={'bold'}>Note: This Office will not entertain any claim of shortage after receipt has been duly acknowledge</Typography>
+              </Box>
+            </Grid>
+            </Grid>
         </Box>
       </Paper>
 

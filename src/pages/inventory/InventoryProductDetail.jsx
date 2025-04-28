@@ -177,7 +177,7 @@ const InventoryProductDetail = () => {
 
         <Grid container spacing={3}>
           {/* Left Column - Product Info */}
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={12}>
             {/* Product Info Card */}
             <ProductInfoCard 
               product={product}
@@ -200,7 +200,7 @@ const InventoryProductDetail = () => {
           </Grid>
 
           {/* Right Column - Content */}
-          <Grid item xs={12} md={8}>
+          <Grid item xs={12} md={12}>
             <Paper sx={{ p: 2, mb: 2 }}>
               <Tabs value={tabValue} onChange={handleTabChange} sx={{ mb: 2 }}>
                 <Tab label="Overview" />
