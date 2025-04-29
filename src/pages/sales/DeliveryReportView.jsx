@@ -13,6 +13,7 @@ import CreditMemoReportModal from './CreditMemoReportModal';
 import PaymentButton from './PaymentButton';
 import PaymentHistory from './PaymentHistory';
 import PaymentReceipt from './PaymentReceipt';
+import SaleKebabMenu from './SaleKebabMenu';
 
 const DeliveryReportView = ({ refresh , report }) => {
   const [createMemoOpen, setCreateMemoOpen] = useState(false);
@@ -202,6 +203,10 @@ const DeliveryReportView = ({ refresh , report }) => {
             >
               Create Credit Memo
             </Button>
+
+            <SaleKebabMenu 
+            sale={report}
+            />
           </Box>
         </Box>
 
@@ -440,6 +445,13 @@ const DeliveryReportView = ({ refresh , report }) => {
             <Grid item xs={2.4}>
               <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
                 <Typography >Received By</Typography>
+              </Box>
+            </Grid>
+            </Grid>
+            <Grid container>
+            <Grid item xs={12} mt={5}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography fontWeight={'bold'}>Note: This Office will not entertain any claim of shortage after receipt has been duly acknowledge</Typography>
               </Box>
             </Grid>
             </Grid>

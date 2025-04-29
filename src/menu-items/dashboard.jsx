@@ -11,21 +11,23 @@ const dashboard = {
   title: 'Navigation',
   type: 'group',
   children: [
-    // {
-    //   id: 'account',
-    //   title: 'Account',
-    //   type: 'item',
-    //   url: '/app/account',
-    //   icon: UserOutlined  ,
-    //   breadcrumbs: false
-    // },
+    {
+      id: 'account',
+      title: 'Account',
+      type: 'item',
+      url: '/app/account',
+      icon: UserOutlined  ,
+      breadcrumbs: false,
+      roles: ['admin']
+    },
     // {
     //   id: 'dashboard',
     //   title: 'Dashboard',
     //   type: 'item',
     //   url: '/app/dashboard',
     //   icon: DashboardOutlined,
-    //   breadcrumbs: false
+    //   breadcrumbs: false,
+    //   roles: ['admin', 'cashier', 'sales', 'staff']
     // },
     {
       id: 'customer',
@@ -33,7 +35,8 @@ const dashboard = {
       type: 'item',
       url: '/app/customer',
       icon: SmileOutlined  ,
-      breadcrumbs: false
+      breadcrumbs: false,
+      roles: ['admin', 'cashier', 'sales', 'staff']
     },
     {
       id: 'product',
@@ -41,7 +44,8 @@ const dashboard = {
       type: 'item',
       url: '/app/product',
       icon: ProductOutlined  ,
-      breadcrumbs: false
+      breadcrumbs: false,
+      roles: ['admin', 'cashier', 'sales', 'staff']
     },
     {
       id: 'sales',
@@ -49,7 +53,8 @@ const dashboard = {
       type: 'item',
       url: '/app/sales-list',
       icon: ShoppingCartOutlined ,
-      breadcrumbs: false
+      breadcrumbs: false,
+      roles: ['admin', 'cashier', 'sales', 'staff']
     },
     {
       id: 'payments',
@@ -57,7 +62,8 @@ const dashboard = {
       type: 'item',
       url: '/app/payments',
       icon: AccountBookOutlined  ,
-      breadcrumbs: false
+      breadcrumbs: false,
+      roles: ['admin', 'cashier']
     },
     {
       id: 'supplier',
@@ -65,7 +71,8 @@ const dashboard = {
       type: 'item',
       url: '/app/supplier',
       icon: AreaChartOutlined ,
-      breadcrumbs: false
+      breadcrumbs: false,
+      roles: ['admin', 'cashier', 'sales', 'staff']
     },
     {
       id: 'purchase',
@@ -73,7 +80,8 @@ const dashboard = {
       type: 'item',
       url: '/app/purchase',
       icon: ShoppingOutlined ,
-      breadcrumbs: false
+      breadcrumbs: false,
+      roles: ['admin']
     },
     {
       id: 'receiving',
@@ -81,7 +89,8 @@ const dashboard = {
       type: 'item',
       url: '/app/receiving-report',
       icon: AuditOutlined ,
-      breadcrumbs: false
+      breadcrumbs: false,
+      roles: ['admin']
     },
     {
       id: 'inventory',
@@ -89,7 +98,8 @@ const dashboard = {
       type: 'item',
       url: '/app/inventory',
       icon: DropboxOutlined ,
-      breadcrumbs: false
+      breadcrumbs: false,
+      roles: ['admin']
     },
     {
       id: 'pettyCash',
@@ -97,7 +107,8 @@ const dashboard = {
       type: 'item',
       url: '/app/petty-cash',
       icon: RedEnvelopeOutlined  ,
-      breadcrumbs: false
+      breadcrumbs: false,
+      roles: ['admin', 'cashier']
     },
  
    

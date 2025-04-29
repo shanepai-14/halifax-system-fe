@@ -5,100 +5,70 @@ import {
   Typography,
   Box,
   Divider,
-  Chip,
-  LinearProgress,
-  Stack,
-  Tooltip
+  Skeleton
 } from '@mui/material';
 import { 
   ShoppingCartOutlined, 
-  WarningOutlined, 
-  MoneyCollectOutlined,
-  VerticalAlignBottomOutlined,
-  VerticalAlignTopOutlined,
-  InfoCircleOutlined
+  WarningOutlined,
+  BranchesOutlined,
+  DollarOutlined
 } from '@ant-design/icons';
 
-const InventorySummaryCards = ({ inventoryData = [], stats = {} }) => {
-  // Using sample data if none is provided
-  const sampleStats = {
-    totalItems: stats.totalItems || 1254,
-    totalValue: stats.totalValue || 187650.75,
-    lowStockItems: stats.lowStockItems || 23,
-    topSellingItems: stats.topSellingItems || 5,
-    reorderNeeded: stats.reorderNeeded || 18,
-    incomingStock: stats.incomingStock || 42,
-    inventoryTurnover: stats.inventoryTurnover || 4.2,
-    stockAccuracy: stats.stockAccuracy || 98.3
+const InventorySummaryCards = ({ inventoryData = [], stats = {}, isLoading = false }) => {
+  // Format for currency display
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('en-PH', { 
+      style: 'currency', 
+      currency: 'PHP',
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    }).format(value || 0);
   };
 
-  // Card definitions
-  const summaryCards = [
-    {
-      title: 'Total Inventory',
-      value: sampleStats.totalItems,
-      icon: <ShoppingCartOutlined style={{ fontSize: 24 }} />,
-      color: '#1976d2',
-      secondaryValue: `$${sampleStats.totalValue.toLocaleString('en-US', { maximumFractionDigits: 2 })}`,
-      secondaryLabel: 'Total Value'
-    },
-    {
-      title: 'Low Stock Items',
-      value: sampleStats.lowStockItems,
-      icon: <WarningOutlined style={{ fontSize: 24 }} />,
-      color: '#f44336',
-      secondaryValue: sampleStats.reorderNeeded,
-      secondaryLabel: 'Require Immediate Reorder',
-      chip: {
-        label: `${sampleStats.lowStockItems} items below threshold`,
-        color: 'error'
-      }
-    },
-    {
-      title: 'Inventory Performance',
-      value: `${sampleStats.stockAccuracy}%`,
-      icon: <InfoCircleOutlined style={{ fontSize: 24 }} />,
-      color: '#4caf50',
-      progress: sampleStats.stockAccuracy,
-      secondaryValue: sampleStats.inventoryTurnover,
-      secondaryLabel: 'Turnover Rate'
-    },
-    {
-      title: 'Stock Movement',
-      value: sampleStats.topSellingItems,
-      icon: <MoneyCollectOutlined style={{ fontSize: 24 }} />,
-      color: '#ff9800',
-      secondaryValue: sampleStats.incomingStock,
-      secondaryLabel: 'Incoming Stock',
-      stats: [
-        { label: 'Outgoing', value: 28, icon: <VerticalAlignTopOutlined /> },
-        { label: 'Incoming', value: 42, icon: <VerticalAlignBottomOutlined /> }
-      ]
-    }
-  ];
+  // Loading component for cards
+  const CardSkeleton = () => (
+    <Paper sx={{ p: 2, height: '100%' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+        <Skeleton width={120} height={30} />
+        <Skeleton variant="circular" width={40} height={40} />
+      </Box>
+      <Skeleton width={80} height={60} />
+      <Divider sx={{ my: 2 }} />
+      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+        <Skeleton width={100} height={24} />
+        <Skeleton width={80} height={24} />
+      </Box>
+    </Paper>
+  );
+
+  // Prepare category data for display
+  const categories = stats.categoriesWithValue 
+    ? Object.entries(stats.categoriesWithValue)
+        .sort(([, a], [, b]) => b.value - a.value)
+        .map(([id, data]) => ({ id, ...data }))
+    : [];
 
   return (
-    <Box sx={{ mb: 4 }}>
-      <Grid container spacing={3}>
-        {summaryCards.map((card, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
+    <>
+      {/* Main stats cards */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        {/* Total Inventory Stats */}
+        <Grid item xs={12} sm={6} md={6}>
+          {isLoading ? (
+            <CardSkeleton />
+          ) : (
             <Paper
               elevation={1}
               sx={{
                 p: 2,
                 height: '100%',
-                borderTop: `4px solid ${card.color}`,
-                borderRadius: '4px',
-                transition: 'transform 0.3s, box-shadow 0.3s',
-                '&:hover': {
-                  transform: 'translateY(-3px)',
-                  boxShadow: 3
-                }
+                borderTop: '4px solid #1976d2',
+                borderRadius: '4px'
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                 <Typography variant="subtitle2" color="text.secondary">
-                  {card.title}
+                  Total Inventory
                 </Typography>
                 <Box sx={{ 
                   display: 'flex', 
@@ -107,76 +77,153 @@ const InventorySummaryCards = ({ inventoryData = [], stats = {} }) => {
                   width: 40, 
                   height: 40, 
                   borderRadius: '50%', 
-                  backgroundColor: `${card.color}20`
+                  backgroundColor: 'rgba(25, 118, 210, 0.12)'
                 }}>
-                  <Box sx={{ color: card.color }}>
-                    {card.icon}
+                  <Box sx={{ color: '#1976d2' }}>
+                    <ShoppingCartOutlined style={{ fontSize: 24 }} />
                   </Box>
                 </Box>
               </Box>
               
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: card.color, mb: 1 }}>
-                {card.value}
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1976d2', mb: 1 }}>
+                {stats.totalItems || inventoryData.length}
               </Typography>
               
-              {card.chip && (
-                <Chip 
-                  label={card.chip.label} 
-                  color={card.chip.color} 
-                  size="small" 
-                  sx={{ my: 1 }} 
-                />
-              )}
-              
-              {card.progress && (
-                <Box sx={{ mb: 1 }}>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={card.progress} 
-                    sx={{ 
-                      height: 8, 
-                      borderRadius: 4,
-                      backgroundColor: `${card.color}30`,
-                      '& .MuiLinearProgress-bar': {
-                        backgroundColor: card.color
-                      }
-                    }} 
-                  />
+              <Box sx={{ mt: 'auto' }}>
+                <Divider sx={{ my: 1 }} />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Total Value
+                  </Typography>
+                  <Typography variant="body1" fontWeight="medium">
+                    {formatCurrency(stats.totalValue || 0)}
+                  </Typography>
                 </Box>
-              )}
-              
-              {card.stats ? (
-                <Box sx={{ mt: 2 }}>
-                  <Divider sx={{ my: 1 }} />
-                  <Stack direction="row" spacing={2} justifyContent="space-between">
-                    {card.stats.map((stat, i) => (
-                      <Tooltip title={stat.label} key={i}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Box sx={{ mr: 0.5, color: 'text.secondary' }}>{stat.icon}</Box>
-                          <Typography variant="body2">{stat.value}</Typography>
-                        </Box>
-                      </Tooltip>
-                    ))}
-                  </Stack>
+              </Box>
+            </Paper>
+          )}
+        </Grid>
+
+        {/* Low Stock Items */}
+        <Grid item xs={12} sm={6} md={6}>
+          {isLoading ? (
+            <CardSkeleton />
+          ) : (
+            <Paper
+              elevation={1}
+              sx={{
+                p: 2,
+                height: '100%',
+                borderTop: '4px solid #f44336',
+                borderRadius: '4px'
+              }}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Low Stock Items
+                </Typography>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  width: 40, 
+                  height: 40, 
+                  borderRadius: '50%', 
+                  backgroundColor: 'rgba(244, 67, 54, 0.12)'
+                }}>
+                  <Box sx={{ color: '#f44336' }}>
+                    <WarningOutlined style={{ fontSize: 24 }} />
+                  </Box>
                 </Box>
-              ) : (
+              </Box>
+              
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#f44336', mb: 1 }}>
+                {stats.lowStockItems || 0}
+              </Typography>
+              
+              <Box sx={{ mt: 'auto' }}>
+                <Divider sx={{ my: 1 }} />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Require Reorder
+                  </Typography>
+                  <Typography variant="body1" fontWeight="medium">
+                    {stats.reorderNeeded || 0}
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+          )}
+        </Grid>
+      </Grid>
+
+      {/* Category heading */}
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <BranchesOutlined style={{ fontSize: 20, marginRight: 8, color: '#4caf50' }} />
+        <Typography variant="h6">
+          Inventory by Category
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
+          ({stats.categoryCount || 0} categories)
+        </Typography>
+      </Box>
+
+      {/* Category cards */}
+      <Grid container spacing={2}>
+        {isLoading ? (
+          // Skeleton loaders for categories
+          Array.from(new Array(4)).map((_, index) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
+              <CardSkeleton />
+            </Grid>
+          ))
+        ) : categories.length > 0 ? (
+          // Real category data
+          categories.map(category => (
+            <Grid item xs={12} sm={6} md={4} lg={4} key={category.id}>
+              <Paper
+                elevation={1}
+                sx={{
+                  p: 2,
+                  height: '100%',
+                  borderLeft: '4px solid #4caf50',
+                  borderRadius: '4px'
+                }}
+              >
+                <Typography variant="subtitle2" noWrap title={category.name} sx={{ mb: 1 }}>
+                  {category.name}
+                </Typography>
+                
+                <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#4caf50', mb: 1 }}>
+                  {formatCurrency(category.value)}
+                </Typography>
+                
                 <Box sx={{ mt: 'auto' }}>
                   <Divider sx={{ my: 1 }} />
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="body2" color="text.secondary">
-                      {card.secondaryLabel}
+                      Items
                     </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      {card.secondaryValue}
+                    <Typography variant="body1">
+                      {category.count}
                     </Typography>
                   </Box>
                 </Box>
-              )}
+              </Paper>
+            </Grid>
+          ))
+        ) : (
+          // No data state
+          <Grid item xs={12}>
+            <Paper sx={{ p: 3, textAlign: 'center' }}>
+              <Typography color="text.secondary">
+                No category data available
+              </Typography>
             </Paper>
           </Grid>
-        ))}
+        )}
       </Grid>
-    </Box>
+    </>
   );
 };
 

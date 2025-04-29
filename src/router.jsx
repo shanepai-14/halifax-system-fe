@@ -2,6 +2,7 @@
 import Dashboard from './layout/Dashboard';
 import { lazy } from 'react';
 import Loadable from '@components/Loadable';
+import ProtectedRoute from './ProtectedRoute';
 
 const ProductPage = Loadable(lazy(() => import('@pages/product/index')));
 const Product = Loadable(lazy(() => import('@pages/product/product')));
@@ -26,37 +27,34 @@ const PaymentsPage = Loadable(lazy(() => import('@/pages/payments/PaymentsPage')
 const PettyCashManagement = Loadable(lazy(() => import('@/pages/pettyCash/PettyCashManagement')));
 const PettyCashIndex = Loadable(lazy(() => import('@/pages/pettyCash/index')));
 const AuthLogin = Loadable(lazy(() => import('@pages/authentication/login')));
+const UserIndex = Loadable(lazy(() => import('@/pages/users/index')));
+const UserManagement = Loadable(lazy(() => import('@/pages/users/UserManagement')));
 
-const router = [   // Changed from object to array
-    {
-      path: '/',
-      element:<AuthLogin />,
-    },
-    {
-        path: '/app',
-        element:<Dashboard />,
+
+const router = [
+  {
+    path: '/',
+    element: <AuthLogin />,
+  },
+  {
+    path: '/app',
+    element: <Dashboard />,
+    children: [
+      {
+        index: true,
+        element: <Dashboard />
+      },
+      // Protected Admin-only route
+      {
+        element: <ProtectedRoute allowedRoles={['admin']} />,
         children: [
           {
-            index: true,
-            element: <Dashboard />
-          },
-          {
-            path: 'product',
-            element: <ProductPage />,
+            path: 'account',
+            element: <UserIndex />,
             children: [
               {
                 index: true,
-                element: <Product />
-              },
-            ]
-          },
-          {
-            path: 'supplier',
-            element: <SupplierPage />,
-            children: [
-              {
-                index: true,
-                element: <Supplier />
+                element: <UserManagement />
               },
             ]
           },
@@ -102,6 +100,33 @@ const router = [   // Changed from object to array
               }
             ]
           },
+          // Other admin-only routes
+        ]
+      },
+      // Routes accessible by admin, cashier, sales, and staff
+      {
+        element: <ProtectedRoute allowedRoles={['admin', 'cashier', 'sales', 'staff']} />,
+        children: [
+          {
+            path: 'product',
+            element: <ProductPage />,
+            children: [
+              {
+                index: true,
+                element: <Product />
+              },
+            ]
+          },
+          {
+            path: 'supplier',
+            element: <SupplierPage />,
+            children: [
+              {
+                index: true,
+                element: <Supplier />
+              },
+            ]
+          },
           {
             path: 'customer',
             element: <CustomerIndex />,
@@ -124,6 +149,13 @@ const router = [   // Changed from object to array
             path: 'delivery-report/:id',
             element: <DeliveryReportPage />,
           },
+          // Other shared routes
+        ]
+      },
+      // Routes accessible by admin and cashier only
+      {
+        element: <ProtectedRoute allowedRoles={['admin', 'cashier']} />,
+        children: [
           {
             path: 'payments',
             element: <PaymentsIndex />,
@@ -136,18 +168,18 @@ const router = [   // Changed from object to array
           },
           {
             path: 'petty-cash',
-            element : <PettyCashIndex />,
-            children :[
+            element: <PettyCashIndex />,
+            children: [
               {
-                index:true,
+                index: true,
                 element: <PettyCashManagement />,
               }
             ]
           }
-
-          
-        ]  
-    },
-  ];
+        ]
+      }
+    ]
+  },
+];
 
 export default router;
