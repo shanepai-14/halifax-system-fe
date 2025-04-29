@@ -51,7 +51,8 @@ import {
   useGetInventory, 
   useCreateAdjustment, 
   useGetAdjustments,
-  useGetInventoryLogs 
+  useGetInventoryLogs,
+  useInventorySummaryStats
 } from '@/hooks/useInventory';
 
 // Status indicators with colors
@@ -106,6 +107,7 @@ const InventoryManagement = () => {
   const { data: adjustments = [], isLoading: isLoadingAdjustments } = useGetAdjustments();
   const { mutateAsync: createAdjustment } = useCreateAdjustment();
   const { data: inventoryLogs = [], isLoading: isLoadingLogs } = useGetInventoryLogs();
+  const { data: summaryStats = {}, isLoading: isLoadingStats } = useInventorySummaryStats();
 
   const inventoryData = React.useMemo(() => {
     return inventory.map(item => {
@@ -227,7 +229,8 @@ const InventoryManagement = () => {
     <Container maxWidth="xxl" sx={{ mt: 0, px: '0!important' }}>
         <InventorySummaryCards 
         inventoryData={inventoryData} 
-        stats={inventorySummaryStats} 
+        stats={summaryStats}
+        isLoading={isLoadingStats}
       />
       <Box sx={{ mb: 4 }}>
         <Tabs value={tabValue} onChange={handleTabChange} sx={{ mb: 3 }}>

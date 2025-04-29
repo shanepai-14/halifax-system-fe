@@ -263,4 +263,22 @@ export const useGetInventoryWarnings = () => {
       return response.data.data;
     }
   });
+
+};
+
+export const useInventorySummaryStats = () => {
+  return useQuery({
+    queryKey: ['inventory-summary-stats'],
+    queryFn: async () => {
+      try {
+        const response = await api.get('/inventory/summary-stats');
+        return response.data.data;
+      } catch (error) {
+        console.error('Error fetching inventory stats:', error);
+        toast.error(error.response?.data?.message || 'Failed to fetch inventory statistics');
+        throw error;
+      }
+    }
+  });
+
 };
