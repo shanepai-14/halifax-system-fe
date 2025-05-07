@@ -51,6 +51,10 @@ const PaymentModal = ({ open, handleClose, sale, onSuccess }) => {
     if (!formData.payment_method) {
       newErrors.payment_method = 'Payment method is required';
     }
+
+    if(formData.payment_method === 'cheque' && !formData.payment_date){
+      newErrors.payment_date = 'Payment date is required for cheque payments';
+    }
     
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
       newErrors.amount = 'Amount must be greater than 0';
@@ -203,22 +207,25 @@ const PaymentModal = ({ open, handleClose, sale, onSuccess }) => {
             />
           </Grid>
           
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Payment Date *"
-              name="payment_date"
-              type="date"
-              value={formData.payment_date}
-              onChange={handleChange}
-              error={!!errors.payment_date}
-              helperText={errors.payment_date}
-              disabled={true}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
+          {formData.payment_method === 'cheque' && (
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Cheque Date *"
+                name="payment_date"
+                type="date"
+                value={formData.payment_date}
+                onChange={handleChange}
+                error={!!errors.payment_date}
+                helperText={errors.payment_date}
+                InputLabelProps={{ shrink: true }}
+                required
+              />
+            </Grid>
+          )}
+
           
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={formData.payment_method === 'cheque' ? 6 : 12}>
             <TextField
               fullWidth
               required={formData.payment_method === 'cheque'}

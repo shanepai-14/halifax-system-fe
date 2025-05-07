@@ -87,7 +87,7 @@ const PaymentReceipt = ({ paymentRecord, onClose }) => {
           <Box sx={{ textAlign: 'center', mb: 2 }}>
             <Typography variant="h4">PAYMENT RECEIPT</Typography>
             <Typography variant="h6">{payment.reference_number}</Typography>
-            <Typography variant="body2">{formatDate(payment.payment_date)}</Typography>
+            <Typography variant="body2">{formatDate(payment.created_at)}</Typography>
           </Box>
 
           {/* Company Info */}
@@ -136,6 +136,11 @@ const PaymentReceipt = ({ paymentRecord, onClose }) => {
               {payment.reference_number && (
                 <Typography >
                   <strong>Reference #:</strong> {payment.reference_number}
+                </Typography>
+              )}
+              {payment.payment_method === 'cheque' && (
+                <Typography >
+                  <strong>Cheque Date</strong> {formatDate(payment.payment_date)}
                 </Typography>
               )}
               <Typography >
