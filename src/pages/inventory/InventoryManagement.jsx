@@ -67,8 +67,6 @@ const adjustmentTypes = [
   { value: 'reduction', label: 'Reduction' },
   { value: 'damage', label: 'Damage' },
   { value: 'loss', label: 'Loss' },
-  // { value: 'return', label: 'Return' },
-  { value: 'correction', label: 'Correction' },
 ];
 
 // Skeleton loader for table rows
@@ -202,13 +200,24 @@ const InventoryManagement = () => {
 
   const handleAdjustmentSubmit = async (adjustmentData) => {
     try {
-      await createAdjustment({
+      // Create payload with basic fields
+      const payload = {
         id: adjustmentData.id,
         quantity: adjustmentData.quantity,
         adjustment_type: adjustmentData.type,
         reason: adjustmentData.reason,
         notes: adjustmentData.notes
-      });
+      };
+      
+      // Add pricing fields to payload if adjustment type is 'addition'
+      if (adjustmentData.type === 'addition') {
+        payload.distribution_price = adjustmentData.distribution_price;
+        payload.walk_in_price = adjustmentData.walk_in_price;
+        payload.wholesale_price = adjustmentData.wholesale_price;
+        payload.regular_price = adjustmentData.regular_price;
+      }
+      
+      await createAdjustment(payload);
       toast.success('Inventory adjustment recorded successfully');
       refetchInventory();
       handleCloseAdjustmentDialog();

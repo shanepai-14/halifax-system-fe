@@ -10,7 +10,8 @@ import {
   MenuItem,
   FormHelperText,
   Autocomplete,
-  Typography
+  Typography,
+  Collapse
 } from '@mui/material';
 import { SaveOutlined, CloseOutlined } from '@ant-design/icons';
 
@@ -22,14 +23,18 @@ const InventoryAdjustmentForm = ({
   onCancel,
   onSelectedProduct
 }) => {
-  console.log(product);
   const [formData, setFormData] = useState({
     id: product?.id || '',
     product_id: product?.id || '',
     quantity: '',
     type: 'addition',
     reason: '',
-    notes: ''
+    notes: '',
+    // New pricing fields
+    distribution_price: '',
+    walk_in_price: '',
+    wholesale_price: '',
+    regular_price: ''
   });
   const [errors, setErrors] = useState({});
   
@@ -39,7 +44,7 @@ const InventoryAdjustmentForm = ({
       setFormData(prev => ({
         ...prev,
         id: product.id || '',
-        product_id : product.id || ''
+        product_id: product.id || ''
       }));
     }
   }, [product]);
@@ -47,7 +52,6 @@ const InventoryAdjustmentForm = ({
   const validateForm = () => {
     const newErrors = {};
     
-    console.log('formData',formData);
     if (!formData.product_id) {
       newErrors.product_id = 'Product is required';
     }
@@ -58,6 +62,25 @@ const InventoryAdjustmentForm = ({
     
     if (!formData.reason) {
       newErrors.reason = 'Reason is required';
+    }
+    
+    // Validate pricing fields only when adjustment type is 'addition'
+    if (formData.type === 'addition') {
+      if (!formData.distribution_price || formData.distribution_price <= 0) {
+        newErrors.distribution_price = 'Distribution price is required';
+      }
+      
+      if (!formData.walk_in_price || formData.walk_in_price <= 0) {
+        newErrors.walk_in_price = 'Walk-in price is required';
+      }
+      
+      if (!formData.wholesale_price || formData.wholesale_price <= 0) {
+        newErrors.wholesale_price = 'Wholesale price is required';
+      }
+      
+      if (!formData.regular_price || formData.regular_price <= 0) {
+        newErrors.regular_price = 'Regular price is required';
+      }
     }
     
     setErrors(newErrors);
@@ -87,7 +110,7 @@ const InventoryAdjustmentForm = ({
       product_id: newValue ? newValue.id : '',
       id: newValue ? newValue.id : ''
     }));
-   console.log('newValue', newValue);
+    
     onSelectedProduct(newValue);
     
     if (errors.product_id) {
@@ -110,8 +133,8 @@ const InventoryAdjustmentForm = ({
   // Find current product details
   const selectedProduct = product || products.find(p => p.id === formData.id);
 
-  console.log('product',product);
-  console.log('products',products);
+  // Check if we need to show pricing fields
+  const showPricingFields = formData.type === 'addition';
 
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
@@ -121,8 +144,11 @@ const InventoryAdjustmentForm = ({
             value={selectedProduct || null}
             onChange={handleProductChange}
             options={products || []}
-            getOptionLabel={(option) => `${option.product_code} - ${option.product_name}`}
-            isOptionEqualToValue={(option, value) => option.id === value.id}
+            getOptionLabel={(option) => {
+              // Check if option exists before accessing its properties
+              return option ? `${option.product_code || ''} ${option.product_name || ''}` : '';
+            }}
+            isOptionEqualToValue={(option, value) => option && value ? option.id === value.id : false}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -188,6 +214,86 @@ const InventoryAdjustmentForm = ({
               inputProps: { min: 1 }
             }}
           />
+        </Grid>
+
+        <Grid item xs={12} sx={{paddingTop :showPricingFields == true ? '24px!important': '0!important' }}>
+        <Collapse in={showPricingFields} sx={{ width: '100%' }}>
+          <Grid container spacing={3} >
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" >
+                Pricing Information
+              </Typography>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Distribution Price"
+                name="distribution_price"
+                type="number"
+                value={formData.distribution_price}
+                onChange={handleChange}
+                error={!!errors.distribution_price}
+                helperText={errors.distribution_price}
+                required={showPricingFields}
+                InputProps={{
+                  inputProps: { min: 0, step: "0.01" }
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Walk-in Price"
+                name="walk_in_price"
+                type="number"
+                value={formData.walk_in_price}
+                onChange={handleChange}
+                error={!!errors.walk_in_price}
+                helperText={errors.walk_in_price}
+                required={showPricingFields}
+                InputProps={{
+                  inputProps: { min: 0, step: "0.01" }
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Wholesale Price"
+                name="wholesale_price"
+                type="number"
+                value={formData.wholesale_price}
+                onChange={handleChange}
+                error={!!errors.wholesale_price}
+                helperText={errors.wholesale_price}
+                required={showPricingFields}
+                InputProps={{
+                  inputProps: { min: 0, step: "0.01" }
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Regular Price"
+                name="regular_price"
+                type="number"
+                value={formData.regular_price}
+                onChange={handleChange}
+                error={!!errors.regular_price}
+                helperText={errors.regular_price}
+                required={showPricingFields}
+                InputProps={{
+                  inputProps: { min: 0, step: "0.01" }
+                }}
+              />
+            </Grid>
+          </Grid>
+        </Collapse>
         </Grid>
 
         <Grid item xs={12}>
