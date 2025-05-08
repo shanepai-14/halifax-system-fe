@@ -27,7 +27,7 @@ import {
 import { usePayments } from '@/hooks/usePayments';
 import TablePaymentRowSkeleton from '@/components/loader/TablePaymentRowSkeleton';
 import PaymentReceipt from '@/pages/sales/PaymentReceipt';
-import { formatDate } from '@/utils/dateUtils';
+import { formatDate , formatDateTime } from '@/utils/dateUtils';
 import { formatCurrency } from '@/utils/currencyFormat';
 
 // Map payment methods to display names
@@ -211,8 +211,8 @@ const PaymentsPage = () => {
     
     // Transform data for export - include only the fields you want in the Excel file
     const dataToExport = payments.data.map(payment => ({
-      'Date & Time': formatDate(payment.payment_date),
-      'Reference #': payment.reference_number,
+      'Date & Time': formatDateTime(payment.created_at),
+      'Reference #': `${payment.reference_number} (${formatDate(payment.payment_date) ?? ''})`,
       'Invoice #': payment.sale?.invoice_number || '',
       'Customer': payment.sale?.customer ? 
         (typeof payment.sale.customer === 'object' ? 
@@ -431,8 +431,12 @@ const PaymentsPage = () => {
                   <TableRow key={payment.id} sx={{
                     backgroundColor: payment.status === 'voided' ? '#fff8f8' : 'inherit'
                   }}>
-                    <TableCell>{formatDate(payment.payment_date)}</TableCell>
-                    <TableCell>{payment.reference_number}</TableCell>
+                    <TableCell>{formatDateTime(payment.created_at)}</TableCell>
+                    <TableCell>
+                  {payment.payment_method === 'cheque' 
+                    ? `${payment.reference_number || '-'} (${formatDate(payment.payment_date)})` 
+                    : (payment.reference_number || '-')}
+                </TableCell>
                     <TableCell>
                       <Typography
                         variant="body2"

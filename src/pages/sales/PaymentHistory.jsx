@@ -104,6 +104,15 @@ const PaymentHistory = ({ sale, onPaymentUpdate , setSelectedReceipt }) => {
     return new Date(dateString).toLocaleString();
   };
 
+  const formatDateOnly = (dateString) => {
+    if (!dateString) return '-';
+    
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
+    
+
+  };
+
 
   const getStatusChip = (status) => {
     if (status === 'completed') {
@@ -165,9 +174,13 @@ const PaymentHistory = ({ sale, onPaymentUpdate , setSelectedReceipt }) => {
               <TableBody>
                 {payments.map((payment) => (
                   <TableRow key={payment.id}>
-                    <TableCell>{formatDate(payment.payment_date)}</TableCell>
+                    <TableCell>{formatDate(payment.created_at)}</TableCell>
                     <TableCell>{paymentMethodDisplay(payment.payment_method)}</TableCell>
-                    <TableCell>{payment.reference_number || '-'}</TableCell>
+                    <TableCell>
+                    {payment.payment_method === 'cheque' 
+                      ? `${payment.reference_number || '-'} (${formatDateOnly(payment.payment_date)})` 
+                      : (payment.reference_number || '-')}
+                  </TableCell>
                     <TableCell align="right">{formatCurrency(payment.amount)}</TableCell>
                     <TableCell>{getStatusChip(payment.status)}</TableCell>
                     <TableCell>{payment.received_by?.customer_name || '-'}</TableCell>

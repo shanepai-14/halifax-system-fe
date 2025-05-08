@@ -7,6 +7,8 @@ import {
   InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem,
   IconButton, Card, CardContent,
 } from '@mui/material';
+import DownloadIcon from '@mui/icons-material/Download';
+import * as XLSX from 'xlsx';
 
 import { 
   SearchOutlined, 
@@ -133,7 +135,34 @@ const SalesTablePage = () => {
     navigate(`/app/delivery-report/${saleId}`);
   };
   
-
+  const handleExportExcel = () => {
+    // Create a new workbook
+    const workbook = XLSX.utils.book_new();
+    
+    // Format the data for Excel
+    const formattedData = sales.map(sale => ({
+      'DR #': sale.invoice_number,
+      'Customer': sale.customer ? sale.customer.customer_name : 'Walk-in Customer',
+      'Business': sale.customer?.business_name || '-',
+      'Status': sale.status,
+      'Payment Method': sale.payment_method,
+      'Order Date': formatDate(sale.order_date),
+      'Delivery Date': formatDate(sale.delivery_date),
+      'City': sale.city || '-',
+      'Total': sale.total,
+      'Received': sale.amount_received,
+      'Delivered': sale.is_delivered ? 'YES' : 'NO'
+    }));
+    
+    // Create worksheet from data
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sales');
+    
+    // Generate Excel file and trigger download
+    XLSX.writeFile(workbook, `Sales_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
 
   const getStatusChip = (status) => {
     let color;
@@ -214,7 +243,7 @@ const SalesTablePage = () => {
       <Box sx={{ mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
           {/* Search Field */}
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} md={2}>
             <TextField
               fullWidth
               placeholder="Search by DR number"
@@ -302,7 +331,7 @@ const SalesTablePage = () => {
           </Grid>
           
           {/* Create Sale Button */}
-          <Grid item xs={12} md={1}>
+          <Grid item xs={12} md={2} display={'flex'}>
             <Button
               variant="contained"
               color="primary"
@@ -312,9 +341,23 @@ const SalesTablePage = () => {
             >
               Sale
             </Button>
+            <IconButton 
+              color="primary"
+              onClick={handleExportExcel}
+              size="medium"
+              sx={{ border: '1px solid', borderColor: 'primary.main', ml:1 }}
+              title="Export to Excel"
+            >
+              <DownloadIcon />
+            </IconButton>
           </Grid>
+
+        {/* <Grid item xs={6} md={1}>
+
+          </Grid> */}
         </Grid>
       </Box>
+      
       
       {/* Sales Table */}
       <TableContainer component={Paper}>
