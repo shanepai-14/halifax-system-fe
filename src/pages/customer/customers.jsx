@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -29,6 +30,7 @@ import {
   SearchOutlined,
   DeleteOutlined,
   ClearOutlined,
+  ShoppingCartOutlined,
 } from '@ant-design/icons';
 import { useCustomers } from '@/hooks/useCustomers';
 import { selectCustomers, selectCustomersLoading } from '@/store/slices/customerSlice';
@@ -55,6 +57,7 @@ const TableRowSkeleton = () => (
 );
 
 const CustomerPage = () => {
+  const navigate = useNavigate();
   const customers = useSelector(selectCustomers);
   const isLoading = useSelector(selectCustomersLoading);
   const { getAllCustomers, deleteCustomer } = useCustomers();
@@ -68,8 +71,6 @@ const CustomerPage = () => {
   // State for customer modal
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
-
-
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -117,6 +118,11 @@ const CustomerPage = () => {
   const handleModalSuccess = () => {
     // Refresh the customer list
     getAllCustomers();
+  };
+
+  // New handler for viewing purchase history
+  const handleViewPurchaseHistory = (customerId) => {
+    navigate(`/app/customer/${customerId}/purchase-history`);
   };
 
   // Filter customers based on search term
@@ -196,7 +202,16 @@ const CustomerPage = () => {
                 .map((customer) => (
                   <TableRow key={customer.id}>
                     <TableCell>
-                      <Typography>
+                      <Typography
+                        sx={{ 
+                          cursor: 'pointer', 
+                          '&:hover': { 
+                            color: 'primary.main',
+                            textDecoration: 'underline' 
+                          }
+                        }}
+                        onClick={() => handleViewPurchaseHistory(customer.id)}
+                      >
                         {customer.customer_name}
                       </Typography>
                     </TableCell>
@@ -207,6 +222,13 @@ const CustomerPage = () => {
                     <TableCell>{customer.address || 'N/A'}</TableCell>
                     <TableCell>{customer.city || 'N/A'}</TableCell>
                     <TableCell align="right">
+                      <IconButton 
+                        onClick={() => handleViewPurchaseHistory(customer.id)}
+                        color="primary"
+                        title="View Purchase History"
+                      >
+                        <ShoppingCartOutlined style={{ fontSize: 20 }} />
+                      </IconButton>
                       <IconButton onClick={() => handleOpenEditModal(customer)}>
                         <EditOutlined style={{ fontSize: 20 }} />
                       </IconButton>
@@ -219,7 +241,7 @@ const CustomerPage = () => {
             )}
             {!isLoading && filteredCustomers.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} align="center">
+                <TableCell colSpan={8} align="center">
                   <Typography variant="body1" sx={{ py: 2 }}>
                     No customers found
                   </Typography>

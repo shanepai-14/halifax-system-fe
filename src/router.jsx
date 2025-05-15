@@ -18,6 +18,7 @@ const InventoryPage = Loadable(lazy(() => import('@pages/inventory/index')));
 const Inventory = Loadable(lazy(() => import('@pages/inventory/InventoryManagement')));
 const CustomerIndex = Loadable(lazy(() => import('@pages/customer/index')));
 const CustomerPage = Loadable(lazy(() => import('@pages/customer/customers')));
+const CustomerPurchaseHistory = Loadable(lazy(() => import('@pages/customer/CustomerPurchaseHistory')));
 const SalesPage = Loadable(lazy(() => import('@/pages/sales/NewOrderPage')));
 const SalesTablePage = Loadable(lazy(() => import('@/pages/sales/SalesTablePage')));
 const InventoryProductDetail = Loadable(lazy(() => import('@pages/inventory/InventoryProductDetail')));
@@ -133,10 +134,15 @@ const router = [
             children: [
               {
                 index: true,
-                element: <CustomerPage />
+                element: <CustomerPage />,
               },
+              {
+                path: ':customerId/purchase-history',
+                element: <CustomerPurchaseHistory />
+              }
             ]
           },
+          
           {
             path: 'sales-list',
             element: <SalesTablePage />,
