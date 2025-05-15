@@ -8,6 +8,7 @@ import paymentsReducer from './slices/paymentsSlice';
 import pettyCashReducer from './slices/pettyCashSlice';
 import employeeReducer from './slices/employeeSlice';
 import userReducer from './slices/userSlice';
+import notificationsReducer from './slices/notificationsSlice';
 
 
 export const store = configureStore({
@@ -20,6 +21,7 @@ export const store = configureStore({
     payments: paymentsReducer,
     pettyCash: pettyCashReducer,
     employees: employeeReducer,
-    users: userReducer
+    users: userReducer,
+    notifications: notificationsReducer
   },
 });

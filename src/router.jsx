@@ -8,6 +8,7 @@ const ProductPage = Loadable(lazy(() => import('@pages/product/index')));
 const Product = Loadable(lazy(() => import('@pages/product/product')));
 const SupplierPage = Loadable(lazy(() => import('@pages/supplier/index')));
 const Supplier = Loadable(lazy(() => import('@pages/supplier/supplier')));
+const SupplierPurchaseHistory = Loadable(lazy(() => import('@pages/supplier/SupplierPurchaseHistory')));
 const PurchasePage = Loadable(lazy(() => import('@pages/purchase/index')));
 const Purchase = Loadable(lazy(() => import('@pages/purchase/purchase')));
 const PurchaseForm = Loadable(lazy(() => import('@pages/purchase/purchaseForm')));
@@ -18,6 +19,7 @@ const InventoryPage = Loadable(lazy(() => import('@pages/inventory/index')));
 const Inventory = Loadable(lazy(() => import('@pages/inventory/InventoryManagement')));
 const CustomerIndex = Loadable(lazy(() => import('@pages/customer/index')));
 const CustomerPage = Loadable(lazy(() => import('@pages/customer/customers')));
+const CustomerPurchaseHistory = Loadable(lazy(() => import('@pages/customer/CustomerPurchaseHistory')));
 const SalesPage = Loadable(lazy(() => import('@/pages/sales/NewOrderPage')));
 const SalesTablePage = Loadable(lazy(() => import('@/pages/sales/SalesTablePage')));
 const InventoryProductDetail = Loadable(lazy(() => import('@pages/inventory/InventoryProductDetail')));
@@ -125,6 +127,10 @@ const router = [
                 index: true,
                 element: <Supplier />
               },
+              {
+              path: ':supplierId/purchase-history',
+              element: <SupplierPurchaseHistory />
+            }
             ]
           },
           {
@@ -133,10 +139,15 @@ const router = [
             children: [
               {
                 index: true,
-                element: <CustomerPage />
+                element: <CustomerPage />,
               },
+              {
+                path: ':customerId/purchase-history',
+                element: <CustomerPurchaseHistory />
+              }
             ]
           },
+          
           {
             path: 'sales-list',
             element: <SalesTablePage />,

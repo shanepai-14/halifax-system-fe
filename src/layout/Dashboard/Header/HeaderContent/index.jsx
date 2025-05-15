@@ -6,6 +6,7 @@ import Box from '@mui/material/Box';
 import Search from './Search';
 import Profile from './Profile';
 import Notification from './Notification';
+import InventoryNotification from './InventoryNotification';
 import MobileSection from './MobileSection';
 
 
@@ -18,7 +19,7 @@ export default function HeaderContent() {
     <>
       {!downLG && <Search />}
       {downLG && <Box sx={{ width: '100%', ml: 1 }} />}
-      <Notification />
+      <InventoryNotification />
       {!downLG && <Profile />}
       {downLG && <MobileSection />}
     </>

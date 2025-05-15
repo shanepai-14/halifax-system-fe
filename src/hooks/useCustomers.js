@@ -1,10 +1,8 @@
-import { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { toast } from 'sonner';
-import api from '@/lib/axios';
-import { 
-  fetchCustomersStart, 
-  fetchCustomersSuccess, 
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchCustomersStart,
+  fetchCustomersSuccess,
   fetchCustomersFailed,
   createCustomerStart,
   createCustomerSuccess,
@@ -14,47 +12,36 @@ import {
   updateCustomerFailed,
   deleteCustomerStart,
   deleteCustomerSuccess,
-  deleteCustomerFailed
+  deleteCustomerFailed,
+  fetchCustomerSalesStart,
+  fetchCustomerSalesSuccess,
+  fetchCustomerSalesFailed,
+  selectCustomerSales,
+  selectCustomerSalesLoading
 } from '@/store/slices/customerSlice';
+import api from '@/lib/axios';
+import { toast } from 'sonner';
 
-// Custom hook for managing customer operations
-export function useCustomers() {
+export const useCustomers = () => {
   const dispatch = useDispatch();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const customers = useSelector(state => state.customers.customers);
+  const isLoading = useSelector(state => state.customers.loading);
+  const customerSales = useSelector(selectCustomerSales);
+  const isLoadingSales = useSelector(selectCustomerSalesLoading);
 
-  // Fetch all customers
-  const getAllCustomers = async (filters = {}) => {
+  const getAllCustomers = async () => {
     try {
       dispatch(fetchCustomersStart());
-      const response = await api.get('/customers', { params: filters });
+      const response = await api.get('/customers');
       dispatch(fetchCustomersSuccess(response.data.data));
       return response.data.data;
-    } catch (err) {
-      console.error('Error fetching customers:', err);
-      dispatch(fetchCustomersFailed(err.message));
-      toast.error(err.response?.data?.message || 'Failed to fetch customers');
-      return [];
+    } catch (error) {
+      dispatch(fetchCustomersFailed(error.message));
+      toast.error(error.response?.data?.message || 'Failed to fetch customers');
+      throw error;
     }
   };
 
-  // Get customer by ID
-  const getCustomerById = async (id) => {
-    try {
-      setIsLoading(true);
-      const response = await api.get(`/customers/${id}`);
-      setIsLoading(false);
-      return response.data.data;
-    } catch (err) {
-      setIsLoading(false);
-      setError(err.message);
-      console.error('Error fetching customer:', err);
-      toast.error(err.response?.data?.message || 'Failed to fetch customer');
-      return null;
-    }
-  };
-
-  // Create a new customer
   const createCustomer = async (customerData) => {
     try {
       dispatch(createCustomerStart());
@@ -62,15 +49,13 @@ export function useCustomers() {
       dispatch(createCustomerSuccess(response.data.data));
       toast.success('Customer created successfully');
       return response.data.data;
-    } catch (err) {
-      console.error('Error creating customer:', err);
-      dispatch(createCustomerFailed(err.message));
-      toast.error(err.response?.data?.message || 'Failed to create customer');
-      throw err;
+    } catch (error) {
+      dispatch(createCustomerFailed(error.message));
+      toast.error(error.response?.data?.message || 'Failed to create customer');
+      throw error;
     }
   };
 
-  // Update an existing customer
   const updateCustomer = async (id, customerData) => {
     try {
       dispatch(updateCustomerStart());
@@ -78,54 +63,55 @@ export function useCustomers() {
       dispatch(updateCustomerSuccess(response.data.data));
       toast.success('Customer updated successfully');
       return response.data.data;
-    } catch (err) {
-      console.error('Error updating customer:', err);
-      dispatch(updateCustomerFailed(err.message));
-      toast.error(err.response?.data?.message || 'Failed to update customer');
-      throw err;
+    } catch (error) {
+      dispatch(updateCustomerFailed(error.message));
+      toast.error(error.response?.data?.message || 'Failed to update customer');
+      throw error;
     }
   };
 
-  // Delete a customer
   const deleteCustomer = async (id) => {
     try {
       dispatch(deleteCustomerStart());
       await api.delete(`/customers/${id}`);
       dispatch(deleteCustomerSuccess(id));
       toast.success('Customer deleted successfully');
-      return true;
-    } catch (err) {
-      console.error('Error deleting customer:', err);
-      dispatch(deleteCustomerFailed(err.message));
-      toast.error(err.response?.data?.message || 'Failed to delete customer');
-      throw err;
+    } catch (error) {
+      dispatch(deleteCustomerFailed(error.message));
+      toast.error(error.response?.data?.message || 'Failed to delete customer');
+      throw error;
     }
   };
 
-  // Get statistics
-  const getCustomerStats = async () => {
+  // New function to get customer purchase history
+  const getCustomerSales = async (customerId) => {
     try {
-      setIsLoading(true);
-      const response = await api.get('/customers/stats');
-      setIsLoading(false);
+      dispatch(fetchCustomerSalesStart());
+      
+      // In a real implementation, you would call your API endpoint
+      // For example:
+      const response = await api.get('/sales', {
+        params: { customer_id: customerId }
+      });
+      
+      dispatch(fetchCustomerSalesSuccess(response.data.data));
       return response.data.data;
-    } catch (err) {
-      setIsLoading(false);
-      setError(err.message);
-      console.error('Error fetching customer statistics:', err);
-      toast.error(err.response?.data?.message || 'Failed to fetch customer statistics');
-      return null;
+    } catch (error) {
+      dispatch(fetchCustomerSalesFailed(error.message));
+      toast.error('Failed to fetch customer purchase history');
+      throw error;
     }
   };
 
   return {
+    customers,
     isLoading,
-    error,
+    customerSales,
+    isLoadingSales,
     getAllCustomers,
-    getCustomerById,
     createCustomer,
     updateCustomer,
     deleteCustomer,
-    getCustomerStats
+    getCustomerSales
   };
-}
+};

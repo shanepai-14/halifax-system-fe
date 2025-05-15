@@ -2,10 +2,12 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
   customers: [],
+  currentCustomer: null,
   loading: false,
   error: null,
-  singleCustomerLoading: false,
-  singleCustomerError: null
+  customerSales: [],
+  customerSalesLoading: false,
+  customerSalesError: null,
 };
 
 const customerSlice = createSlice({
@@ -69,10 +71,33 @@ const customerSlice = createSlice({
     deleteCustomerFailed: (state, action) => {
       state.loading = false;
       state.error = action.payload;
-    }
+    },
+
+    // Set current customer
+    setCurrentCustomer: (state, action) => {
+      state.currentCustomer = action.payload;
+    },
+    clearCurrentCustomer: (state) => {
+      state.currentCustomer = null;
+    },
+
+    // Fetch customer sales history
+    fetchCustomerSalesStart: (state) => {
+      state.customerSalesLoading = true;
+      state.customerSalesError = null;
+    },
+    fetchCustomerSalesSuccess: (state, action) => {
+      state.customerSales = action.payload;
+      state.customerSalesLoading = false;
+    },
+    fetchCustomerSalesFailed: (state, action) => {
+      state.customerSalesLoading = false;
+      state.customerSalesError = action.payload;
+    },
   }
 });
 
+// Export actions
 export const {
   fetchCustomersStart,
   fetchCustomersSuccess,
@@ -85,12 +110,21 @@ export const {
   updateCustomerFailed,
   deleteCustomerStart,
   deleteCustomerSuccess,
-  deleteCustomerFailed
+  deleteCustomerFailed,
+  setCurrentCustomer,
+  clearCurrentCustomer,
+  fetchCustomerSalesStart,
+  fetchCustomerSalesSuccess,
+  fetchCustomerSalesFailed
 } = customerSlice.actions;
 
 // Selectors
 export const selectCustomers = state => state.customers.customers;
+export const selectCurrentCustomer = state => state.customers.currentCustomer;
 export const selectCustomersLoading = state => state.customers.loading;
 export const selectCustomersError = state => state.customers.error;
+export const selectCustomerSales = state => state.customers.customerSales;
+export const selectCustomerSalesLoading = state => state.customers.customerSalesLoading;
+export const selectCustomerSalesError = state => state.customers.customerSalesError;
 
 export default customerSlice.reducer;

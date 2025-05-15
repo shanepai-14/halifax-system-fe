@@ -207,6 +207,16 @@ export const useSales = () => {
     }
   };
 
+  const getCustomerPurchaseHistory = async (customerId) => {
+    try {
+      const response = await api.get(`/sales/customers/${customerId}/purchase-history`);
+      return response.data.data;
+    } catch (error) {
+      console.error('Error fetching customer purchase history:', error);
+      throw error;
+    }
+  };
+
   // Clear current sale
   const resetCurrentSale = () => {
     dispatch(clearCurrentSale());
@@ -234,6 +244,7 @@ export const useSales = () => {
     markAsDelivered,
     getSalesStats,
     resetCurrentSale,
-    createCreditMemo
+    createCreditMemo,
+    getCustomerPurchaseHistory
   };
 };
