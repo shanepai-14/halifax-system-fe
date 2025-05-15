@@ -8,6 +8,7 @@ const ProductPage = Loadable(lazy(() => import('@pages/product/index')));
 const Product = Loadable(lazy(() => import('@pages/product/product')));
 const SupplierPage = Loadable(lazy(() => import('@pages/supplier/index')));
 const Supplier = Loadable(lazy(() => import('@pages/supplier/supplier')));
+const SupplierPurchaseHistory = Loadable(lazy(() => import('@pages/supplier/SupplierPurchaseHistory')));
 const PurchasePage = Loadable(lazy(() => import('@pages/purchase/index')));
 const Purchase = Loadable(lazy(() => import('@pages/purchase/purchase')));
 const PurchaseForm = Loadable(lazy(() => import('@pages/purchase/purchaseForm')));
@@ -126,6 +127,10 @@ const router = [
                 index: true,
                 element: <Supplier />
               },
+              {
+              path: ':supplierId/purchase-history',
+              element: <SupplierPurchaseHistory />
+            }
             ]
           },
           {

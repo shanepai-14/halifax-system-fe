@@ -45,3 +45,14 @@ export const useDeleteSupplier = () => {
     }
   });
 };
+
+export const useSupplierPurchaseHistory = (supplierId) => {
+  return useQuery({
+    queryKey: ['supplier', supplierId, 'purchase-history'],
+    queryFn: async () => {
+      const response = await api.get(`/suppliers/${supplierId}/purchase-history`);
+      return response.data.data;
+    },
+    enabled: !!supplierId
+  });
+};
