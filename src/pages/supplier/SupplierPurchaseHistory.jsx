@@ -1,21 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Typography, Box, Paper, Button, Grid, Divider,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Chip, Breadcrumbs, Link, CircularProgress, Tab, Tabs
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,Tooltip,
+  Chip, Breadcrumbs, Link, CircularProgress, Tab, Tabs, TextField, InputAdornment
 } from '@mui/material';
 import { 
   HomeOutlined, 
   TeamOutlined, 
   ShoppingOutlined, 
   LeftOutlined,
-  FileTextOutlined 
+  FileTextOutlined, 
+  SearchOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+  FileExcelOutlined
 } from '@ant-design/icons';
 import MainCard from '@components/MainCard';
-import { useSupplierPurchaseHistory } from '@/hooks/useSuppliers';
+import api from '@/lib/axios';
 import { formatDate } from '@/utils/dateUtils';
 import { formatCurrency } from '@/utils/currencyFormat';
+import * as XLSX from 'xlsx';
 
 // TabPanel component for the tabs
 function TabPanel(props) {
@@ -38,8 +43,18 @@ const SupplierPurchaseHistory = () => {
   const { supplierId } = useParams();
   const navigate = useNavigate();
   const [tabValue, setTabValue] = useState(0);
-  const { data, isLoading, isError, error } = useSupplierPurchaseHistory(supplierId);
-  
+  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
+  const [displayItems, setDisplayItems] = useState([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const observer = useRef();
+  const loadingRef = useRef();
+
   // Handle tab change
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -50,8 +65,147 @@ const SupplierPurchaseHistory = () => {
     navigate('/app/supplier');
   };
 
+  // Fetch data from API with pagination
+  const fetchData = useCallback(async (pageNum = 1, reset = false) => {
+    if (!supplierId) return;
+    
+    try {
+      setLoading(true);
+      const response = await api.get(`/suppliers/${supplierId}/purchase-history?page=${pageNum}&per_page=50`);
+      
+      if (reset) {
+        // Reset data for new searches or sorting
+        setData(response.data.data);
+        setDisplayItems(response.data.data.items || []);
+      } else {
+        // Append new items for infinite scrolling
+        setData(prev => {
+          if (!prev) return response.data.data;
+          
+          const newItems = [...prev.items, ...(response.data.data.items || [])];
+          // Deduplicate items based on received_item_id
+          const uniqueItems = Array.from(new Map(newItems.map(item => [item.received_item_id, item])).values());
+          
+          return {
+            ...response.data.data,
+            items: uniqueItems,
+            items_by_po: response.data.data.items_by_po // Use the latest items_by_po
+          };
+        });
+        
+        setDisplayItems(prev => {
+          const newItems = [...prev, ...(response.data.data.items || [])];
+          // Deduplicate items
+          return Array.from(new Map(newItems.map(item => [item.received_item_id, item])).values());
+        });
+      }
+      
+      setHasMore(response.data.data.pagination?.has_more || false);
+      setInitialLoading(false);
+    } catch (err) {
+      setError(err.message || 'Failed to load data');
+      setInitialLoading(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [supplierId]);
+
+  // Initialize infinite scroll observer
+  const lastItemRef = useCallback(node => {
+    if (loading) return;
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        const nextPage = page + 1;
+        setPage(nextPage);
+        fetchData(nextPage);
+      }
+    });
+    
+    if (node) observer.current.observe(node);
+  }, [loading, hasMore, page, fetchData]);
+
+  // Initial data load
+  useEffect(() => {
+    setPage(1);
+    fetchData(1, true);
+  }, [supplierId, fetchData]);
+
+  // Search functionality
+  useEffect(() => {
+    if (!data) return;
+    
+    const filtered = data.items.filter(item => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        item.po_number.toLowerCase().includes(searchLower) ||
+        item.product_name.toLowerCase().includes(searchLower) ||
+        item.total_cost.toString().includes(searchLower) ||
+        item.batch_number.toLowerCase().includes(searchLower) ||
+        (item.product_category && item.product_category.toLowerCase().includes(searchLower))
+      );
+    });
+    
+    setDisplayItems(filtered);
+  }, [searchTerm, data]);
+
+  // Sorting functionality
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Apply sorting to display items
+  useEffect(() => {
+    if (!sortConfig.key || !displayItems.length) return;
+    
+    const sortedItems = [...displayItems].sort((a, b) => {
+      if (a[sortConfig.key] < b[sortConfig.key]) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (a[sortConfig.key] > b[sortConfig.key]) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+    
+    setDisplayItems(sortedItems);
+  }, [sortConfig]);
+
+  // Export to Excel function
+  const exportToExcel = () => {
+    if (!displayItems.length) return;
+    
+    // Prepare data for export
+    const exportData = displayItems.map(item => ({
+      'PO Number': item.po_number,
+      'Product': item.product_name,
+      'Product Code': item.product_code,
+      'Category': item.product_category || 'Uncategorized',
+      'Date Received': item.rr_date,
+      'Quantity': item.received_quantity,
+      'Cost Price': item.cost_price,
+      'Total': item.total_cost,
+      'Payment Status': item.payment_status
+    }));
+    
+    // Create worksheet and workbook
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Purchase History');
+    
+    // Generate Excel file
+    const supplier_name = data?.supplier?.supplier_name || 'Supplier';
+    const date = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `${supplier_name}_Purchase_History_${date}.xlsx`);
+  };
+
   // Show loading state
-  if (isLoading) {
+  if (initialLoading) {
     return (
       <MainCard>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
@@ -62,11 +216,11 @@ const SupplierPurchaseHistory = () => {
   }
 
   // Show error state
-  if (isError) {
+  if (error) {
     return (
       <MainCard>
         <Typography variant="h5" color="error" align="center">
-          Error: {error.message || 'Failed to load supplier purchase history'}
+          Error: {error}
         </Typography>
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Button 
@@ -81,11 +235,8 @@ const SupplierPurchaseHistory = () => {
     );
   }
 
-  const { supplier, stats, items, items_by_po } = data || {};
-
-  // Prepare a sorted array of PO numbers for display
+  const { supplier, stats, items_by_po } = data || {};
   const poNumbers = items_by_po ? Object.keys(items_by_po).sort((a, b) => {
-    // Get the first item from each PO to compare dates (newest first)
     const dateA = items_by_po[a][0]?.po_date;
     const dateB = items_by_po[b][0]?.po_date;
     return new Date(dateB) - new Date(dateA);
@@ -119,14 +270,17 @@ const SupplierPurchaseHistory = () => {
         </Typography>
       </Breadcrumbs>
       
-      <Button
-        variant="outlined"
-        startIcon={<LeftOutlined />}
-        onClick={handleBackToSuppliers}
-        sx={{ mb: 3 }}
-      >
-        Back to Suppliers
-      </Button>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+        <Button
+          variant="outlined"
+          startIcon={<LeftOutlined />}
+          onClick={handleBackToSuppliers}
+        >
+          Back to Suppliers
+        </Button>
+        
+
+      </Box>
       
       {/* Supplier Information */}
       <Paper sx={{ p: 3, mb: 4 }}>
@@ -218,6 +372,24 @@ const SupplierPurchaseHistory = () => {
         </Grid>
       </Paper>
       
+      {/* Search Bar */}
+      <Box sx={{ mb: 3 }}>
+        <TextField
+          fullWidth
+          placeholder="Search by DR #, Product Name, Category or Total..."
+          variant="outlined"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchOutlined />
+              </InputAdornment>
+            ),
+          }}
+        />
+      </Box>
+      
       {/* Purchase History */}
       <Paper sx={{ p: 3 }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -229,19 +401,89 @@ const SupplierPurchaseHistory = () => {
         
         {/* All Items Tab */}
         <TabPanel value={tabValue} index={0}>
+       <Box sx={{display : 'flex', justifyContent:'space-between' , alignContent: 'center', mb:1}}>
           <Typography variant="h6" gutterBottom>
             All Purchased Items
           </Typography>
+
+          <Button
+          variant="contained"
+          color="success"
+          size='small'
+          startIcon={<FileExcelOutlined />}
+          onClick={exportToExcel}
+          disabled={!displayItems.length}
+        >
+          Export to Excel
+        </Button>
+       </Box>
           
-          {items && items.length > 0 ? (
+          {displayItems.length > 0 ? (
             <TableContainer component={Paper} variant="outlined">
               <Table size="small">
                 <TableHead>
                   <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                    <TableCell>PO Number</TableCell>
-                    <TableCell>Product</TableCell>
+                    <TableCell 
+                      onClick={() => handleSort('po_number')}
+                      sx={{ cursor: 'pointer', userSelect: 'none' }}
+                    >
+                        <Tooltip title="Sort by PO Number" arrow>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        PO Number
+                        {sortConfig.key === 'po_number' && (
+                          sortConfig.direction === 'asc' 
+                            ? <ArrowUpOutlined style={{ marginLeft: 8 }} /> 
+                            : <ArrowDownOutlined style={{ marginLeft: 8 }} />
+                        )}
+                      </Box>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell
+                      onClick={() => handleSort('product_name')}
+                      sx={{ cursor: 'pointer', userSelect: 'none' }}
+                    >
+                      <Tooltip title="Sort by Product Name" arrow>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          Product
+                          {sortConfig.key === 'product_name' && (
+                            sortConfig.direction === 'asc'
+                              ? <ArrowUpOutlined style={{ marginLeft: 8 }} />
+                              : <ArrowDownOutlined style={{ marginLeft: 8 }} />
+                          )}
+                        </Box>
+                      </Tooltip>
+                    </TableCell>
                     <TableCell>Code</TableCell>
-                    <TableCell>Date Received</TableCell>
+                    <TableCell 
+                      onClick={() => handleSort('product_category')}
+                      sx={{ cursor: 'pointer', userSelect: 'none' }}
+                    >
+                        <Tooltip title="Sort by Category" arrow>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        Category
+                        {sortConfig.key === 'product_category' && (
+                          sortConfig.direction === 'asc' 
+                            ? <ArrowUpOutlined style={{ marginLeft: 8 }} /> 
+                            : <ArrowDownOutlined style={{ marginLeft: 8 }} />
+                        )}
+                      </Box>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell 
+                      onClick={() => handleSort('rr_date')}
+                      sx={{ cursor: 'pointer', userSelect: 'none' }}
+                    >
+                        <Tooltip title="Sort by Date" arrow>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        Date
+                        {sortConfig.key === 'rr_date' && (
+                          sortConfig.direction === 'asc' 
+                            ? <ArrowUpOutlined style={{ marginLeft: 8 }} /> 
+                            : <ArrowDownOutlined style={{ marginLeft: 8 }} />
+                        )}
+                      </Box>
+                      </Tooltip>
+                    </TableCell>
                     <TableCell align="right">Quantity</TableCell>
                     <TableCell align="right">Cost Price</TableCell>
                     <TableCell align="right">Total</TableCell>
@@ -249,32 +491,39 @@ const SupplierPurchaseHistory = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {items.map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <Link
-                          href="#"
-                          onClick={() => navigate(`/app/purchase/${item.po_number}/edit`)}
-                          sx={{ textDecoration: 'none' }}
-                        >
-                          {item.po_number}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{item.product_name}</TableCell>
-                      <TableCell>{item.product_code}</TableCell>
-                      <TableCell>{formatDate(item.rr_date)}</TableCell>
-                      <TableCell align="right">{item.received_quantity}</TableCell>
-                      <TableCell align="right">{formatCurrency(item.cost_price)}</TableCell>
-                      <TableCell align="right">{formatCurrency(item.total_cost)}</TableCell>
-                      <TableCell>
-                        <Chip 
-                          label={item.payment_status} 
-                          color={item.payment_status === 'Paid' ? 'success' : 'error'}
-                          size="small"
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {displayItems.map((item, index) => {
+                    const isLastItem = index === displayItems.length - 1;
+                    return (
+                      <TableRow 
+                        key={item.received_item_id} 
+                        ref={isLastItem ? lastItemRef : null}
+                      >
+                        <TableCell>
+                          <Link
+                            href="#"
+                            onClick={() => navigate(`/app/purchase/${item.po_number}/edit`)}
+                            sx={{ textDecoration: 'none' }}
+                          >
+                            {item.po_number}
+                          </Link>
+                        </TableCell>
+                        <TableCell>{item.product_name}</TableCell>
+                        <TableCell>{item.product_code}</TableCell>
+                        <TableCell>{item.product_category || 'Uncategorized'}</TableCell>
+                        <TableCell>{formatDate(item.rr_date)}</TableCell>
+                        <TableCell align="right">{item.received_quantity}</TableCell>
+                        <TableCell align="right">{formatCurrency(item.cost_price)}</TableCell>
+                        <TableCell align="right">{formatCurrency(item.total_cost)}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={item.payment_status} 
+                            color={item.payment_status === 'Paid' ? 'success' : 'error'}
+                            size="small"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -283,6 +532,13 @@ const SupplierPurchaseHistory = () => {
               <Typography variant="body1" color="text.secondary">
                 No purchase history found for this supplier.
               </Typography>
+            </Box>
+          )}
+          
+          {/* Loading indicator at bottom */}
+          {loading && (
+            <Box ref={loadingRef} sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+              <CircularProgress size={30} />
             </Box>
           )}
         </TabPanel>
@@ -334,6 +590,7 @@ const SupplierPurchaseHistory = () => {
                           <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
                             <TableCell>Product</TableCell>
                             <TableCell>Code</TableCell>
+                            <TableCell>Category</TableCell>
                             <TableCell align="right">Quantity</TableCell>
                             <TableCell align="right">Cost Price</TableCell>
                             <TableCell align="right">Total</TableCell>
@@ -344,13 +601,14 @@ const SupplierPurchaseHistory = () => {
                             <TableRow key={itemIndex}>
                               <TableCell>{item.product_name}</TableCell>
                               <TableCell>{item.product_code}</TableCell>
+                              <TableCell>{item.product_category || 'Uncategorized'}</TableCell>
                               <TableCell align="right">{item.received_quantity}</TableCell>
                               <TableCell align="right">{formatCurrency(item.cost_price)}</TableCell>
                               <TableCell align="right">{formatCurrency(item.total_cost)}</TableCell>
                             </TableRow>
                           ))}
                           <TableRow>
-                            <TableCell colSpan={3} />
+                            <TableCell colSpan={4} />
                             <TableCell align="right">
                               <Typography variant="subtitle2">Order Total:</Typography>
                             </TableCell>
