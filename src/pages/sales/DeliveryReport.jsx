@@ -7,7 +7,7 @@ import {
   Paper, Divider, Grid, Select, MenuItem,
   CircularProgress
 } from '@mui/material';
-import { DeleteOutlined, PlusCircleOutlined, MinusCircleOutlined, SaveOutlined } from '@ant-design/icons';
+import { DeleteOutlined, PlusCircleOutlined, MinusCircleOutlined, SaveOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import cities from '@/utils/cities';
@@ -39,7 +39,8 @@ const DeliveryReport = forwardRef(({
   onQuantityChange, 
   onDiscountChange,
   onPriceTypeChange,
-  isSubmitting = false
+  isSubmitting = false,
+  onOpenProductModal
 }, ref) => {
   const initialValues = {
     customer: null,
@@ -277,31 +278,42 @@ const DeliveryReport = forwardRef(({
               <Divider sx={{ mb: 1 }} />
               
             <Box sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-            <Typography variant="h6" gutterBottom>Order Items</Typography>
-              {values.paymentMethod === 'term' && (
-   
-                  <Field
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography variant="h6" gutterBottom>Order Items</Typography>
+                {onOpenProductModal && (
+                  <Button
+                    variant="outlined"
+                    color="primary"
                     size="small"
-                    as={TextField}
-                    name="term_days"
-                    label="Term"
-                    type="number"
-                    width={50}
-                    sx={{
-                      mb: 1,
-                   
-                    }}
-                    slotProps={{
-                      inputLabel: {
-                        sx: { top: '1px' }, 
-                      },
-                    }}
-                    margin="small"
-                    InputProps={{ min: 0 }}
-                    error={touched.term_days && !!errors.term_days}
-                    helperText={touched.term_days && errors.term_days}
-                  />
-         
+                    startIcon={<ShoppingCartOutlined />}
+                    onClick={onOpenProductModal}
+                    sx={{ ml: 2, mb: 1 }}
+                  >
+                    Add Products
+                  </Button>
+                )}
+              </Box>
+              {values.paymentMethod === 'term' && (
+                <Field
+                  size="small"
+                  as={TextField}
+                  name="term_days"
+                  label="Term"
+                  type="number"
+                  width={50}
+                  sx={{
+                    mb: 1,
+                  }}
+                  slotProps={{
+                    inputLabel: {
+                      sx: { top: '1px' }, 
+                    },
+                  }}
+                  margin="small"
+                  InputProps={{ min: 0 }}
+                  error={touched.term_days && !!errors.term_days}
+                  helperText={touched.term_days && errors.term_days}
+                />
               )}
             </Box>
               
