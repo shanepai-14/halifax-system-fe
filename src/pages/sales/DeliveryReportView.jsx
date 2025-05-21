@@ -5,7 +5,7 @@ import {
   TableContainer, TableHead, TableRow, Button, Dialog,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { PrinterOutlined, RollbackOutlined, HomeOutlined , DownOutlined , UpOutlined } from '@ant-design/icons';
+import { PrinterOutlined, RollbackOutlined, HomeOutlined , DownOutlined , UpOutlined , CheckCircleOutlined  } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
 import { formatDate } from '@/utils/dateUtils';
 import CreditMemoModal from './CreditMemoModal';
@@ -24,7 +24,7 @@ const DeliveryReportView = ({ refresh , report }) => {
   const contentRef = useRef();
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
-  const { createCreditMemo } = useSales();
+  const { createCreditMemo , markAsDelivered } = useSales();
 
   
 
@@ -120,6 +120,15 @@ const DeliveryReportView = ({ refresh , report }) => {
     }
   };
 
+    const handleMarkAsDelivered = async () => {
+    try {
+      await markAsDelivered(report.id);
+      // Refresh the report data after marking as delivered
+      refresh(report.id, true);
+    } catch (error) {
+      console.error("Error marking report as delivered:", error);
+    }
+  };
   // Calculate total credit memo amount
   const totalCreditMemoAmount = report?.returns?.reduce((total, returnItem) => {
     const returnTotal = returnItem.items?.reduce((sum, item) => {
@@ -185,6 +194,17 @@ const DeliveryReportView = ({ refresh , report }) => {
             onPaymentSuccess={handlePaymentUpdate}
             disabled={report.status == 'cancelled' || report.status == 'completed'}
           />
+              {!report.is_delivered && report.status !== 'cancelled' && (
+            <Button
+              variant="outlined"
+              color="success"
+              startIcon={<CheckCircleOutlined />}
+              onClick={handleMarkAsDelivered}
+              sx={{ mr: 1 }}
+            >
+              Mark Delivered
+            </Button>
+          )}
             <Button
               variant="outlined"
               color="primary"
