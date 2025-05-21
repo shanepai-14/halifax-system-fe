@@ -203,7 +203,8 @@ const NewOrderPage = () => {
           distribution_price: item.distribution_price || item.cost_price || 0,
           sold_price: getPriceByPriceType(item),
           discount: item.discount || 0,
-          price_type: item.price_type || 'regular' // Include price type for each item
+          price_type: item.price_type || 'regular',
+          composition : item.composition
         }))
       };
 
@@ -243,6 +244,12 @@ const NewOrderPage = () => {
     setAlertInfo(prev => ({ ...prev, open: false }));
   };
 
+  const handleUpdateItemComposition = (productId, compositionText) => {
+  setOrderItems(orderItems.map(item =>
+    item.id === productId ? { ...item, composition: compositionText } : item
+  ));
+};
+
   return (
     <>
       <Grid container spacing={2} sx={{ position: 'relative' }}>
@@ -280,6 +287,7 @@ const NewOrderPage = () => {
               onQuantityChange={handleQuantityChange}
               onDiscountChange={handleDiscountChange}
               onPriceTypeChange={handlePriceTypeChange}
+              onUpdateItemComposition={handleUpdateItemComposition} 
               isSubmitting={isSubmitting}
               onOpenProductModal={handleOpenProductModal}
             />
