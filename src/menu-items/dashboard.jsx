@@ -20,15 +20,15 @@ const dashboard = {
       breadcrumbs: false,
       roles: ['admin']
     },
-    {
-      id: 'dashboard',
-      title: 'Dashboard',
-      type: 'item',
-      url: '/app/dashboard',
-      icon: DashboardOutlined,
-      breadcrumbs: false,
-      roles: ['admin', 'cashier', 'sales', 'staff']
-    },
+    // {
+    //   id: 'dashboard',
+    //   title: 'Dashboard',
+    //   type: 'item',
+    //   url: '/app/dashboard',
+    //   icon: DashboardOutlined,
+    //   breadcrumbs: false,
+    //   roles: ['admin', 'cashier', 'sales', 'staff']
+    // },
     {
       id: 'customer',
       title: 'Customer',
@@ -110,7 +110,15 @@ const dashboard = {
       breadcrumbs: false,
       roles: ['admin', 'cashier']
     },
- 
+     {
+      id: 'report',
+      title: 'Report',
+      type: 'item',
+      url: '/app/report',
+      icon: RedEnvelopeOutlined  ,
+      breadcrumbs: false,
+      roles: ['admin', 'cashier']
+    },
    
 
   ]
