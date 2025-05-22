@@ -5,12 +5,17 @@ import {
   TableRow, IconButton, InputAdornment, Button,
   Radio, RadioGroup, FormControlLabel, FormControl, FormLabel,
   Paper, Divider, Grid, Select, MenuItem,
-  CircularProgress
+  CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
-import { DeleteOutlined, PlusCircleOutlined, MinusCircleOutlined, SaveOutlined } from '@ant-design/icons';
+import { 
+  DeleteOutlined, PlusCircleOutlined, MinusCircleOutlined, 
+  SaveOutlined, ShoppingCartOutlined, EditOutlined 
+} from '@ant-design/icons';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import cities from '@/utils/cities';
+import ReactQuill from 'react-quill'; // Import the rich text editor
+import 'react-quill/dist/quill.snow.css'; // Import Quill styles
 
 // Format date to YYYY-MM-DD for input
 const formatDateForInput = (date) => {
@@ -39,8 +44,15 @@ const DeliveryReport = forwardRef(({
   onQuantityChange, 
   onDiscountChange,
   onPriceTypeChange,
-  isSubmitting = false
+  onUpdateItemComposition, // New prop to handle composition updates
+  isSubmitting = false,
+  onOpenProductModal
 }, ref) => {
+  // State for composition modal
+  const [compositionModalOpen, setCompositionModalOpen] = useState(false);
+  const [currentItemId, setCurrentItemId] = useState(null);
+  const [composition, setComposition] = useState('');
+
   const initialValues = {
     customer: null,
     phone: '',
@@ -51,6 +63,21 @@ const DeliveryReport = forwardRef(({
     deliveryDate: formatDateForInput(new Date(Date.now() + 86400000)), // today + 1 day
     paymentMethod: '',
     term_days: null,
+  };
+
+  // Function to open composition modal
+  const handleOpenCompositionModal = (itemId) => {
+    const item = orderItems.find(item => item.id === itemId);
+    setCurrentItemId(itemId);
+    setComposition(item.composition || '');
+    setCompositionModalOpen(true);
+  };
+
+  // Function to save composition
+  const handleSaveComposition = () => {
+    // Update the orderItems with the new composition
+    onUpdateItemComposition(currentItemId, composition);
+    setCompositionModalOpen(false);
   };
 
   // Get the appropriate price based on the selected price type for the item
@@ -75,23 +102,24 @@ const DeliveryReport = forwardRef(({
   };
 
   return (
-    <Formik
-      initialValues={initialValues}
-      validationSchema={validationSchema}
-      onSubmit={(values, { setSubmitting }) => {
-        onSubmit(values);
-      }}
-    >
-      {({ errors, touched, setFieldValue, values, isValid, dirty }) => (
-        <Form>
-          <div ref={ref}>
-            <Box sx={{ width: '100%', border: (ref ? '1px solid transparent' : 'none') }}>
-              {/* Header for DR */}
-              <Box sx={{ mb:0, textAlign: 'center' }}>
-                <Typography variant="h5" gutterBottom>
-                  DELIVERY REPORT
-                </Typography>
-              </Box>
+    <>
+      <Formik
+        initialValues={initialValues}
+        validationSchema={validationSchema}
+        onSubmit={(values, { setSubmitting }) => {
+          onSubmit(values);
+        }}
+      >
+        {({ errors, touched, setFieldValue, values, isValid, dirty }) => (
+          <Form>
+            <div ref={ref}>
+              <Box sx={{ width: '100%', border: (ref ? '1px solid transparent' : 'none') }}>
+                {/* Header for DR */}
+                <Box sx={{ mb:0, textAlign: 'center' }}>
+                  <Typography variant="h5" gutterBottom>
+                    DELIVERY REPORT
+                  </Typography>
+                </Box>
               
               <Grid container spacing={2} sx={{paddingTop: "0!important"}}>
                 <Grid item xs={12} md={6} sx={{paddingTop: "0!important"}}>
@@ -276,144 +304,235 @@ const DeliveryReport = forwardRef(({
 
               <Divider sx={{ mb: 1 }} />
               
-            <Box sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-            <Typography variant="h6" gutterBottom>Order Items</Typography>
-              {values.paymentMethod === 'term' && (
-   
-                  <Field
-                    size="small"
-                    as={TextField}
-                    name="term_days"
-                    label="Term"
-                    type="number"
-                    width={50}
-                    sx={{
-                      mb: 1,
-                   
-                    }}
-                    slotProps={{
-                      inputLabel: {
-                        sx: { top: '1px' }, 
-                      },
-                    }}
-                    margin="small"
-                    InputProps={{ min: 0 }}
-                    error={touched.term_days && !!errors.term_days}
-                    helperText={touched.term_days && errors.term_days}
-                  />
-         
-              )}
-            </Box>
-              
-              <TableContainer component={Paper} sx={{ mb: 2, maxHeight: '300px', overflow: 'auto' }}>
-                <Table size="small" stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Product</TableCell>
-                      <TableCell>Price Type</TableCell>
-                      <TableCell align="right">Price</TableCell>
-                      <TableCell align="center">Qty</TableCell>
-                      <TableCell align="right">Discount (%)</TableCell>
-                      <TableCell align="right">Subtotal</TableCell>
-                      <TableCell align="right"></TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {orderItems.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} align="center">No items added to order</TableCell>
-                      </TableRow>
-                    ) : (
-                      orderItems.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell>{item.name}</TableCell>
-                          <TableCell>
-                            <Select
-                              value={item.price_type || 'regular'}
-                              onChange={(e) => onPriceTypeChange(item.id, e.target.value)}
-                              size="small"
-                              fullWidth
-                            >
-                              <MenuItem value="regular">Regular</MenuItem>
-                              <MenuItem value="walkin">Walk-in</MenuItem>
-                              <MenuItem value="wholesale">Wholesale</MenuItem>
-                            </Select>
-                          </TableCell>
-                          <TableCell align="right">₱{Number(getPriceByPriceType(item)).toFixed(2)}</TableCell>
-                          <TableCell align="center" sx={{ display: 'flex', justifyContent: 'center', alignItems: "center"}} >
-                            <IconButton size="small" onClick={() => onQuantityChange(item.id, -1)}>
-                              <MinusCircleOutlined />
-                            </IconButton>
-                            <TextField
-                              value={item.quantity}
-                              onChange={(e) => onQuantityChange(item.id, 0, parseInt(e.target.value) || 0)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'ArrowLeft') onQuantityChange(item.id, -1);
-                                if (e.key === 'ArrowRight') onQuantityChange(item.id, 1);
-                              }}
-                              inputProps={{ style: { textAlign: 'center', width: '40px' } }}
-                              size="small"
-                            />
-                            <IconButton size="small" onClick={() => onQuantityChange(item.id, 1)}>
-                              <PlusCircleOutlined />
-                            </IconButton>
-                          </TableCell>
-                          <TableCell align="right">
-                            <TextField
-                              value={item.discount || 0}
-                              onChange={(e) => onDiscountChange(item.id, e.target.value)}
-                              InputProps={{
-                                style: { textAlign: 'right', width: '80px' },
-                                min: 0,
-                                max: 100,
-                                endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                              }}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell align="right">₱{calculateItemSubtotal(item).toFixed(2)}</TableCell>
-                          <TableCell align="right">
-                            <IconButton onClick={() => onRemoveProduct(item.id)}>
-                              <DeleteOutlined />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))
+  <Box sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Typography variant="h6" gutterBottom>Order Items</Typography>
+                    {onOpenProductModal && (
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                        startIcon={<ShoppingCartOutlined />}
+                        onClick={onOpenProductModal}
+                        sx={{ ml: 2, mb: 1 }}
+                      >
+                        Add Products
+                      </Button>
                     )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              
-              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="body2">
-                  Payment Method: {values.paymentMethod.charAt(0).toUpperCase() + values.paymentMethod.slice(1)}
-                </Typography>
-                <Typography variant="h6">
-                  Total Amount: ₱{orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0).toFixed(2)}
-                </Typography>
+                  </Box>
+                  {values.paymentMethod === 'term' && (
+                    <Field
+                      size="small"
+                      as={TextField}
+                      name="term_days"
+                      label="Term"
+                      type="number"
+                      width={50}
+                      sx={{
+                        mb: 1,
+                      }}
+                      slotProps={{
+                        inputLabel: {
+                          sx: { top: '1px' }, 
+                        },
+                      }}
+                      margin="small"
+                      InputProps={{ min: 0 }}
+                      error={touched.term_days && !!errors.term_days}
+                      helperText={touched.term_days && errors.term_days}
+                    />
+                  )}
+                </Box>
+                
+                <TableContainer component={Paper} sx={{ mb: 2}}>
+                  <Table size="small" stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Product</TableCell>
+                        <TableCell>Price Type</TableCell>
+                        <TableCell align="right">Price</TableCell>
+                        <TableCell align="center">Qty</TableCell>
+                        <TableCell align="right">Discount (%)</TableCell>
+                        <TableCell align="right">Subtotal</TableCell>
+                        <TableCell align="right">Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {orderItems.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} align="center">No items added to order</TableCell>
+                        </TableRow>
+                      ) : (
+                        orderItems.map((item) => (
+                          <React.Fragment key={item.id}>
+                            <TableRow>
+                              <TableCell>{item.name}</TableCell>
+                              <TableCell>
+                                <Select
+                                  value={item.price_type || 'regular'}
+                                  onChange={(e) => onPriceTypeChange(item.id, e.target.value)}
+                                  size="small"
+                                  fullWidth
+                                >
+                                  <MenuItem value="regular">Regular</MenuItem>
+                                  <MenuItem value="walkin">Walk-in</MenuItem>
+                                  <MenuItem value="wholesale">Wholesale</MenuItem>
+                                </Select>
+                              </TableCell>
+                              <TableCell align="right">₱{Number(getPriceByPriceType(item)).toFixed(2)}</TableCell>
+                              <TableCell align="center" sx={{ display: 'flex', justifyContent: 'center', alignItems: "center"}} >
+                                <IconButton size="small" onClick={() => onQuantityChange(item.id, -1)}>
+                                  <MinusCircleOutlined />
+                                </IconButton>
+                                <TextField
+                                  value={item.quantity}
+                                  onChange={(e) => onQuantityChange(item.id, 0, parseInt(e.target.value) || 0)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'ArrowLeft') onQuantityChange(item.id, -1);
+                                    if (e.key === 'ArrowRight') onQuantityChange(item.id, 1);
+                                  }}
+                                  inputProps={{ style: { textAlign: 'center', width: '40px' } }}
+                                  size="small"
+                                />
+                                <IconButton size="small" onClick={() => onQuantityChange(item.id, 1)}>
+                                  <PlusCircleOutlined />
+                                </IconButton>
+                              </TableCell>
+                              <TableCell align="right">
+                                <TextField
+                                  value={item.discount || 0}
+                                  onChange={(e) => onDiscountChange(item.id, e.target.value)}
+                                  InputProps={{
+                                    style: { textAlign: 'right', width: '80px' },
+                                    min: 0,
+                                    max: 100,
+                                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                                  }}
+                                  size="small"
+                                />
+                              </TableCell>
+                              <TableCell align="right">₱{calculateItemSubtotal(item).toFixed(2)}</TableCell>
+                              <TableCell align="right">
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                  <IconButton 
+                                    size="small" 
+                                    color="primary"
+                                    onClick={() => handleOpenCompositionModal(item.id)}
+                                    title="Add/Edit Composition"
+                                  >
+                                    <EditOutlined />
+                                  </IconButton>
+                                  <IconButton 
+                                    size="small"
+                                    onClick={() => onRemoveProduct(item.id)}
+                                  >
+                                    <DeleteOutlined />
+                                  </IconButton>
+                                </Box>
+                              </TableCell>
+                            </TableRow>
+                            
+                            {/* Composition row - only show if composition exists */}
+                            {item.composition && (
+                              <TableRow>
+                                <TableCell colSpan={7} style={{ paddingTop: 0, paddingBottom: 8 }}>
+                                  <Box 
+                                    sx={{ 
+                                      pl: 2, 
+                                      pr: 2,
+                                      pt: 1,
+                                      pb: 1,
+                                      mt: 1, 
+                                      backgroundColor: '#f5f5f5', 
+                                      borderRadius: 1,
+                                      borderLeft: '3px solid #1976d2'
+                                    }}
+                                  >
+                                    <Typography variant="subtitle2" color="primary">
+                                      Composition:
+                                    </Typography>
+                                    <div 
+                                      className="composition-content"
+                                      dangerouslySetInnerHTML={{ __html: item.composition }}
+                                    />
+                                  </Box>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </React.Fragment>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                
+                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body2">
+                    Payment Method: {values.paymentMethod.charAt(0).toUpperCase() + values.paymentMethod.slice(1)}
+                  </Typography>
+                  <Typography variant="h6">
+                    Total Amount: ₱{orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0).toFixed(2)}
+                  </Typography>
+                </Box>
+              </Box>
+            </div>
+            
+            {/* Action buttons */}
+            <Box sx={{ mt: 3 }}>
+              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  fullWidth
+                  startIcon={isSubmitting ? <CircularProgress size={24} color="inherit" /> : <SaveOutlined />}
+                  disabled={orderItems.length === 0 || isSubmitting || !isValid}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit Delivery Report'}
+                </Button>
               </Box>
             </Box>
-          </div>
-          
-          {/* Action buttons */}
-          <Box sx={{ mt: 3 }}>
-            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                size="large"
-                fullWidth
-                startIcon={isSubmitting ? <CircularProgress size={24} color="inherit" /> : <SaveOutlined />}
-                disabled={orderItems.length === 0 || isSubmitting || !isValid}
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Delivery Report'}
-              </Button>
-            </Box>
+          </Form>
+        )}
+      </Formik>
+
+      {/* Composition Modal - now inside the main component return */}
+      <Dialog
+        open={compositionModalOpen}
+        onClose={() => setCompositionModalOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Edit Composition
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            <ReactQuill
+              value={composition}
+              onChange={setComposition}
+              style={{ height: '200px', marginBottom: '50px' }}
+              modules={{
+                toolbar: [
+                  [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                  ['bold', 'italic', 'underline', 'strike'],
+                  [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                  [{ 'indent': '-1'}, { 'indent': '+1' }],
+                  ['clean']
+                ],
+              }}
+            />
           </Box>
-        </Form>
-      )}
-    </Formik>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCompositionModalOpen(false)}>Cancel</Button>
+          <Button onClick={handleSaveComposition} variant="contained" color="primary">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 });
 

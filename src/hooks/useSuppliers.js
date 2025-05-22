@@ -46,13 +46,14 @@ export const useDeleteSupplier = () => {
   });
 };
 
-export const useSupplierPurchaseHistory = (supplierId) => {
+export const useSupplierPurchaseHistory = (supplierId, page = 1, perPage = 50) => {
   return useQuery({
-    queryKey: ['supplier', supplierId, 'purchase-history'],
+    queryKey: ['supplier', supplierId, 'purchase-history', page, perPage],
     queryFn: async () => {
-      const response = await api.get(`/suppliers/${supplierId}/purchase-history`);
+      const response = await api.get(`/suppliers/${supplierId}/purchase-history?page=${page}&per_page=${perPage}`);
       return response.data.data;
     },
-    enabled: !!supplierId
+    enabled: !!supplierId,
+    keepPreviousData: true // Keep previous data while loading new data
   });
 };

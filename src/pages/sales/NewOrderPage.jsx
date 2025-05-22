@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import {
-  Grid, Paper, Backdrop, CircularProgress, Snackbar, Alert, Typography, Box
+  Grid, Paper, Backdrop, CircularProgress, Snackbar, Alert, Typography, Box,
+  Dialog, DialogContent, DialogTitle, IconButton
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { selectCustomers } from '@/store/slices/customerSlice';
@@ -9,7 +10,7 @@ import { selectCategories } from '@/store/slices/productsSlice';
 import { useSales } from '@/hooks/useSales';
 import ProductList from './ProductList';
 import DeliveryReport from './DeliveryReport';
-
+import { CloseOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 
 const NewOrderPage = () => {
   const customers = useSelector(selectCustomers); 
@@ -30,6 +31,7 @@ const NewOrderPage = () => {
   const [isProductListMinimized, setIsProductListMinimized] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [alertInfo, setAlertInfo] = useState({ open: false, message: '', type: 'info' });
+  const [productModalOpen, setProductModalOpen] = useState(false);
   
   const deliveryReportRef = useRef();
   const navigate = useNavigate();
@@ -75,7 +77,13 @@ const NewOrderPage = () => {
     setIsProductListMinimized(!isProductListMinimized);
   };
 
+  const handleOpenProductModal = () => {
+    setProductModalOpen(true);
+  };
 
+  const handleCloseProductModal = () => {
+    setProductModalOpen(false);
+  };
 
   const handleAddProduct = (product) => {
     if (product.quantity > 0) {
@@ -195,7 +203,8 @@ const NewOrderPage = () => {
           distribution_price: item.distribution_price || item.cost_price || 0,
           sold_price: getPriceByPriceType(item),
           discount: item.discount || 0,
-          price_type: item.price_type || 'regular' // Include price type for each item
+          price_type: item.price_type || 'regular',
+          composition : item.composition
         }))
       };
 
@@ -203,8 +212,6 @@ const NewOrderPage = () => {
       const result = await createSale(saleData);
       
       if (result) {
-   
-  
         setAlertInfo({
           open: true,
           message: 'Sale created successfully!',
@@ -220,8 +227,6 @@ const NewOrderPage = () => {
         navigate(`/app/delivery-report/${result.id}`, { 
             state: { reportData: result }
         });
-      
-
       }
     } catch (error) {
       console.error('Error creating sale:', error);
@@ -235,10 +240,15 @@ const NewOrderPage = () => {
     }
   };
 
-
   const handleCloseAlert = () => {
     setAlertInfo(prev => ({ ...prev, open: false }));
   };
+
+  const handleUpdateItemComposition = (productId, compositionText) => {
+  setOrderItems(orderItems.map(item =>
+    item.id === productId ? { ...item, composition: compositionText } : item
+  ));
+};
 
   return (
     <>
@@ -277,7 +287,9 @@ const NewOrderPage = () => {
               onQuantityChange={handleQuantityChange}
               onDiscountChange={handleDiscountChange}
               onPriceTypeChange={handlePriceTypeChange}
+              onUpdateItemComposition={handleUpdateItemComposition} 
               isSubmitting={isSubmitting}
+              onOpenProductModal={handleOpenProductModal}
             />
           </Paper>
         </Grid>
@@ -297,6 +309,38 @@ const NewOrderPage = () => {
         )}
       </Grid>
 
+      {/* Product List Modal */}
+      <Dialog
+        open={productModalOpen}
+        onClose={handleCloseProductModal}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6">Add Products</Typography>
+            <IconButton onClick={handleCloseProductModal} size="small">
+              <CloseOutlined />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers>
+          <ProductList 
+            products={products} 
+            categories={categories}
+            onAddProduct={(product) => {
+              handleAddProduct(product);
+              // Optional: close modal after adding product
+              // handleCloseProductModal();
+            }}
+            dialogOpen={dialogOpen}
+            selectedProduct={selectedProduct}
+            onCloseDialog={() => setDialogOpen(false)}
+            onMinimize={null} // Disable minimize functionality in modal
+            isInModal={true} // Pass prop to indicate this is in a modal
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Alert for notifications */}
       <Snackbar

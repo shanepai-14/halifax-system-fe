@@ -5,7 +5,7 @@ import {
   TableContainer, TableHead, TableRow, Button, Dialog,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { PrinterOutlined, RollbackOutlined, HomeOutlined , DownOutlined , UpOutlined } from '@ant-design/icons';
+import { PrinterOutlined, RollbackOutlined, HomeOutlined , DownOutlined , UpOutlined , CheckCircleOutlined  } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
 import { formatDate } from '@/utils/dateUtils';
 import CreditMemoModal from './CreditMemoModal';
@@ -24,7 +24,7 @@ const DeliveryReportView = ({ refresh , report }) => {
   const contentRef = useRef();
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
-  const { createCreditMemo } = useSales();
+  const { createCreditMemo , markAsDelivered } = useSales();
 
   
 
@@ -120,6 +120,15 @@ const DeliveryReportView = ({ refresh , report }) => {
     }
   };
 
+    const handleMarkAsDelivered = async () => {
+    try {
+      await markAsDelivered(report.id);
+      // Refresh the report data after marking as delivered
+      refresh(report.id, true);
+    } catch (error) {
+      console.error("Error marking report as delivered:", error);
+    }
+  };
   // Calculate total credit memo amount
   const totalCreditMemoAmount = report?.returns?.reduce((total, returnItem) => {
     const returnTotal = returnItem.items?.reduce((sum, item) => {
@@ -185,6 +194,17 @@ const DeliveryReportView = ({ refresh , report }) => {
             onPaymentSuccess={handlePaymentUpdate}
             disabled={report.status == 'cancelled' || report.status == 'completed'}
           />
+              {!report.is_delivered && report.status !== 'cancelled' && (
+            <Button
+              variant="outlined"
+              color="success"
+              startIcon={<CheckCircleOutlined />}
+              onClick={handleMarkAsDelivered}
+              sx={{ mr: 1 }}
+            >
+              Mark Delivered
+            </Button>
+          )}
             <Button
               variant="outlined"
               color="primary"
@@ -248,14 +268,21 @@ const DeliveryReportView = ({ refresh , report }) => {
           <Grid container spacing={2} justifyContent="space-between" alignItems="flex-start">
 
             <Grid item xs={6} md={6}>
-              <Box sx={{ mb: 1 }}>
-                <Typography >
-                <strong> Delivered to:</strong>  {report.customer?.business_name || report.customer?.customer_name}
-                </Typography>
-                <Typography ><strong>Address:</strong>  {report.customer?.business_address || report.address}</Typography>
-                <Typography ><strong>City:</strong>  {report.city}</Typography>
-                <Typography ><strong>Phone:</strong>  {report.phone}</Typography>
-              </Box>
+              <Box sx={{ mb: 0.5 }}>
+            <Typography fontSize={20} lineHeight={1.3}>
+              <strong>Delivered to:</strong> {report.customer?.business_name || report.customer?.customer_name}
+            </Typography>
+            <Typography fontSize={20} lineHeight={1.3}>
+              <strong>Address:</strong> {report.customer?.business_address || report.address}
+            </Typography>
+            <Typography fontSize={20} lineHeight={1.3}>
+              <strong>City:</strong> {report.city}
+            </Typography>
+            <Typography fontSize={20} lineHeight={1.3}>
+              <strong>Phone:</strong> {report.phone}
+            </Typography>
+          </Box>
+
             </Grid>
 
             <Grid item xs={6} md={6}>
@@ -278,39 +305,70 @@ const DeliveryReportView = ({ refresh , report }) => {
           <Divider sx={{ my: 1 }} />
 
           {/* Items Table */}
-          <Typography variant="subtitle1" gutterBottom>Order Items</Typography>
-          <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Item</TableCell>
-                  <TableCell>Code</TableCell>
-                  <TableCell align="right">Price</TableCell>
-                  <TableCell align="center">Qty</TableCell>
-                  <TableCell align="right">Discount (%)</TableCell>
-                  <TableCell align="right">Subtotal</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {report.items.map((item) => {
-                  const itemSubtotal = parseFloat(item.sold_price) * item.quantity;
-                  const discountAmount = itemSubtotal * (parseFloat(item.discount) / 100);
-                  const finalAmount = itemSubtotal - discountAmount;
-                  
-                  return (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.product?.product_name}</TableCell>
-                      <TableCell>{item.product?.product_code}</TableCell>
-                      <TableCell align="right">₱{parseFloat(item.sold_price).toFixed(2)}</TableCell>
-                      <TableCell align="center">{item.quantity}</TableCell>
-                      <TableCell align="right">{parseFloat(item.discount).toFixed(2)}%</TableCell>
-                      <TableCell align="right">₱{finalAmount.toFixed(2)}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+<Typography variant="subtitle1" gutterBottom>Order Items</Typography>
+<TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
+  <Table size="small">
+    <TableHead>
+      <TableRow>
+        <TableCell>Item</TableCell>
+        <TableCell>Code</TableCell>
+        <TableCell align="right">Price</TableCell>
+        <TableCell align="center">Qty</TableCell>
+        <TableCell align="right">Discount (%)</TableCell>
+        <TableCell align="right">Subtotal</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      {report.items.map((item) => {
+        const itemSubtotal = parseFloat(item.sold_price) * item.quantity;
+        const discountAmount = itemSubtotal * (parseFloat(item.discount) / 100);
+        const finalAmount = itemSubtotal - discountAmount;
+        
+        return (
+          <React.Fragment key={item.id}>
+            {/* Regular item row */}
+            <TableRow>
+              <TableCell>{item.product?.product_name}</TableCell>
+              <TableCell>{item.product?.product_code}</TableCell>
+              <TableCell align="right">₱{parseFloat(item.sold_price).toFixed(2)}</TableCell>
+              <TableCell align="center">{item.quantity}</TableCell>
+              <TableCell align="right">{parseFloat(item.discount).toFixed(2)}%</TableCell>
+              <TableCell align="right">₱{finalAmount.toFixed(2)}</TableCell>
+            </TableRow>
+            
+            {/* Composition row - only shown when composition exists */}
+            {item.composition && (
+              <TableRow>
+                <TableCell colSpan={6} sx={{ pt: 0, pb: 2 }}>
+                  <Box 
+                    sx={{ 
+                      pl: 2, 
+                      pr: 2,
+                      pt: 1,
+                      pb: 1,
+                    }}
+                  >
+                    <Typography variant="subtitle2" color="primary">
+                      Composition:
+                    </Typography>
+                    <div 
+                      className="composition-content"
+                      dangerouslySetInnerHTML={{ __html: item.composition }}
+                      sx={{ 
+                        '& ul, & ol': { pl: 2, m: 0 },
+                        '& p': { m: 0 }
+                      }}
+                    />
+                  </Box>
+                </TableCell>
+              </TableRow>
+            )}
+          </React.Fragment>
+        );
+      })}
+    </TableBody>
+  </Table>
+</TableContainer>
 
       
 

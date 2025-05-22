@@ -110,7 +110,15 @@ const dashboard = {
       breadcrumbs: false,
       roles: ['admin', 'cashier']
     },
- 
+     {
+      id: 'report',
+      title: 'Report',
+      type: 'item',
+      url: '/app/report',
+      icon: RedEnvelopeOutlined  ,
+      breadcrumbs: false,
+      roles: ['admin', 'cashier']
+    },
    
 
   ]

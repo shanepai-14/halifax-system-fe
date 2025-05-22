@@ -31,6 +31,7 @@ const PettyCashIndex = Loadable(lazy(() => import('@/pages/pettyCash/index')));
 const AuthLogin = Loadable(lazy(() => import('@pages/authentication/login')));
 const UserIndex = Loadable(lazy(() => import('@/pages/users/index')));
 const UserManagement = Loadable(lazy(() => import('@/pages/users/UserManagement')));
+const ReportPage = Loadable(lazy(() => import('@/pages/report/ReportPage')));
 
 
 const router = [
@@ -186,6 +187,10 @@ const router = [
                 element: <PettyCashManagement />,
               }
             ]
+          },
+                    {
+            path: 'report',
+            element: <ReportPage/>,
           }
         ]
       }
