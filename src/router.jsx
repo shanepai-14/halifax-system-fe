@@ -32,6 +32,7 @@ const AuthLogin = Loadable(lazy(() => import('@pages/authentication/login')));
 const UserIndex = Loadable(lazy(() => import('@/pages/users/index')));
 const UserManagement = Loadable(lazy(() => import('@/pages/users/UserManagement')));
 const ReportPage = Loadable(lazy(() => import('@/pages/report/ReportPage')));
+const BracketPricingManagement = Loadable(lazy(() => import('@/pages/bracket/BracketPricingManagement')));
 
 
 const router = [
@@ -103,7 +104,11 @@ const router = [
               }
             ]
           },
-          // Other admin-only routes
+            {
+            path: 'bracket',
+            element: <BracketPricingManagement />,
+
+          },
         ]
       },
       // Routes accessible by admin, cashier, sales, and staff
