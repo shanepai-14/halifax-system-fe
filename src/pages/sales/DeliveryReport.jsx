@@ -4,7 +4,7 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, 
   TableRow, IconButton, InputAdornment, Button,
   Radio, RadioGroup, FormControlLabel, FormControl, FormLabel,
-  Paper, Divider, Grid, Select, MenuItem,
+  Paper, Divider, Grid, Select, MenuItem, Checkbox,
   CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
 import { 
@@ -44,7 +44,8 @@ const DeliveryReport = forwardRef(({
   onQuantityChange, 
   onDiscountChange,
   onPriceTypeChange,
-  onUpdateItemComposition, // New prop to handle composition updates
+  onUpdateItemComposition,
+  onBracketPricingChange, // Add new prop for bracket pricing toggle
   isSubmitting = false,
   onOpenProductModal
 }, ref) => {
@@ -80,18 +81,41 @@ const DeliveryReport = forwardRef(({
     setCompositionModalOpen(false);
   };
 
+  const calculateBracketPrice = (item, quantity) => {
+  if (!item.price_bracket || !item.use_bracket_pricing) return null;
+  
+  const priceType = item.price_type || 'regular';
+  const bracketItem = item.price_bracket.items.find(bracket => 
+    bracket.price_type === priceType &&
+    bracket.is_active &&
+    bracket.min_quantity <= quantity &&
+    (bracket.max_quantity === null || bracket.max_quantity >= quantity)
+  );
+  
+  return bracketItem ? bracketItem.price : null;
+};
+
   // Get the appropriate price based on the selected price type for the item
-  const getPriceByPriceType = (item) => {
-    switch(item.price_type || 'regular') {
-      case 'walkin':
-        return item.walk_in_price || item.regular_price;
-      case 'wholesale':
-        return item.wholesale_price || item.regular_price;
-      case 'regular':
-      default:
-        return item.regular_price;
+const getPriceByPriceType = (item) => {
+  // Check for bracket pricing first if enabled for this item
+  if (item.use_bracket_pricing && item.price_bracket) {
+    const bracketPrice = calculateBracketPrice(item, item.quantity);
+    if (bracketPrice !== null) {
+      return bracketPrice;
     }
-  };
+  }
+  
+  // Fall back to regular pricing
+  switch(item.price_type || 'regular') {
+    case 'walkin':
+      return item.walk_in_price || item.regular_price;
+    case 'wholesale':
+      return item.wholesale_price || item.regular_price;
+    case 'regular':
+    default:
+      return item.regular_price;
+  }
+};
 
   const calculateItemSubtotal = (item) => {
     const price = getPriceByPriceType(item);
@@ -304,8 +328,8 @@ const DeliveryReport = forwardRef(({
 
               <Divider sx={{ mb: 1 }} />
               
-  <Box sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Box sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent:'space-between' , width: '100%'  }}>
                     <Typography variant="h6" gutterBottom>Order Items</Typography>
                     {onOpenProductModal && (
                       <Button
@@ -346,91 +370,138 @@ const DeliveryReport = forwardRef(({
                 
                 <TableContainer component={Paper} sx={{ mb: 2}}>
                   <Table size="small" stickyHeader>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Product</TableCell>
-                        <TableCell>Price Type</TableCell>
-                        <TableCell align="right">Price</TableCell>
-                        <TableCell align="center">Qty</TableCell>
-                        <TableCell align="right">Discount (%)</TableCell>
-                        <TableCell align="right">Subtotal</TableCell>
-                        <TableCell align="right">Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Product</TableCell>
+                  <TableCell>Price Type</TableCell>
+                  <TableCell align="center">Bracket</TableCell> {/* Add this column */}
+                  <TableCell align="right">Price</TableCell>
+                  <TableCell align="center">Qty</TableCell>
+                  <TableCell align="right">Discount (%)</TableCell>
+                  <TableCell align="right">Subtotal</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
                     <TableBody>
                       {orderItems.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={7} align="center">No items added to order</TableCell>
                         </TableRow>
                       ) : (
-                        orderItems.map((item) => (
-                          <React.Fragment key={item.id}>
-                            <TableRow>
-                              <TableCell>{item.name}</TableCell>
-                              <TableCell>
-                                <Select
-                                  value={item.price_type || 'regular'}
-                                  onChange={(e) => onPriceTypeChange(item.id, e.target.value)}
-                                  size="small"
-                                  fullWidth
-                                >
-                                  <MenuItem value="regular">Regular</MenuItem>
-                                  <MenuItem value="walkin">Walk-in</MenuItem>
-                                  <MenuItem value="wholesale">Wholesale</MenuItem>
-                                </Select>
-                              </TableCell>
-                              <TableCell align="right">₱{Number(getPriceByPriceType(item)).toFixed(2)}</TableCell>
-                              <TableCell align="center" sx={{ display: 'flex', justifyContent: 'center', alignItems: "center"}} >
-                                <IconButton size="small" onClick={() => onQuantityChange(item.id, -1)}>
-                                  <MinusCircleOutlined />
-                                </IconButton>
-                                <TextField
-                                  value={item.quantity}
-                                  onChange={(e) => onQuantityChange(item.id, 0, parseInt(e.target.value) || 0)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'ArrowLeft') onQuantityChange(item.id, -1);
-                                    if (e.key === 'ArrowRight') onQuantityChange(item.id, 1);
-                                  }}
-                                  inputProps={{ style: { textAlign: 'center', width: '40px' } }}
-                                  size="small"
-                                />
-                                <IconButton size="small" onClick={() => onQuantityChange(item.id, 1)}>
-                                  <PlusCircleOutlined />
-                                </IconButton>
-                              </TableCell>
-                              <TableCell align="right">
-                                <TextField
-                                  value={item.discount || 0}
-                                  onChange={(e) => onDiscountChange(item.id, e.target.value)}
-                                  InputProps={{
-                                    style: { textAlign: 'right', width: '80px' },
-                                    min: 0,
-                                    max: 100,
-                                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                                  }}
-                                  size="small"
-                                />
-                              </TableCell>
-                              <TableCell align="right">₱{calculateItemSubtotal(item).toFixed(2)}</TableCell>
-                              <TableCell align="right">
-                                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                  <IconButton 
-                                    size="small" 
-                                    color="primary"
-                                    onClick={() => handleOpenCompositionModal(item.id)}
-                                    title="Add/Edit Composition"
-                                  >
-                                    <EditOutlined />
-                                  </IconButton>
-                                  <IconButton 
-                                    size="small"
-                                    onClick={() => onRemoveProduct(item.id)}
-                                  >
-                                    <DeleteOutlined />
-                                  </IconButton>
-                                </Box>
-                              </TableCell>
-                            </TableRow>
+                  orderItems.map((item) => (
+                  <React.Fragment key={item.id}>
+                    <TableRow>
+                      <TableCell>{item.name}</TableCell>
+                      
+                      {/* Price Type Cell - disable/hide when bracket pricing is enabled */}
+                      <TableCell>
+                        <Select
+                          value={item.price_type || 'regular'}
+                          onChange={(e) => onPriceTypeChange(item.id, e.target.value)}
+                          size="small"
+                          fullWidth
+                          disabled={item.use_bracket_pricing} // Disable when bracket pricing is active
+                          sx={{ 
+                            opacity: item.use_bracket_pricing ? 0.5 : 1,
+                            '& .MuiSelect-select': {
+                              backgroundColor: item.use_bracket_pricing ? '#f5f5f5' : 'inherit'
+                            }
+                          }}
+                        >
+                          <MenuItem value="regular">Regular</MenuItem>
+                          <MenuItem value="walkin">Walk-in</MenuItem>
+                          <MenuItem value="wholesale">Wholesale</MenuItem>
+                        </Select>
+                      </TableCell>
+                      
+                      {/* Bracket Pricing Checkbox Cell */}
+                      <TableCell align="center">
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={item.use_bracket_pricing || false}
+                              onChange={(e) => onBracketPricingChange(item.id, e.target.checked)}
+                              size="small"
+                              disabled={!item.price_bracket} // Disable if no bracket available
+                            />
+                          }
+                          label=""
+                          sx={{ 
+                            m: 0,
+                            opacity: item.price_bracket ? 1 : 0.3 
+                          }}
+                        />
+                        {item.price_bracket && (
+                          <Typography variant="caption" display="block" color="primary" sx={{ fontSize: '0.6rem' }}>
+                            Available
+                          </Typography>
+                        )}
+                      </TableCell>
+                      
+                      {/* Price Cell - show bracket indicator */}
+                      <TableCell align="right">
+                        ₱{Number(getPriceByPriceType(item)).toFixed(2)}
+                        {item.use_bracket_pricing && item.price_bracket && calculateBracketPrice(item, item.quantity) !== null && (
+                          <Typography variant="caption" display="block" color="primary">
+                            (Bracket)
+                          </Typography>
+                        )}
+                      </TableCell>
+                      
+                      {/* Quantity Cell - remains the same */}
+                      <TableCell align="center" sx={{ display: 'flex', justifyContent: 'center', alignItems: "center"}} >
+                        <IconButton size="small" onClick={() => onQuantityChange(item.id, -1)}>
+                          <MinusCircleOutlined />
+                        </IconButton>
+                        <TextField
+                          value={item.quantity}
+                          onChange={(e) => onQuantityChange(item.id, 0, parseInt(e.target.value) || 0)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'ArrowLeft') onQuantityChange(item.id, -1);
+                            if (e.key === 'ArrowRight') onQuantityChange(item.id, 1);
+                          }}
+                          inputProps={{ style: { textAlign: 'center', width: '40px' } }}
+                          size="small"
+                        />
+                        <IconButton size="small" onClick={() => onQuantityChange(item.id, 1)}>
+                          <PlusCircleOutlined />
+                        </IconButton>
+                      </TableCell>
+                      
+                      {/* Rest of the cells remain the same */}
+                      <TableCell align="right">
+                        <TextField
+                          value={item.discount || 0}
+                          onChange={(e) => onDiscountChange(item.id, e.target.value)}
+                          InputProps={{
+                            style: { textAlign: 'right', width: '80px' },
+                            min: 0,
+                            max: 100,
+                            endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                          }}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell align="right">₱{calculateItemSubtotal(item).toFixed(2)}</TableCell>
+                      <TableCell align="right">
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                          <IconButton 
+                            size="small" 
+                            color="primary"
+                            onClick={() => handleOpenCompositionModal(item.id)}
+                            title="Add/Edit Composition"
+                          >
+                            <EditOutlined />
+                          </IconButton>
+                          <IconButton 
+                            size="small"
+                            onClick={() => onRemoveProduct(item.id)}
+                          >
+                            <DeleteOutlined />
+                          </IconButton>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
                             
                             {/* Composition row - only show if composition exists */}
                             {item.composition && (

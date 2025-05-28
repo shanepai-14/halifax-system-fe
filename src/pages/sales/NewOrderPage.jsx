@@ -28,7 +28,7 @@ const NewOrderPage = () => {
   const [totalPrice, setTotalPrice] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [isProductListMinimized, setIsProductListMinimized] = useState(false);
+  const [isProductListMinimized, setIsProductListMinimized] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [alertInfo, setAlertInfo] = useState({ open: false, message: '', type: 'info' });
   const [productModalOpen, setProductModalOpen] = useState(false);
@@ -49,10 +49,20 @@ const NewOrderPage = () => {
   }, [inventory]);
 
   // Calculate total price whenever orderItems changes
-  useEffect(() => {
-    const newTotal = orderItems.reduce((sum, item) => {
-      // Get price based on the item's price_type
-      let price;
+useEffect(() => {
+  const newTotal = orderItems.reduce((sum, item) => {
+    let price;
+    
+    // Check for bracket pricing first if enabled for this specific item
+    if (item.use_bracket_pricing && item.price_bracket) {
+      const bracketPrice = calculateBracketPrice(item, item.quantity);
+      if (bracketPrice !== null) {
+        price = bracketPrice;
+      }
+    }
+    
+    // Fall back to regular pricing if no bracket price found
+    if (!price) {
       switch(item.price_type || 'regular') {
         case 'walkin':
           price = item.walk_in_price || item.regular_price;
@@ -64,14 +74,15 @@ const NewOrderPage = () => {
         default:
           price = item.regular_price;
       }
-      
-      const subtotal = Number(price) * item.quantity;
-      const discountPercentage = parseFloat(item.discount) || 0;
-      const discountAmount = subtotal * (discountPercentage / 100);
-      return sum + (subtotal - discountAmount);
-    }, 0);
-    setTotalPrice(newTotal);
-  }, [orderItems]);
+    }
+    
+    const subtotal = Number(price) * item.quantity;
+    const discountPercentage = parseFloat(item.discount) || 0;
+    const discountAmount = subtotal * (discountPercentage / 100);
+    return sum + (subtotal - discountAmount);
+  }, 0);
+  setTotalPrice(newTotal);
+}, [orderItems]);
 
   const handleToggleMinimize = () => {
     setIsProductListMinimized(!isProductListMinimized);
@@ -85,32 +96,33 @@ const NewOrderPage = () => {
     setProductModalOpen(false);
   };
 
-  const handleAddProduct = (product) => {
-    if (product.quantity > 0) {
-      const existingItem = orderItems.find(item => item.id === product.id);
-      if (existingItem) {
-        setOrderItems(orderItems.map(item =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        ));
-      } else {
-        setOrderItems([...orderItems, { 
-          ...product, 
-          quantity: 1, 
-          discount: 0,
-          distribution_price: product.distribution_price || product.cost_price || 0,
-          price_type: 'regular' // Default price type for each item
-        }]);
-      }
-      // Update the product quantity in the product list
-      setProducts(products.map(p =>
-        p.id === product.id ? { ...p, quantity: p.quantity - 1 } : p
+const handleAddProduct = (product) => {
+  if (product.quantity > 0) {
+    const existingItem = orderItems.find(item => item.id === product.id);
+    if (existingItem) {
+      setOrderItems(orderItems.map(item =>
+        item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
       ));
     } else {
-      setSelectedProduct(product);
-      setDialogOpen(true);
+      setOrderItems([...orderItems, { 
+        ...product, 
+        quantity: 1, 
+        discount: 0,
+        distribution_price: product.distribution_price || product.cost_price || 0,
+        price_type: 'regular',
+        price_bracket: product.price_bracket,
+        use_bracket_pricing: false // Initialize as false
+      }]);
     }
-  };
-
+    // Update the product quantity in the product list
+    setProducts(products.map(p =>
+      p.id === product.id ? { ...p, quantity: p.quantity - 1 } : p
+    ));
+  } else {
+    setSelectedProduct(product);
+    setDialogOpen(true);
+  }
+};
   const handleRemoveProduct = (productId) => {
     const removedItem = orderItems.find(item => item.id === productId);
     if (removedItem) {
@@ -152,8 +164,37 @@ const NewOrderPage = () => {
     ));
   };
 
+  const handleBracketPricingChange = (productId, useBracket) => {
+  setOrderItems(orderItems.map(item =>
+      item.id === productId ? { ...item, use_bracket_pricing: useBracket } : item
+    ));
+  };
+
+  const calculateBracketPrice = (item, quantity) => {
+  if (!item.price_bracket || !item.use_bracket_pricing) return null;
+  
+  const priceType = item.price_type || 'regular';
+  const bracketItem = item.price_bracket.items.find(bracket => 
+    bracket.price_type === priceType &&
+    bracket.is_active &&
+    bracket.min_quantity <= quantity &&
+    (bracket.max_quantity === null || bracket.max_quantity >= quantity)
+  );
+  
+  return bracketItem ? bracketItem.price : null;
+};
+
   // Get price based on item's price type
   const getPriceByPriceType = (item) => {
+    // Check for bracket pricing first if enabled for this specific item
+    if (item.use_bracket_pricing && item.price_bracket) {
+      const bracketPrice = calculateBracketPrice(item, item.quantity);
+      if (bracketPrice !== null) {
+        return bracketPrice;
+      }
+    }
+    
+    // Fall back to regular pricing
     switch(item.price_type || 'regular') {
       case 'walkin':
         return item.walk_in_price || item.regular_price;
@@ -277,20 +318,22 @@ const NewOrderPage = () => {
           }}
         >
           <Paper sx={{ p: 2 }}>
-            <DeliveryReport 
-              ref={deliveryReportRef}
-              orderItems={orderItems} 
-              totalPrice={totalPrice} 
-              customers={customers}
-              onSubmit={handleSubmitOrder}
-              onRemoveProduct={handleRemoveProduct}
-              onQuantityChange={handleQuantityChange}
-              onDiscountChange={handleDiscountChange}
-              onPriceTypeChange={handlePriceTypeChange}
-              onUpdateItemComposition={handleUpdateItemComposition} 
-              isSubmitting={isSubmitting}
-              onOpenProductModal={handleOpenProductModal}
-            />
+           <DeliveryReport 
+          ref={deliveryReportRef}
+          orderItems={orderItems} 
+          totalPrice={totalPrice} 
+          customers={customers}
+          onSubmit={handleSubmitOrder}
+          onRemoveProduct={handleRemoveProduct}
+          onQuantityChange={handleQuantityChange}
+          onDiscountChange={handleDiscountChange}
+          onPriceTypeChange={handlePriceTypeChange}
+          onBracketPricingChange={handleBracketPricingChange} // Add this new prop
+          onUpdateItemComposition={handleUpdateItemComposition} 
+          isSubmitting={isSubmitting}
+          onOpenProductModal={handleOpenProductModal}
+          // Remove useBracketPricing and onUseBracketPricingChange props
+        />
           </Paper>
         </Grid>
         
