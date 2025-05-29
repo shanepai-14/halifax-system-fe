@@ -1,5 +1,5 @@
 // assets
-import { DashboardOutlined ,SmileOutlined , ShoppingCartOutlined ,DropboxOutlined ,AreaChartOutlined ,UserOutlined ,ProductOutlined ,ShoppingOutlined , AuditOutlined ,RedEnvelopeOutlined , AccountBookOutlined  } from '@ant-design/icons';
+import { DashboardOutlined ,SmileOutlined , ShoppingCartOutlined ,DropboxOutlined ,AreaChartOutlined ,UserOutlined ,ProductOutlined ,ShoppingOutlined , AuditOutlined ,RedEnvelopeOutlined , AccountBookOutlined , FundOutlined  } from '@ant-design/icons';
 
 
 
@@ -115,7 +115,7 @@ const dashboard = {
       title: 'Report',
       type: 'item',
       url: '/app/report',
-      icon: RedEnvelopeOutlined  ,
+      icon: FundOutlined  ,
       breadcrumbs: false,
       roles: ['admin', 'cashier']
     },

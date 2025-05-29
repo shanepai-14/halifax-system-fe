@@ -230,7 +230,7 @@ const DeliveryReportView = ({ refresh , report }) => {
           </Box>
         </Box>
 
-        <Box ref={contentRef} sx={{ p: 2 }}>
+<Box ref={contentRef} sx={{ p: 2, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
           {/* Company Header with Logo */}
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid item xs={12} md={12}>
@@ -301,218 +301,221 @@ const DeliveryReportView = ({ refresh , report }) => {
             </Grid>
         </Grid>
 
-
           <Divider sx={{ my: 1 }} />
 
-          {/* Items Table */}
-<Typography variant="subtitle1" gutterBottom>Order Items</Typography>
-<TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
-  <Table size="small">
-    <TableHead>
-      <TableRow>
-        <TableCell>Item</TableCell>
-        <TableCell>Code</TableCell>
-        <TableCell align="right">Price</TableCell>
-        <TableCell align="center">Qty</TableCell>
-        <TableCell align="right">Discount (%)</TableCell>
-        <TableCell align="right">Subtotal</TableCell>
-      </TableRow>
-    </TableHead>
-    <TableBody>
-      {report.items.map((item) => {
-        const itemSubtotal = parseFloat(item.sold_price) * item.quantity;
-        const discountAmount = itemSubtotal * (parseFloat(item.discount) / 100);
-        const finalAmount = itemSubtotal - discountAmount;
-        
-        return (
-          <React.Fragment key={item.id}>
-            {/* Regular item row */}
-            <TableRow>
-              <TableCell>{item.product?.product_name}</TableCell>
-              <TableCell>{item.product?.product_code}</TableCell>
-              <TableCell align="right">₱{parseFloat(item.sold_price).toFixed(2)}</TableCell>
-              <TableCell align="center">{item.quantity}</TableCell>
-              <TableCell align="right">{parseFloat(item.discount).toFixed(2)}%</TableCell>
-              <TableCell align="right">₱{finalAmount.toFixed(2)}</TableCell>
-            </TableRow>
-            
-            {/* Composition row - only shown when composition exists */}
-            {item.composition && (
-              <TableRow>
-                <TableCell colSpan={6} sx={{ pt: 0, pb: 2 }}>
-                  <Box 
-                    sx={{ 
-                      pl: 2, 
-                      pr: 2,
-                      pt: 1,
-                      pb: 1,
-                    }}
-                  >
-                    <Typography variant="subtitle2" color="primary">
-                      Composition:
-                    </Typography>
-                    <div 
-                      className="composition-content"
-                      dangerouslySetInnerHTML={{ __html: item.composition }}
-                      sx={{ 
-                        '& ul, & ol': { pl: 2, m: 0 },
-                        '& p': { m: 0 }
-                      }}
-                    />
-                  </Box>
-                </TableCell>
-              </TableRow>
-            )}
-          </React.Fragment>
-        );
-      })}
-    </TableBody>
-  </Table>
-</TableContainer>
+          {/* Content Area - grows to fill available space */}
+          <Box sx={{ flex: 1 }}>
+            {/* Items Table */}
+            <Typography variant="subtitle1" gutterBottom>Order Items</Typography>
+            <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Item</TableCell>
+                    <TableCell>Code</TableCell>
+                    <TableCell align="right">Price</TableCell>
+                    <TableCell align="center">Qty</TableCell>
+                    <TableCell align="right">Discount (%)</TableCell>
+                    <TableCell align="right">Subtotal</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {report.items.map((item) => {
+                    const itemSubtotal = parseFloat(item.sold_price) * item.quantity;
+                    const discountAmount = itemSubtotal * (parseFloat(item.discount) / 100);
+                    const finalAmount = itemSubtotal - discountAmount;
+                    
+                    return (
+                      <React.Fragment key={item.id}>
+                        {/* Regular item row */}
+                        <TableRow>
+                          <TableCell>{item.product?.product_name}</TableCell>
+                          <TableCell>{item.product?.product_code}</TableCell>
+                          <TableCell align="right">₱{parseFloat(item.sold_price).toFixed(2)}</TableCell>
+                          <TableCell align="center">{item.quantity}</TableCell>
+                          <TableCell align="right">{parseFloat(item.discount).toFixed(2)}%</TableCell>
+                          <TableCell align="right">₱{finalAmount.toFixed(2)}</TableCell>
+                        </TableRow>
+                        
+                        {/* Composition row - only shown when composition exists */}
+                        {item.composition && (
+                          <TableRow>
+                            <TableCell colSpan={6} sx={{ pt: 0, pb: 2 }}>
+                              <Box 
+                                sx={{ 
+                                  pl: 2, 
+                                  pr: 2,
+                                  pt: 1,
+                                  pb: 1,
+                                }}
+                              >
+                                <Typography variant="subtitle2" color="primary">
+                                  Composition:
+                                </Typography>
+                                <div 
+                                  className="composition-content"
+                                  dangerouslySetInnerHTML={{ __html: item.composition }}
+                                  sx={{ 
+                                    '& ul, & ol': { pl: 2, m: 0 },
+                                    '& p': { m: 0 }
+                                  }}
+                                />
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-      
-
-       <Box sx={{ display: 'flex',justifyContent: 'space-between' }}>
-       <Box sx={{  display: 'flex', flexDirection:'column',justifyContent: 'flex-start' }}>
-            <Typography >
-              <strong>Delivery Status:</strong> {report.is_delivered ? 'Delivered' : 'Pending Delivery'}
-            </Typography>
-            <Typography >
-              <strong>Encoded By:</strong> {report.user?.name}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Grid container spacing={0} sx={{ maxWidth: '400px' }}>
-              <Grid item xs={6} >
-                <Typography  align="right">Subtotal:</Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography  align="right">₱{subtotal.toFixed(2)}</Typography>
-              </Grid>
-
-              <Grid item xs={6}>
-                <Typography  align="right">Discount:</Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography  align="right">₱{totalDiscount.toFixed(2)}</Typography>
-              </Grid>
-
-              {/* Credit Memo Total - Only show when returns exist */}
-              {report.returns && report.returns.length > 0 && (
-                <>
-                  <Grid item xs={6}>
-                    <Typography 
-                      variant="body2" 
-                      align="right"
-                      onClick={handleOpenCreditMemoReport}
-                      sx={{ 
-                        cursor: 'pointer', 
-                        color: 'primary.main',
-                        '&:hover': { textDecoration: 'underline' } 
-                      }}
-                    >
-                      Credit Memo Total:
-                    </Typography>
+            <Box sx={{ display: 'flex',justifyContent: 'space-between' }}>
+              <Box sx={{  display: 'flex', flexDirection:'column',justifyContent: 'flex-start' }}>
+                <Typography >
+                  <strong>Delivery Status:</strong> {report.is_delivered ? 'Delivered' : 'Pending Delivery'}
+                </Typography>
+                <Typography >
+                  <strong>Encoded By:</strong> {report.user?.name}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Grid container spacing={0} sx={{ maxWidth: '400px' }}>
+                  <Grid item xs={6} >
+                    <Typography  align="right">Subtotal:</Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography 
-                      variant="body2" 
-                      align="right"
-                      onClick={handleOpenCreditMemoReport}
-                      sx={{ 
-                        cursor: 'pointer', 
-                        color: 'primary.main',
-                        '&:hover': { textDecoration: 'underline' } 
-                      }}
-                    >
-                      ₱{totalCreditMemoAmount.toFixed(2)}
-                    </Typography>
+                    <Typography  align="right">₱{subtotal.toFixed(2)}</Typography>
                   </Grid>
-                </>
-              )}
 
-              <Grid item xs={6}>
-                <Typography  fontWeight="bold" align="right">Total Amount:</Typography>
-              </Grid>
-              <Grid item xs={6}>
-              <Typography  fontWeight="bold" align="right">
-                ₱{totalAmount.toFixed(2)}
-              </Typography>
-              </Grid>
-              {report.amount_received !== '0.00' && report.amount_received && (
-              <>
-                <Grid item xs={6}>
-                  <Typography  align="right">Amount Received:</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography  align="right">
-                    ₱{parseFloat(report.amount_received).toFixed(2)}
+                  <Grid item xs={6}>
+                    <Typography  align="right">Discount:</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography  align="right">₱{totalDiscount.toFixed(2)}</Typography>
+                  </Grid>
+
+                  {/* Credit Memo Total - Only show when returns exist */}
+                  {report.returns && report.returns.length > 0 && (
+                    <>
+                      <Grid item xs={6}>
+                        <Typography 
+                          variant="body2" 
+                          align="right"
+                          onClick={handleOpenCreditMemoReport}
+                          sx={{ 
+                            cursor: 'pointer', 
+                            color: 'primary.main',
+                            '&:hover': { textDecoration: 'underline' } 
+                          }}
+                        >
+                          Credit Memo Total:
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography 
+                          variant="body2" 
+                          align="right"
+                          onClick={handleOpenCreditMemoReport}
+                          sx={{ 
+                            cursor: 'pointer', 
+                            color: 'primary.main',
+                            '&:hover': { textDecoration: 'underline' } 
+                          }}
+                        >
+                          ₱{totalCreditMemoAmount.toFixed(2)}
+                        </Typography>
+                      </Grid>
+                    </>
+                  )}
+
+                  <Grid item xs={6}>
+                    <Typography  fontWeight="bold" align="right">Total Amount:</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                  <Typography  fontWeight="bold" align="right">
+                    ₱{totalAmount.toFixed(2)}
                   </Typography>
-                </Grid>
-              </>
+                  </Grid>
+                  {report.amount_received !== '0.00' && report.amount_received && (
+                  <>
+                    <Grid item xs={6}>
+                      <Typography  align="right">Amount Received:</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography  align="right">
+                        ₱{parseFloat(report.amount_received).toFixed(2)}
+                      </Typography>
+                    </Grid>
+                  </>
+                )}
+             {report.change !== '0.00' && report.change && (
+               <>
+                  <Grid item xs={6}>
+                    <Typography  align="right">Change:</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography  align="right">₱{parseFloat(report.change).toFixed(2)} {typeof(report.change)}</Typography>
+                  </Grid>
+               
+                </>
+            
             )}
-         {report.change !== '0.00' && report.change && (
-           <>
-              <Grid item xs={6}>
-                <Typography  align="right">Change:</Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography  align="right">₱{parseFloat(report.change).toFixed(2)} {typeof(report.change)}</Typography>
-              </Grid>
-           
-            </>
-        
-        )}
-         </Grid>
-      </Box>
-       </Box>
-          {/* Additional Information */}
-          {report.remarks && (
-            <Box sx={{ mt: 3 }}>
-              <Typography >Remarks:</Typography>
-              <Typography variant="body2">{report.remarks}</Typography>
-            </Box>
-          )}
-          
+             </Grid>
+          </Box>
+        </Box>
 
-          {/* Signature Lines */}
-          <Grid container spacing={2} sx={{ mt: 4,px:2,display:'flex',justifyContent:'space-between' }} >
-            <Grid item xs={2.4}>
-              <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
-                <Typography >Prepared By</Typography>
+            {/* Additional Information */}
+            {report.remarks && (
+              <Box sx={{ mt: 3 }}>
+                <Typography >Remarks:</Typography>
+                <Typography variant="body2">{report.remarks}</Typography>
               </Box>
+            )}
+          </Box>
+
+          {/* Footer Section - Always at bottom */}
+          <Box sx={{ mt: 'auto', pt: 3 }}>
+            {/* Signature Lines */}
+            <Grid container spacing={2} sx={{ px: 2, display: 'flex', justifyContent: 'space-between', mb: 4 }}>
+              <Grid item xs={2.4}>
+                <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center', minHeight: '60px' }}>
+                  <Typography variant="body2">Prepared By</Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={2.4}>
+                <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center', minHeight: '60px' }}>
+                  <Typography variant="body2">Checked By</Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={2.4}>
+                <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center', minHeight: '60px' }}>
+                  <Typography variant="body2">Released By</Typography>
+                </Box>
+              </Grid>
             </Grid>
-            <Grid item xs={2.4}>
-              <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
-                <Typography >Checked By</Typography>
-              </Box>
+            
+            <Grid container spacing={2} sx={{ px: 2, display: 'flex', justifyContent: 'center', gap: 15, mb: 4 }}>
+              <Grid item xs={2.4}>
+                <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center', minHeight: '60px' }}>
+                  <Typography variant="body2">Delivered By</Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={2.4}>
+                <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center', minHeight: '60px' }}>
+                  <Typography variant="body2">Received By</Typography>
+                </Box>
+              </Grid>
             </Grid>
-            <Grid item xs={2.4}>
-              <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
-                <Typography >Released By</Typography>
-              </Box>
-            </Grid>
-           
-          </Grid>
-          <Grid container spacing={2} sx={{ mt: 4,px:2,display:'flex',justifyContent:'center',gap:30 }} >
-          <Grid item xs={2.4}>
-              <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
-                <Typography >Delivered By</Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={2.4}>
-              <Box sx={{ borderTop: '1px solid #000', pt: 1, textAlign: 'center' }}>
-                <Typography >Received By</Typography>
-              </Box>
-            </Grid>
-            </Grid>
-            <Grid container>
-            <Grid item xs={12} mt={5}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography fontWeight={'bold'}>Note: This Office will not entertain any claim of shortage after receipt has been duly acknowledge</Typography>
-              </Box>
-            </Grid>
-            </Grid>
+            
+            {/* Note at bottom */}
+            <Box sx={{ textAlign: 'center', mt: 2, borderTop: '1px solid #e0e0e0', pt: 2 }}>
+              <Typography variant="body2" fontWeight="bold">
+                Note: This Office will not entertain any claim of shortage after receipt has been duly acknowledged
+              </Typography>
+            </Box>
+          </Box>
         </Box>
       </Paper>
 
