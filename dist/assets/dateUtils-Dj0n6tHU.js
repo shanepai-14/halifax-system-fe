@@ -1,0 +1,1 @@
+const n=e=>e?new Date(e).toLocaleDateString("en-PH",{year:"numeric",month:"long",day:"numeric"}):"",a=e=>{if(!e)return"";const t=new Date(e);return t.toLocaleDateString("en-PH",{year:"numeric",month:"long",day:"numeric"})+" "+t.toLocaleTimeString("en-PH",{hour:"2-digit",minute:"2-digit"})};export{a,n as f};
