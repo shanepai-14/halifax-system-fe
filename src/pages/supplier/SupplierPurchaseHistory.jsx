@@ -143,6 +143,7 @@ const SupplierPurchaseHistory = () => {
         item.product_name.toLowerCase().includes(searchLower) ||
         item.total_cost.toString().includes(searchLower) ||
         item.batch_number.toLowerCase().includes(searchLower) ||
+         item.grand_total.toLowerCase().includes(searchLower) ||
         (item.product_category && item.product_category.toLowerCase().includes(searchLower))
       );
     });
@@ -438,6 +439,21 @@ const SupplierPurchaseHistory = () => {
                       </Box>
                       </Tooltip>
                     </TableCell>
+                                        <TableCell 
+                      onClick={() => handleSort('batch_number')}
+                      sx={{ cursor: 'pointer', userSelect: 'none' }}
+                    >
+                        <Tooltip title="Sort by Batch #" arrow>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        Batch #
+                        {sortConfig.key === 'batch_number' && (
+                          sortConfig.direction === 'asc' 
+                            ? <ArrowUpOutlined style={{ marginLeft: 8 }} /> 
+                            : <ArrowDownOutlined style={{ marginLeft: 8 }} />
+                        )}
+                      </Box>
+                      </Tooltip>
+                    </TableCell>
                     <TableCell
                       onClick={() => handleSort('product_name')}
                       sx={{ cursor: 'pointer', userSelect: 'none' }}
@@ -486,7 +502,8 @@ const SupplierPurchaseHistory = () => {
                     </TableCell>
                     <TableCell align="right">Quantity</TableCell>
                     <TableCell align="right">Cost Price</TableCell>
-                    <TableCell align="right">Total</TableCell>
+                    <TableCell align="right">Item Total</TableCell>
+                    <TableCell align="right">Grand Total</TableCell>
                     <TableCell>Status</TableCell>
                   </TableRow>
                 </TableHead>
@@ -507,6 +524,7 @@ const SupplierPurchaseHistory = () => {
                             {item.po_number}
                           </Link>
                         </TableCell>
+                         <TableCell>{item.batch_number}</TableCell>
                         <TableCell>{item.product_name}</TableCell>
                         <TableCell>{item.product_code}</TableCell>
                         <TableCell>{item.product_category || 'Uncategorized'}</TableCell>
@@ -514,6 +532,7 @@ const SupplierPurchaseHistory = () => {
                         <TableCell align="right">{item.received_quantity}</TableCell>
                         <TableCell align="right">{formatCurrency(item.cost_price)}</TableCell>
                         <TableCell align="right">{formatCurrency(item.total_cost)}</TableCell>
+                        <TableCell align="right">{formatCurrency(item.grand_total)}</TableCell>
                         <TableCell>
                           <Chip 
                             label={item.payment_status} 

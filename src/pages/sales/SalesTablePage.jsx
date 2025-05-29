@@ -198,7 +198,7 @@ const SalesTablePage = () => {
     <Container maxWidth="xxl" sx={{ mt: 0, p: "0!important" }}>
       {/* Statistics Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
               <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
@@ -211,7 +211,7 @@ const SalesTablePage = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
               <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
@@ -224,7 +224,7 @@ const SalesTablePage = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={4}>
+        {/* <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
               <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
@@ -236,7 +236,7 @@ const SalesTablePage = () => {
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
+        </Grid> */}
       </Grid>
       
       {/* Search and Filters */}

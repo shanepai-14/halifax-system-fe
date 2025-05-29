@@ -141,6 +141,7 @@ const CustomerPurchaseHistory = () => {
         item.invoice_number.toLowerCase().includes(searchLower) ||
         item.product_name.toLowerCase().includes(searchLower) ||
         item.total.toString().includes(searchLower) ||
+        item.total_sale_amount.toString().includes(searchLower) ||
         (item.product_code && item.product_code.toLowerCase().includes(searchLower))
       );
     });
@@ -487,7 +488,8 @@ const CustomerPurchaseHistory = () => {
                     <TableCell align="right">Unit Price</TableCell>
                     <TableCell align="center">Quantity</TableCell>
                     <TableCell align="right">Discount</TableCell>
-                    <TableCell align="right">Total</TableCell>
+                    <TableCell align="right">Item Total</TableCell>
+                    <TableCell align="right">Total Sale</TableCell>
                     <TableCell>Status</TableCell>
                   </TableRow>
                 </TableHead>
@@ -502,7 +504,7 @@ const CustomerPurchaseHistory = () => {
                         <TableCell>
                           <Link
                             href="#"
-                            onClick={() => navigate(`/app/sales/${item.sale_id}`)}
+                            onClick={() => navigate(`/app/delivery-report/${item.sale_id}`)}
                             sx={{ textDecoration: 'none' }}
                           >
                             {item.invoice_number}
@@ -515,6 +517,7 @@ const CustomerPurchaseHistory = () => {
                         <TableCell align="center">{item.quantity}</TableCell>
                         <TableCell align="right">{parseFloat(item.discount).toFixed(2)}%</TableCell>
                         <TableCell align="right">{formatCurrency(item.total)}</TableCell>
+                         <TableCell align="right">{formatCurrency(item.total_sale_amount)}</TableCell>
                         <TableCell>
                           <Chip 
                             label={item.status} 

@@ -23,6 +23,7 @@ import { getFileUrl } from '@/utils/fileHelper';
 import CardSkeleton from '@/components/CardSkeleton';
 import TableRowSkeleton from '@/components/loader/TableRowSkeleton';
 import CategoryChip from '@/components/CategoryChip';
+import BracketPricingButton from '../bracket/BracketPricingButton';
 import Swal from 'sweetalert2';
 
 
@@ -191,7 +192,7 @@ const [sortConfig, setSortConfig] = useState({
             </TableSortLabel>
           </TableCell>
           <TableCell>Category</TableCell>
-          <TableCell>
+          {/* <TableCell>
           <TableSortLabel
             active={sortConfig.field === 'attributes'}
             direction={sortConfig.field === 'attributes' ? sortConfig.direction : 'asc'}
@@ -199,7 +200,7 @@ const [sortConfig, setSortConfig] = useState({
           >
             Attributes
           </TableSortLabel>
-        </TableCell>
+        </TableCell> */}
         <TableCell align="right">
             <TableSortLabel
               active={sortConfig.field === 'quantity'}
@@ -218,6 +219,7 @@ const [sortConfig, setSortConfig] = useState({
               Reorder Level
             </TableSortLabel>
           </TableCell>
+          <TableCell align="right">Pricing</TableCell>
           <TableCell align="right">Actions</TableCell>
         </TableRow>
       </TableHead>
@@ -256,9 +258,17 @@ const [sortConfig, setSortConfig] = useState({
                 <TableCell>{row.product_code}</TableCell>
                 <TableCell>{row.product_name}</TableCell>
                 <TableCell>{<CategoryChip category={row.category} />}</TableCell>
-                <TableCell>{renderAttributes(row.attributes)}</TableCell>
+                {/* <TableCell>{renderAttributes(row.attributes)}</TableCell> */}
                 <TableCell align="right">{Number(row.quantity)}</TableCell>
+                
                 <TableCell align="right">{row.reorder_level}</TableCell>
+                                  <TableCell align="right">
+                       <BracketPricingButton 
+                      product={row}
+                      variant="contained"
+                      showStatus={true}
+                    />
+                  </TableCell>
                   <TableCell align="right">
                     <IconButton onClick={ () => handleOpenEditProductModal(row)}>
                       <EditOutlined style={{ fontSize: 20 }} />
@@ -266,7 +276,8 @@ const [sortConfig, setSortConfig] = useState({
                     <IconButton onClick={() => handleDelete(row.id)}>
                       <DeleteOutlined style={{ fontSize: 20 }} />
                     </IconButton>
-                  </TableCell>
+                  </TableCell >
+
               </TableRow>
                 ))
               )}

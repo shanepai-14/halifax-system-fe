@@ -34,6 +34,7 @@ const UserManagement = Loadable(lazy(() => import('@/pages/users/UserManagement'
 const ReportPage = Loadable(lazy(() => import('@/pages/report/ReportPage')));
 
 
+
 const router = [
   {
     path: '/',
@@ -103,7 +104,6 @@ const router = [
               }
             ]
           },
-          // Other admin-only routes
         ]
       },
       // Routes accessible by admin, cashier, sales, and staff

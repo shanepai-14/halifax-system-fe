@@ -21,6 +21,8 @@ const ProductList = ({ products, categories, onAddProduct, dialogOpen, selectedP
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'card'
   const [filteredProducts, setFilteredProducts] = useState(products);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [bracketModalOpen, setBracketModalOpen] = useState(false);
+  const [selectedBracket, setSelectedBracket] = useState(null);
 
   useEffect(() => {
     // Filter products based on search term and selected category
@@ -42,6 +44,11 @@ const ProductList = ({ products, categories, onAddProduct, dialogOpen, selectedP
     setFilteredProducts(filtered);
   }, [searchTerm, products, selectedCategory]);
 
+  const handleShowBracket = (product) => {
+  setSelectedBracket(product.price_bracket);
+  setBracketModalOpen(true);
+};
+
   const TableView = () => (
     <TableContainer sx={{ maxHeight:'800px', overflowY: 'auto' }}>
       <Table stickyHeader size="small">
@@ -49,9 +56,9 @@ const ProductList = ({ products, categories, onAddProduct, dialogOpen, selectedP
           <TableRow>
             <TableCell>Code</TableCell>
             <TableCell>Name</TableCell>
-            <TableCell align="right">Regular $</TableCell>
-            <TableCell align="right">Walk In $</TableCell>
-            <TableCell align="right">Whole sale $</TableCell>
+            <TableCell align="right">Regular ₱</TableCell>
+            <TableCell align="right">Walk In ₱</TableCell>
+            <TableCell align="right">Whole sale ₱</TableCell>
             <TableCell align="right">Qty</TableCell>
             <TableCell align="right"> </TableCell>
           </TableRow>
@@ -60,7 +67,25 @@ const ProductList = ({ products, categories, onAddProduct, dialogOpen, selectedP
           {filteredProducts.map((product) => (
             <TableRow key={product.id}  >
               <TableCell sx={{padding:"0px!important"}}>{product.code}</TableCell>
-              <TableCell sx={{padding:"0px!important"}}>{product.name}</TableCell>
+              <TableCell sx={{padding:"0px!important"}}>{product.price_bracket ? (
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                cursor: 'pointer', 
+                color: 'primary.main',
+                textDecoration: 'underline',
+                '&:hover': { color: 'primary.dark' }
+              }}
+              onClick={() => handleShowBracket(product)}
+              title="Click to view pricing brackets"
+            >
+              {product.name} 📊
+            </Typography>
+          ) : (
+            <Typography variant="h6">
+              {product.name}
+            </Typography>
+          )}</TableCell>
               <TableCell align="right" sx={{padding:"0px!important"}}>₱{product.regular_price}</TableCell>
               <TableCell align="right" sx={{padding:"0px!important"}}>₱{product.walk_in_price}</TableCell>
               <TableCell align="right" sx={{padding:"0px!important"}}>₱{product.wholesale_price}</TableCell>
@@ -233,6 +258,8 @@ const ProductList = ({ products, categories, onAddProduct, dialogOpen, selectedP
     </Box>
   );
 
+  
+
   return isMinimized ? (
     <Zoom in={isMinimized}>
       <Paper 
@@ -271,9 +298,57 @@ const ProductList = ({ products, categories, onAddProduct, dialogOpen, selectedP
     <Fade in={!isMinimized}>
       <Paper sx={{ p: 2, height: '100%' }}>
         <FullProductList />
+        <Dialog open={bracketModalOpen} onClose={() => setBracketModalOpen(false)} maxWidth="md" fullWidth>
+  <DialogTitle>
+    Pricing Brackets - {selectedBracket && products.find(p => p.price_bracket?.id === selectedBracket.id)?.name}
+  </DialogTitle>
+  <DialogContent>
+    {selectedBracket && (
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              {/* <TableCell>Price Type</TableCell> */}
+              <TableCell>Quantity Range</TableCell>
+              <TableCell align="right">Price</TableCell>
+              <TableCell>Status</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {selectedBracket.items.map((item) => (
+              <TableRow key={item.id}>
+                {/* <TableCell>
+                  <Chip 
+                    label={item.price_type.charAt(0).toUpperCase() + item.price_type.slice(1)} 
+                    size="small"
+                    color={item.price_type === 'regular' ? 'primary' : 
+                           item.price_type === 'wholesale' ? 'secondary' : 'default'}
+                  />
+                </TableCell> */}
+                <TableCell>
+                  {item.min_quantity} - {item.max_quantity || '∞'}
+                </TableCell>
+                <TableCell align="right">₱{Number(item.price).toFixed(2)}</TableCell>
+                <TableCell>
+                  <Chip 
+                    label={item.is_active ? 'Active' : 'Inactive'} 
+                    size="small"
+                    color={item.is_active ? 'success' : 'default'}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    )}
+  </DialogContent>
+</Dialog>
       </Paper>
     </Fade>
   );
 };
+
+
 
 export default ProductList;
