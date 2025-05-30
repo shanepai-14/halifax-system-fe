@@ -74,35 +74,39 @@ const InventoryAdjustmentForm = ({
         newErrors.walk_in_price = 'Walk-in price is required';
       }
       
-      if (!formData.wholesale_price || formData.wholesale_price <= 0) {
-        newErrors.wholesale_price = 'Wholesale price is required';
-      }
-      
-      if (!formData.regular_price || formData.regular_price <= 0) {
-        newErrors.regular_price = 'Regular price is required';
-      }
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
+const handleChange = (e) => {
+  const { name, value } = e.target;
+  
+  setFormData(prev => {
+    let updatedData = {
       ...prev,
       [name]: value
-    }));
+    };
     
-    // Clear error for this field if it exists
-    if (errors[name]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
+    // If walk_in_price is being updated, sync wholesale_price and regular_price
+    if (name === 'walk_in_price') {
+      updatedData.wholesale_price = value;
+      updatedData.regular_price = value;
     }
-  };
+    console.log('Updated formData:', updatedData);
+    return updatedData;
+  });
+  
+  // Clear error for this field if it exists
+  if (errors[name]) {
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[name];
+      return newErrors;
+    });
+  }
+};
 
   const handleProductChange = (event, newValue) => {
     setFormData(prev => ({
@@ -259,7 +263,7 @@ const InventoryAdjustmentForm = ({
               />
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            {/* <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Wholesale Price"
@@ -274,9 +278,9 @@ const InventoryAdjustmentForm = ({
                   inputProps: { min: 0, step: "0.01" }
                 }}
               />
-            </Grid>
+            </Grid> */}
             
-            <Grid item xs={12} md={6}>
+            {/* <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Regular Price"
@@ -291,7 +295,7 @@ const InventoryAdjustmentForm = ({
                   inputProps: { min: 0, step: "0.01" }
                 }}
               />
-            </Grid>
+            </Grid> */}
           </Grid>
         </Collapse>
         </Grid>
