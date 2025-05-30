@@ -315,8 +315,8 @@ const PurchaseOrderReceivingReports = ({
       const priceFields = {
         cost_price: 'Cost price',
         walk_in_price: 'Walk-in price',
-        wholesale_price: 'Wholesale price',
-        regular_price: 'Regular price'
+        // wholesale_price: 'Wholesale price',
+        // regular_price: 'Regular price'
       };
       
       Object.entries(priceFields).forEach(([field, label]) => {
@@ -339,14 +339,18 @@ const PurchaseOrderReceivingReports = ({
       setIsProcessing(true);
       
       // Prepare data for API
-      const dataToSave = {
-        po_id: poId,
-        invoice: reportData.invoice,
-        term: reportData.term,
-        is_paid: reportData.is_paid,
-        received_items: reportData.received_items,
-        additional_costs: reportData.additional_costs,
-      };
+    const dataToSave = {
+      po_id: poId,
+      invoice: reportData.invoice,
+      term: reportData.term,
+      is_paid: reportData.is_paid,
+      received_items: reportData.received_items.map(item => ({
+        ...item,
+        wholesale_price: item.walk_in_price,
+        regular_price: item.walk_in_price
+      })),
+      additional_costs: reportData.additional_costs,
+    };
       
       if (isEditing) {
         await onUpdateReceivingReport(selectedReportId, dataToSave);

@@ -209,7 +209,7 @@ const ReceivedItemRow = React.memo(({
           `₱${item.walk_in_price}`
         )}
       </TableCell>
-      <TableCell sx={{ verticalAlign: "top" }}>
+      {/* <TableCell sx={{ verticalAlign: "top" }}>
         {!isCompleted && !isCancelled ? (
           <TextField
             type="number"
@@ -246,7 +246,7 @@ const ReceivedItemRow = React.memo(({
         ) : (
           `₱${item.regular_price}`
         )}
-      </TableCell>
+      </TableCell> */}
       <TableCell sx={{ verticalAlign: "top" }}>
         {totalDisplay}
       </TableCell>
@@ -327,8 +327,8 @@ const PurchaseOrderReceivedItems = ({
             <TableCell>Cost Price</TableCell>
             <TableCell>Distribution Cost</TableCell>
             <TableCell>Walk-in Price</TableCell>
-            <TableCell>Wholesale Price</TableCell>
-            <TableCell>Regular Price</TableCell>
+            {/* <TableCell>Wholesale Price</TableCell> */}
+            {/* <TableCell>Regular Price</TableCell> */}
             <TableCell>Total</TableCell>
             {!disabled && <TableCell width={50} />}
           </TableRow>
