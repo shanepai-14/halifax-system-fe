@@ -10,7 +10,9 @@ import {
   PriceChange as BracketIcon,
   Settings as SettingsIcon
 } from '@mui/icons-material';
+import { useSelector } from 'react-redux';
 import BracketPricingManagement from './BracketPricingManagement';
+import { selectCurrentUser } from '@/store/slices/authSlice'
 
 const BracketPricingButton = ({ 
   product, 
@@ -20,6 +22,9 @@ const BracketPricingButton = ({
   fullWidth = false 
 }) => {
   const [open, setOpen] = useState(false);
+  const currentUser = useSelector(selectCurrentUser);
+
+  const canCreateBracket = currentUser?.role === 'admin' || currentUser?.role === 'cashier';
 
   const handleOpen = () => {
     setOpen(true);
@@ -47,26 +52,19 @@ const BracketPricingButton = ({
           <Button
             variant={variant}
             size={size}
+            disabled={!canCreateBracket}
             fullWidth={fullWidth}
             onClick={handleOpen}
             startIcon={<BracketIcon />}
             sx={{
               borderColor: status.active ? 'success.main' : undefined,
-              color: status.active ? 'success.main' : undefined
+              backgroundColor: status.active ? 'success.main' : undefined
             }}
           >
             Bracket Pricing
           </Button>
         </Tooltip>
         
-        {/* {showStatus && (
-          <Chip
-            label={status.label}
-            color={status.active ? 'success' : 'default'}
-            size="small"
-            variant="outlined"
-          />
-        )} */}
       </Box>
 
       <Dialog

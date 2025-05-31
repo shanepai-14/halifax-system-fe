@@ -188,6 +188,7 @@ const DeliveryReportView = ({ refresh , report }) => {
       <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h5">Delivery Report Details</Typography>
+
           <Box>
           <PaymentButton 
             sale={report}
@@ -236,7 +237,7 @@ const DeliveryReportView = ({ refresh , report }) => {
             <Grid item xs={12} md={12}>
               <Box sx={{ textAlign: 'center', mb: 2 }}>
                 <Typography variant="h4">DELIVERY REPORT</Typography>
-                {/* <Typography variant="h6">{report.invoice_number}</Typography> */}
+                <Typography variant="h6">{report.invoice_number}</Typography>
               </Box>
             </Grid>
             <Grid item xs={12} md={12} sx={{ display: 'flex', justifyContent:'space-between'}}>
@@ -267,25 +268,69 @@ const DeliveryReportView = ({ refresh , report }) => {
           {/* Customer & Order Info */}
           <Grid container spacing={2} justifyContent="space-between" alignItems="flex-start">
 
-            <Grid item xs={6} md={6}>
-              <Box sx={{ mb: 0.5 }}>
-            <Typography fontSize={20} lineHeight={1.3}>
-              <strong>Delivered to:</strong> {report.customer?.business_name || report.customer?.customer_name}
+<Grid item xs={12} md={12}>
+  <Box sx={{ mb: 0.5 }}>
+    <Table>
+      <TableBody>
+        <TableRow>
+          <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '2.5%', verticalAlign: 'top' }}>
+            <Typography fontSize={18} lineHeight={1}>
+              <strong>Delivered to:</strong>
             </Typography>
-            <Typography fontSize={20} lineHeight={1.3}>
-              <strong>Address:</strong> {report.customer?.business_address || report.address}
+          </TableCell>
+          <TableCell sx={{ border: 'none', padding: '8px 16px 8px 0', width: '10.5%', verticalAlign: 'top' , }}>
+            <Typography fontSize={18} lineHeight={1}>
+              <span style={{ textDecoration: 'underline' }}>
+                {report.customer?.business_name || report.customer?.customer_name}
+              </span>
             </Typography>
-            <Typography fontSize={20} lineHeight={1.3}>
-              <strong>City:</strong> {report.city}
+          </TableCell>
+            <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '0.5%', verticalAlign: 'top' }}>
+            <Typography fontSize={18} lineHeight={1}>
+              <strong>City:</strong>
             </Typography>
-            <Typography fontSize={20} lineHeight={1.3}>
-              <strong>Phone:</strong> {report.phone}
+          </TableCell>
+          <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '12.5%', verticalAlign: 'top' }}>
+            <Typography fontSize={18} lineHeight={1}>
+              <span style={{ textDecoration: 'underline' }}>
+                {report.city}
+              </span>
             </Typography>
-          </Box>
+          </TableCell>
+        
+        </TableRow>
+        <TableRow>
+          <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '2.5%', verticalAlign: 'top' }}>
+            <Typography fontSize={18} lineHeight={1}>
+              <strong>Address:</strong>
+            </Typography>
+          </TableCell>
+          <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '10.5%', verticalAlign: 'top' }}>
+            <Typography fontSize={18} lineHeight={1}>
+              <span style={{ textDecoration: 'underline' }}>
+                {report.customer?.business_address || report.address}
+              </span>
+            </Typography>
+          </TableCell>
+          <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '0.5%', verticalAlign: 'top' }}>
+            <Typography fontSize={18} lineHeight={1}>
+              <strong>Phone:</strong>
+            </Typography>
+          </TableCell>
+          <TableCell sx={{ border: 'none', padding: '8px 0', width: '12.5%', verticalAlign: 'top' }}>
+            <Typography fontSize={18} lineHeight={1}>
+              <span style={{ textDecoration: 'underline' }}>
+                {report.phone}
+              </span>
+            </Typography>
+          </TableCell>
+        </TableRow>
+      </TableBody>
+    </Table>
+  </Box>
+</Grid>
 
-            </Grid>
-
-            <Grid item xs={6} md={6}>
+            {/* <Grid item xs={6} md={6}>
               <Box sx={{ textAlign: 'right' }}>
                 <Typography variant="h6">
                   <strong>DR #:</strong> {report.invoice_number}
@@ -298,7 +343,7 @@ const DeliveryReportView = ({ refresh , report }) => {
                 </>
                 )}
               </Box>
-            </Grid>
+            </Grid> */}
         </Grid>
 
           <Divider sx={{ my: 1 }} />
@@ -306,7 +351,16 @@ const DeliveryReportView = ({ refresh , report }) => {
           {/* Content Area - grows to fill available space */}
           <Box sx={{ flex: 1 }}>
             {/* Items Table */}
-            <Typography variant="subtitle1" gutterBottom>Order Items</Typography>
+            <Box display='flex' justifyContent="space-between" >
+              <Typography variant="subtitle1" gutterBottom>Order Items</Typography>
+             {report.term_days !== 0 && report.term_days && (
+              <>
+                <Typography variant="h6">
+                  <strong>Term :</strong> {report.term_days}
+                </Typography>
+                </>
+                )}
+            </Box>
             <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
               <Table size="small">
                 <TableHead>

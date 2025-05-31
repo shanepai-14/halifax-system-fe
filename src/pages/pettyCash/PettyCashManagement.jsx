@@ -65,7 +65,7 @@ const PettyCashManagement = () => {
 
 
   return (
-    <MainCard >
+  <>
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs 
           value={activeTab} 
@@ -112,7 +112,7 @@ const PettyCashManagement = () => {
         />
       </TabPanel>
 
-    </MainCard>
+  </>
   );
 };
 
