@@ -36,6 +36,7 @@ import PurchaseOrderAdditionalCosts from './PurchaseOrderAdditionalCosts';
 import MultipleFileUploader from './MultipleFileUploader';
 import PrintIcon from '@mui/icons-material/Print';
 import PrintableRR from '../receiving/PrintableRR';
+import AdditionalCostTypeModal from './AdditionalCostTypeModal';
 import { useReactToPrint } from 'react-to-print';
 /**
  * Component to display a list of receiving reports for a purchase order
@@ -68,6 +69,7 @@ const PurchaseOrderReceivingReports = ({
   const [selectedReportId, setSelectedReportId] = useState(null);
   const [selectedReport, setSelectedReport] = useState(null);
   const [errors, setErrors] = useState({});
+  const [costTypeModalOpen, setCostTypeModalOpen] = useState(false);
   const [reportData, setReportData] = useState({
     invoice: '',
     term: 0,
@@ -98,6 +100,10 @@ const PurchaseOrderReceivingReports = ({
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
   };
+
+  const handleAddCostType = () => {
+  setCostTypeModalOpen(true);
+};
   
   const openNewReportDialog = () => {
     setReportData({
@@ -483,7 +489,7 @@ const PurchaseOrderReceivingReports = ({
           status="partially_received"
           showTotals={true}
           calculateTotalCosts={calculateAdditionalCosts}
-          onAddCostType={() => setOpenCostTypeModal(true)}
+          onAddCostType={handleAddCostType}
         />
       </DialogContent>
       <DialogActions>
@@ -735,6 +741,12 @@ const PurchaseOrderReceivingReports = ({
       {/* Receiving Report Dialog (used for both create and edit) */}
       {reportDialog && renderReportDialog()}
       <PrintableRR receivingReport={selectedReport} contentRef={contentRef}/>
+          <AdditionalCostTypeModal
+        open={costTypeModalOpen}
+        onClose={() => setCostTypeModalOpen(false)}
+        costTypeId={null} // Always null for creating new cost types
+         onSuccess={() => {}}
+      />
     </Box>
   );
 };

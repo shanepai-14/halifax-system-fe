@@ -244,7 +244,7 @@ const SupplierPurchaseHistory = () => {
   }) : [];
 
   return (
-    <MainCard>
+    <>
       {/* Breadcrumbs navigation */}
       <Breadcrumbs sx={{ mb: 2 }}>
         <Link 
@@ -655,7 +655,7 @@ const SupplierPurchaseHistory = () => {
           )}
         </TabPanel>
       </Paper>
-    </MainCard>
+    </>
   );
 };
 
