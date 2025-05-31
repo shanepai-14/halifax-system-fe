@@ -56,7 +56,7 @@ const PurchaseOrderAdditionalCosts = ({
             <TableRow>
               <TableCell colSpan={isReadOnly ? 3 : 4}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Typography variant="h5" sx={{ mt: 4, mb: 1 }}>
+                  <Typography variant="h5" >
                     Additional Costs
                   </Typography>
                   {onAddCostType && !isReadOnly && (

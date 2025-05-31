@@ -264,8 +264,7 @@ const CustomerPurchaseHistory = () => {
   const totalOrders = sortedInvoices.length;
 
   return (
-    <MainCard>
-      {/* Breadcrumbs navigation */}
+    <>
       <Breadcrumbs sx={{ mb: 2 }}>
         <Link 
           underline="hover" 
@@ -637,7 +636,7 @@ const CustomerPurchaseHistory = () => {
           )}
         </TabPanel>
       </Paper>
-    </MainCard>
+     </>
   );
 };
 
