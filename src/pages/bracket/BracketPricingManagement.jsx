@@ -157,7 +157,7 @@ const BracketPricingManagement = ({ product, onClose }) => {
   };
 
   return (
-    <Paper sx={{ width: '100%', height: '80vh', display: 'flex', flexDirection: 'column' }}>
+    <Paper sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Typography variant="h6" gutterBottom>
