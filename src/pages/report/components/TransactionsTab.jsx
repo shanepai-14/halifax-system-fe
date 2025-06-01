@@ -4,46 +4,19 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
   Typography, Container, TablePagination, Button, TextField, Box, Chip,
   InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem,
-  IconButton, Card, CardContent, TableSortLabel, CircularProgress,
-  Divider
+  IconButton, Card, CardContent, TableSortLabel, CircularProgress
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import SearchIcon from '@mui/icons-material/Search';
 import * as XLSX from 'xlsx';
-import { Chart } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-} from 'chart.js';
-
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-);
 
 import { formatDate } from '@/utils/dateUtils';
 import { formatCurrency } from '@/utils/currencyFormat';
 import TableSalesRowSkeleton from '@/components/loader/TableSalesRowSkeleton';
 import { useProfitReport } from '@/hooks/useProfitReport';
 
-const ProfitReportPage = () => {
+const TransactionsTab = () => {
   const navigate = useNavigate();
   
   // Get custom hook
@@ -66,11 +39,6 @@ const ProfitReportPage = () => {
   const [endDate, setEndDate] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('all');
-  const [activeChartView, setActiveChartView] = useState('daily');
-  const [chartData, setChartData] = useState({
-    dailyData: { labels: [], datasets: [] },
-    monthlyData: { labels: [], datasets: [] }
-  });
 
   // Initialize component
   useEffect(() => {
@@ -89,7 +57,6 @@ const ProfitReportPage = () => {
     const data = await fetchAllProfitData();
     if (data) {
       setFilteredSales(data.sales);
-      setChartData(data.charts);
     }
   };
 
@@ -107,7 +74,6 @@ const ProfitReportPage = () => {
     const data = await filterSalesByDateRange(startDate, endDate);
     if (data) {
       setFilteredSales(applyFilters(data.sales));
-      setChartData(data.charts);
     }
   };
 
@@ -125,11 +91,6 @@ const ProfitReportPage = () => {
         (sale.customer && sale.customer.customer_name && sale.customer.customer_name.toLowerCase().includes(search))
       );
     }
-    
-    // // Apply status filter
-    // if (statusFilter !== 'all') {
-    //   filtered = filtered.filter(sale => sale.status === statusFilter);
-    // }
     
     // Apply payment method filter
     if (paymentMethodFilter !== 'all') {
@@ -241,10 +202,10 @@ const ProfitReportPage = () => {
     
     // Create worksheet and add to workbook
     const worksheet = XLSX.utils.json_to_sheet(formattedData);
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Profit Report');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Transactions Report');
     
     // Generate Excel file
-    XLSX.writeFile(workbook, `Profit_Report_${startDate}_to_${endDate}.xlsx`);
+    XLSX.writeFile(workbook, `Transactions_Report_${startDate}_to_${endDate}.xlsx`);
   };
 
   // Render table header
@@ -265,108 +226,54 @@ const ProfitReportPage = () => {
     );
   };
 
-  // Chart options
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top',
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
-            }
-            if (context.parsed.y !== null) {
-              label += formatCurrency(context.parsed.y);
-            }
-            return label;
-          }
-        }
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          callback: function(value) {
-            return formatCurrency(value);
-          }
-        }
-      }
-    }
-  };
-
   return (
-    <Container maxWidth="xxl" sx={{ mt: 0, p: "0!important" }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Profit Report
-      </Typography>
-      
-      {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
-                Profit This Week
-              </Typography>
-              <Typography variant="h4">
-                {loading ? (
-                  <CircularProgress size={24} sx={{ mr: 1 }} />
-                ) : (
-                  formatCurrency(profitData.summary.thisWeek)
-                )}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Last 7 days
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
-                Profit This Month
-              </Typography>
-              <Typography variant="h4">
-                {loading ? (
-                  <CircularProgress size={24} sx={{ mr: 1 }} />
-                ) : (
-                  formatCurrency(profitData.summary.thisMonth)
-                )}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Current month
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
-                Profit This Year
-              </Typography>
-              <Typography variant="h4">
-                {loading ? (
-                  <CircularProgress size={24} sx={{ mr: 1 }} />
-                ) : (
-                  formatCurrency(profitData.summary.thisYear)
-                )}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Current year
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-      
+    <Box>
+           {/* Summary Footer */}
+      {filteredSales.length > 0 && (
+        <Card sx={{ mb: 2 }}>
+          <CardContent>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={3}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Total Records
+                </Typography>
+                <Typography variant="h6">
+                  {filteredSales.length}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Total Revenue
+                </Typography>
+                <Typography variant="h6">
+                  {formatCurrency(filteredSales.reduce((sum, sale) => sum + Number(sale.total || 0), 0))}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Total COGS
+                </Typography>
+                <Typography variant="h6">
+                  {formatCurrency(filteredSales.reduce((sum, sale) => sum + Number(sale.cogs || 0), 0))}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Total Profit
+                </Typography>
+                <Typography 
+                  variant="h6"
+                  sx={{ 
+                    color: filteredSales.reduce((sum, sale) => sum + Number(sale.profit || 0), 0) > 0 ? 'success.main' : 'error.main'
+                  }}
+                >
+                  {formatCurrency(filteredSales.reduce((sum, sale) => sum + Number(sale.profit || 0), 0))}
+                </Typography>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      )}
       {/* Filters & Search */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
@@ -482,57 +389,7 @@ const ProfitReportPage = () => {
         </CardContent>
       </Card>
       
-      {/* Chart Section */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">Profit Trends</Typography>
-            <Box>
-              <Button 
-                variant={activeChartView === 'daily' ? 'contained' : 'outlined'}
-                size="small"
-                onClick={() => setActiveChartView('daily')}
-                sx={{ mr: 1 }}
-              >
-                Daily
-              </Button>
-              <Button 
-                variant={activeChartView === 'monthly' ? 'contained' : 'outlined'}
-                size="small"
-                onClick={() => setActiveChartView('monthly')}
-              >
-                Monthly
-              </Button>
-            </Box>
-          </Box>
-          
-          <Box sx={{ height: 300 }}>
-            {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                <CircularProgress />
-              </Box>
-            ) : chartData.dailyData.labels.length > 0 ? (
-              activeChartView === 'daily' ? (
-                <Chart type="line" data={chartData.dailyData} options={chartOptions} />
-              ) : (
-                <Chart type="bar" data={chartData.monthlyData} options={chartOptions} />
-              )
-            ) : (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                <Typography variant="body2" color="text.secondary">
-                  No data available for chart
-                </Typography>
-              </Box>
-            )}
-          </Box>
-        </CardContent>
-      </Card>
-      
-      {/* Profit Summary Table */}
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        Profit Details
-      </Typography>
-      
+      {/* Transactions Table */}
       <TableContainer component={Paper}>
         <Table size="small">
           <TableHead>
@@ -658,7 +515,7 @@ const ProfitReportPage = () => {
                 <TableCell colSpan={9} align="center">
                   <Box sx={{ py: 4 }}>
                     <Typography variant="body1" color="text.secondary">
-                      {error ? `Error: ${error}` : 'No sales found for the selected filters'}
+                      {error ? `Error: ${error}` : 'No transactions found for the selected filters'}
                     </Typography>
                     {!error && (
                       <Typography variant="caption" color="text.secondary">
@@ -685,54 +542,9 @@ const ProfitReportPage = () => {
         sx={{ borderTop: 1, borderColor: 'divider' }}
       />
       
-      {/* Summary Footer */}
-      {filteredSales.length > 0 && (
-        <Card sx={{ mt: 2 }}>
-          <CardContent>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={3}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Total Records
-                </Typography>
-                <Typography variant="h6">
-                  {filteredSales.length}
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={3}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Total Revenue
-                </Typography>
-                <Typography variant="h6">
-                  {formatCurrency(filteredSales.reduce((sum, sale) => sum + (sale.total || 0), 0))}
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={3}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Total COGS
-                </Typography>
-                <Typography variant="h6">
-                  {formatCurrency(filteredSales.reduce((sum, sale) => sum + (sale.cogs || 0), 0))}
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={3}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Total Profit
-                </Typography>
-                <Typography 
-                  variant="h6"
-                  sx={{ 
-                    color: filteredSales.reduce((sum, sale) => sum + (sale.profit || 0), 0) > 0 ? 'success.main' : 'error.main'
-                  }}
-                >
-                  {formatCurrency(filteredSales.reduce((sum, sale) => sum + (sale.profit || 0), 0))}
-                </Typography>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
-      )}
-    </Container>
+ 
+    </Box>
   );
 };
 
-export default ProfitReportPage;
+export default TransactionsTab;
