@@ -41,9 +41,11 @@ export default function DashboardLayout() {
   const { data: costTypes, refetch: refetchCostTypes } = useCostTypes();
   const { getAllCustomers } = useCustomers();
   const { getAllInventory } = useSales();
+
+  
   
   useEffect(() => {
-    // Initial data fetch
+
     const fetchData = async () => {
       await Promise.all([
         refetchProducts(),
@@ -57,6 +59,7 @@ export default function DashboardLayout() {
     };
   
     fetchData();
+    
   }, []); // Empty dependency array since we only want to fetch once on mount
   
   // Separate effect for updating store
@@ -78,6 +81,7 @@ export default function DashboardLayout() {
 
   return (
     <Box sx={{ display: 'flex', width: '100%' }}>
+      
       <Toaster richColors position="top-right" closeButton/>
       <Header />
       <Drawer />

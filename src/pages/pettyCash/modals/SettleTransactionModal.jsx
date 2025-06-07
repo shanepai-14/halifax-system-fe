@@ -165,37 +165,6 @@ const SettleTransactionModal = ({ open, onClose, onSuccess, transaction }) => {
     }
   };
 
-// const handleSubmit = async (e) => {
-//     e.preventDefault();
-  
-//     if (!validateForm() || fileErrorText) {
-//       return;
-//     }
-  
-//     try {
-//       // Always use FormData for consistency with Laravel validation
-//       const data = new FormData();
-//       data.append('amount_spent', formData.amount_spent);
-//       data.append('amount_returned', formData.amount_returned);
-      
-//       // Only add remarks if it exists (to avoid "null" string)
-//       if (formData.remarks) {
-//         data.append('remarks', formData.remarks);
-//       } else {
-//         data.append('remarks', ''); // Send empty string instead of null
-//       }
-      
-//       // Only add the file if it exists
-//       if (formData.receipt_attachment) {
-//         data.append('receipt_attachment', formData.receipt_attachment);
-//       }
-      
-//       await settleTransaction(transaction.id, data);
-//       handleClose(true);
-//     } catch (error) {
-//       console.error('Error settling transaction:', error);
-//     }
-//   };
 
   const handleClose = (success = false) => {
     setFormData({
@@ -206,7 +175,7 @@ const SettleTransactionModal = ({ open, onClose, onSuccess, transaction }) => {
     });
     setErrors({});
     setFileErrorText('');
-    success ? onSuccess() : onClose();
+    success ? onSuccess(success) : onClose();
   };
 
   if (!transaction) {

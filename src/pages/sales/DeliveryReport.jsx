@@ -151,6 +151,7 @@ const CustomerFormSection = memo(({ values, touched, errors, setFieldValue, cust
           label="Order Date"
           type="date"
           fullWidth
+          disabled={true}
           margin="normal"
           InputLabelProps={{ shrink: true }}
           error={touched.orderDate && !!errors.orderDate}

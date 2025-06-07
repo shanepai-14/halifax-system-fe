@@ -328,7 +328,7 @@ const DashboardOverview = ({ dashboardData, selectedYear, selectedMonth }) => {
                 <Divider sx={{ my: 2 }} />
 
                 <Box>
-                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  <Typography variant="subtitle2" color="text.secondary" >
                     Yesterday's Performance
                   </Typography>
                   <List dense>

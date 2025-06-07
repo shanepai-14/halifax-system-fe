@@ -11,7 +11,7 @@ const initialState = {
     search: '',
     status: 'all',
     startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0], // First day of current month
-    endDate: new Date().toLocaleDateString('en-CA'), // Today
+    endDate: new Date().toISOString().split('T')[0], // Today
     employeeId: ''
   }
 };
@@ -81,12 +81,14 @@ const pettyCashSlice = createSlice({
     setStatusFilter: (state, action) => {
       state.filters.status = action.payload;
     },
-    setEmployeeFilter: (state, action) => {
-      state.filters.employeeId = action.payload;
-    },
-    setDateRange: (state, action) => {
+    setStartDate: (state, action) => {
       state.filters.startDate = action.payload.startDate;
+    },
+    setEndDate: (state, action) => {
       state.filters.endDate = action.payload.endDate;
+    },
+    setEmployeeId: (state, action) => {
+      state.filters.employeeId = action.payload.employeeId;
     },
     resetFilters: (state) => {
       state.filters = {
@@ -113,8 +115,9 @@ export const {
   fetchBalanceSuccess,
   setSearchFilter,
   setStatusFilter,
-  setEmployeeFilter,
-  setDateRange,
+  setEmployeeId,
+  setStartDate,
+  setEndDate,
   resetFilters
 } = pettyCashSlice.actions;
 
