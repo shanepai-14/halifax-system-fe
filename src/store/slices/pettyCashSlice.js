@@ -12,7 +12,7 @@ const initialState = {
     status: 'all',
     startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0], // First day of current month
     endDate: new Date().toISOString().split('T')[0], // Today
-    employeeId: ''
+    employeeId: 'all'
   }
 };
 
