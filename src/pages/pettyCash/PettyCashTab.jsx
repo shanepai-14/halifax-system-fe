@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector , useDispatch  } from 'react-redux';
 import {
   Box,
   Typography,
@@ -27,7 +28,6 @@ import {
   CircularProgress
 } from '@mui/material';
 import {
-  WalletOutlined,
   PlusOutlined,
   SearchOutlined,
   CheckCircleOutlined,
@@ -50,10 +50,11 @@ import TransactionReceiptModal from './modals/TransactionReceiptModal';
 import FundReceiptModal from './modals/FundReceiptModal';
 import { formatDate } from '@/utils/dateUtils';
 import { formatCurrency } from '@/utils/currencyFormat';
-// Helper function to format currency
+import { selectPettyCashFilters ,setStartDate ,setEndDate , setEmployeeId ,setSearchFilter , setStatusFilter } from '@/store/slices/pettyCashSlice';
 
 
 const PettyCashTab = () => {
+  const dispatch = useDispatch();
   const [subTab, setSubTab] = useState(0);
   const [addFundModalOpen, setAddFundModalOpen] = useState(false);
   const [addTransactionModalOpen, setAddTransactionModalOpen] = useState(false);
@@ -62,20 +63,16 @@ const PettyCashTab = () => {
   const [fundReceiptModalOpen, setFundReceiptModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [selectedFund, setSelectedFund] = useState(null);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [startDate, setStartDate] = useState(
-    new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0] // First day of current month
-  );
-  const [endDate, setEndDate] = useState(
-    new Date().toISOString().split('T')[0] // Today
-  );
+
+  const PettyCashfilters = useSelector(selectPettyCashFilters);
+
+ console.log(PettyCashfilters);
   const [showNewFundReceipt, setShowNewFundReceipt] = useState(false);
   const [showNewTransactionReceipt, setShowNewTransactionReceipt] = useState(false);
   const [newlyCreatedFund, setNewlyCreatedFund] = useState(null);
   const [newlyCreatedTransaction, setNewlyCreatedTransaction] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showBalanceTrail, setShowBalanceTrail] = useState(false);
 
   // Custom hooks
   const { 
@@ -88,7 +85,6 @@ const PettyCashTab = () => {
     approveFund,
     approveTransaction,
     cancelTransaction,
-    settleTransaction,
     loading: pettyCashLoading 
   } = usePettyCash();
   
@@ -100,13 +96,14 @@ const PettyCashTab = () => {
   }, [subTab, refreshKey]);
 
   const loadData = async () => {
+  
     try {
       const filters = {
-        search: searchTerm,
-        status: statusFilter !== 'all' ? statusFilter : undefined,
-        startDate: startDate,
-        endDate: endDate,
-        employeeId: selectedEmployeeId !== 'all' ? selectedEmployeeId : undefined,
+        search: PettyCashfilters.search,
+        status: PettyCashfilters.status !== 'all' ? PettyCashfilters.status : undefined,
+        startDate: PettyCashfilters.startDate,
+        endDate: PettyCashfilters.endDate,
+        employeeId: PettyCashfilters.employeeId !== 'all' ? PettyCashfilters.employeeId : undefined,
       };
 
       if (subTab === 0) {
@@ -172,18 +169,14 @@ const PettyCashTab = () => {
     setSettleTransactionModalOpen(true);
   };
 
-  const handleSettleSuccess = async (data) => {
-    try {
-      const result = await settleTransaction(selectedTransaction.id, data);
-      if (result) {
+  const handleSettleSuccess = async (success = false) => {
+ 
+      if (success == true) {
         setSettleTransactionModalOpen(false);
-        setSelectedTransaction(result);
         setTransactionReceiptModalOpen(true);
         loadData();
       }
-    } catch (error) {
-      console.error('Error settling transaction:', error);
-    }
+  
   };
 
   const handleViewTransaction = (transaction) => {
@@ -374,6 +367,14 @@ const PettyCashTab = () => {
         </Box>
         <Box>
           <Button
+          variant={showBalanceTrail ? "contained" : "outlined"}
+          onClick={() => setShowBalanceTrail(!showBalanceTrail)}
+          sx={{ mr: 2 }}
+          size="small"
+        >
+          {showBalanceTrail ? 'Hide' : 'Show'} Balance Trail
+        </Button>
+          <Button
             variant="outlined"
             color="primary"
             startIcon={<PrinterOutlined />}
@@ -410,8 +411,8 @@ const PettyCashTab = () => {
             <TextField
               fullWidth
               placeholder="Search"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={PettyCashfilters.search}
+              onChange={(e) => dispatch(setSearchFilter(e.target.value))}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               InputProps={{
                 startAdornment: (
@@ -428,8 +429,8 @@ const PettyCashTab = () => {
             <FormControl fullWidth size="small">
               <InputLabel>Status</InputLabel>
               <Select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                value={PettyCashfilters.status}
+                onChange={(e) => dispatch(setStatusFilter( e.target.value ))}
                 label="Status"
               >
                 <MenuItem value="all">All Status</MenuItem>
@@ -453,8 +454,8 @@ const PettyCashTab = () => {
               <FormControl fullWidth size="small" >
                 <InputLabel>Employee</InputLabel>
                 <Select
-                  value={selectedEmployeeId}
-                  onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                  value={PettyCashfilters.employeeId}
+                  onChange={(e) => dispatch(setEmployeeId( { employeeId : e.target.value }))}
                   label="Employee"
                   
                 >
@@ -475,8 +476,8 @@ const PettyCashTab = () => {
             <TextField
               label="Start Date"
               type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              value={PettyCashfilters.startDate}
+              onChange={(e) => dispatch(setStartDate({ startDate: e.target.value }))}
               InputLabelProps={{ shrink: true }}
               fullWidth
               size="small"
@@ -488,12 +489,12 @@ const PettyCashTab = () => {
             <TextField
               label="End Date"
               type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              value={PettyCashfilters.endDate}
+              onChange={(e) => dispatch(setEndDate({ endDate: e.target.value }))}
               InputLabelProps={{ shrink: true }}
               fullWidth
               size="small"
-              inputProps={{ min: startDate }}
+              inputProps={{ min: PettyCashfilters.startDate }}
             />
           </Grid>
           
@@ -600,6 +601,12 @@ const PettyCashTab = () => {
                 <TableCell align="right">Spent</TableCell>
                 <TableCell align="right">Returned</TableCell>
                 <TableCell>Status</TableCell>
+                   {showBalanceTrail && (
+                <>
+                  <TableCell align="right"><strong>Balance Before</strong></TableCell>
+                  <TableCell align="right"><strong>Balance After</strong></TableCell>
+                </>
+              )}
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -638,6 +645,31 @@ const PettyCashTab = () => {
                     <TableCell align="right">{formatCurrency(transaction.amount_spent || 0)}</TableCell>
                     <TableCell align="right">{formatCurrency(transaction.amount_returned || 0)}</TableCell>
                     <TableCell>{getStatusChip(transaction.status)}</TableCell>
+
+                    {showBalanceTrail && (
+                <>
+                  <TableCell align="right">
+                    <Typography variant="body2" color="textSecondary">
+                      {transaction.balance_before ? formatCurrency(transaction.balance_before) : '-'}
+                    </Typography>
+                  </TableCell>
+                  
+        
+                  
+                  <TableCell align="right">
+                    <Typography 
+                      variant="body2" 
+                      fontWeight="bold"
+                      style={{ 
+                        color: (transaction.balance_after || 0) >= 0 ? '#52c41a' : '#ff4d4f' 
+                      }}
+                    >
+                      {transaction.balance_after ? formatCurrency(transaction.balance_after) : '-'}
+                    </Typography>
+                  </TableCell>
+                </>
+              )}
+
                     <TableCell>
                       <Tooltip title="View Receipt">
                         <IconButton

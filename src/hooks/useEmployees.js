@@ -38,9 +38,9 @@ export const useEmployees = () => {
       dispatch(fetchEmployeesStart());
       
       const queryParams = {
-        search: filters.search || customFilters.search,
-        status: filters.status !== 'all' ? filters.status : undefined,
-        department: filters.department !== 'all' ? filters.department : undefined,
+        search:  customFilters.search,
+        status: customFilters.status !== 'all' ? customFilters.status : undefined,
+        department: customFilters.department !== 'all' ? customFilters.department : undefined,
         sort_by: customFilters.sort_by || 'created_at',
         sort_order: customFilters.sort_order || 'desc'
       };

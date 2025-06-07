@@ -53,10 +53,10 @@ export const usePettyCash = () => {
     try {
       dispatch(fetchStart());
       const queryParams = {
-        search: filters.search || customFilters.search,
-        status: filters.status !== 'all' ? filters.status : undefined,
-        date_from: filters.startDate || customFilters.startDate,
-        date_to: filters.endDate || customFilters.endDate,
+        search:  customFilters.search,
+        status: customFilters.status !== 'all' ? customFilters.status : undefined,
+        date_from: customFilters.startDate,
+        date_to:  customFilters.endDate,
         sort_by: customFilters.sort_by || 'date',
         sort_order: customFilters.sort_order || 'desc'
       };
@@ -121,11 +121,11 @@ export const usePettyCash = () => {
     try {
       dispatch(fetchStart());
       const queryParams = {
-        search: filters.search || customFilters.search,
-        status: filters.status !== 'all' ? filters.status : undefined,
-        employee_id: filters.employeeId || customFilters.employeeId,
-        date_from: filters.startDate || customFilters.startDate,
-        date_to: filters.endDate || customFilters.endDate,
+        search:  customFilters.search,
+        status: customFilters.status !== 'all' ? customFilters.status : undefined,
+        employee_id:  customFilters.employeeId,
+        date_from:  customFilters.startDate,
+        date_to:  customFilters.endDate,
       };
 
       const response = await api.get('/petty-cash/transactions', { params: queryParams });
@@ -264,9 +264,9 @@ export const usePettyCash = () => {
     try {
       dispatch(fetchStart());
       const queryParams = {
-        status: filters.status !== 'all' ? filters.status : undefined,
-        date_from: filters.startDate || customFilters.startDate,
-        date_to: filters.endDate || customFilters.endDate,
+        status: customFilters.status !== 'all' ? customFilters.status : undefined,
+        date_from:  customFilters.startDate,
+        date_to:  customFilters.endDate,
         sort_by: customFilters.sort_by || 'date',
         sort_order: customFilters.sort_order || 'desc'
       };
@@ -284,6 +284,10 @@ export const usePettyCash = () => {
       return [];
     }
   };
+
+
+
+
 
   return {
     // State

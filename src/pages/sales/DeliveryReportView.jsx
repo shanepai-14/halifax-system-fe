@@ -365,11 +365,9 @@ const DeliveryReportView = ({ refresh , report }) => {
               <Table size="small">
                 <TableHead>
                   <TableRow>
+                  <TableCell >Qty</TableCell>
                     <TableCell>Item</TableCell>
-                    <TableCell>Code</TableCell>
-                    <TableCell align="right">Price</TableCell>
-                    <TableCell align="center">Qty</TableCell>
-                    <TableCell align="right">Discount (%)</TableCell>
+                      <TableCell align="right">Price</TableCell>
                     <TableCell align="right">Subtotal</TableCell>
                   </TableRow>
                 </TableHead>
@@ -383,11 +381,9 @@ const DeliveryReportView = ({ refresh , report }) => {
                       <React.Fragment key={item.id}>
                         {/* Regular item row */}
                         <TableRow>
+                           <TableCell >{item.quantity}</TableCell>
                           <TableCell>{item.product?.product_name}</TableCell>
-                          <TableCell>{item.product?.product_code}</TableCell>
                           <TableCell align="right">₱{parseFloat(item.sold_price).toFixed(2)}</TableCell>
-                          <TableCell align="center">{item.quantity}</TableCell>
-                          <TableCell align="right">{parseFloat(item.discount).toFixed(2)}%</TableCell>
                           <TableCell align="right">₱{finalAmount.toFixed(2)}</TableCell>
                         </TableRow>
                         
