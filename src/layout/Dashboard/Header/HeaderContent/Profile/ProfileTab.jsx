@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { useState } from 'react';
-
+import { useLogout } from '@/hooks/useAuth';
 // material-ui
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -8,16 +8,17 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import { Link as RouterLink } from 'react-router-dom';
 // assets
-import EditOutlined from '@ant-design/icons/EditOutlined';
-import ProfileOutlined from '@ant-design/icons/ProfileOutlined';
+// import EditOutlined from '@ant-design/icons/EditOutlined';
+// import ProfileOutlined from '@ant-design/icons/ProfileOutlined';
 import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
-import UserOutlined from '@ant-design/icons/UserOutlined';
-import WalletOutlined from '@ant-design/icons/WalletOutlined';
+// import UserOutlined from '@ant-design/icons/UserOutlined';
+// import WalletOutlined from '@ant-design/icons/WalletOutlined';
 
 // ==============================|| HEADER PROFILE - PROFILE TAB ||============================== //
 
 export default function ProfileTab() {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const logout = useLogout();
 
   const handleListItemClick = (index) => {
     setSelectedIndex(index);
@@ -50,9 +51,8 @@ export default function ProfileTab() {
         </ListItemIcon>
         <ListItemText primary="Billing" />
       </ListItemButton> */}
-      <ListItemButton selected={selectedIndex === 2}  component={RouterLink}
-                          to="/">
-        <ListItemIcon  >
+      <ListItemButton selected={selectedIndex === 2} onClick={() => logout.mutate()}>
+        <ListItemIcon    >
           <LogoutOutlined />
         </ListItemIcon>
         <ListItemText primary="Logout" />
