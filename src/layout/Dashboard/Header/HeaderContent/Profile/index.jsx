@@ -11,8 +11,8 @@ import Paper from '@mui/material/Paper';
 import IconButton from '@mui/material/IconButton';
 import Popper from '@mui/material/Popper';
 import Stack from '@mui/material/Stack';
-import Tab from '@mui/material/Tab';
-import Tabs from '@mui/material/Tabs';
+// import Tab from '@mui/material/Tab';
+// import Tabs from '@mui/material/Tabs';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
@@ -26,10 +26,11 @@ import Transitions from '@components/@extended/Transitions';
 
 // assets
 import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
-import SettingOutlined from '@ant-design/icons/SettingOutlined';
-import UserOutlined from '@ant-design/icons/UserOutlined';
+// import SettingOutlined from '@ant-design/icons/SettingOutlined';
+// import UserOutlined from '@ant-design/icons/UserOutlined';
 import avatar1 from '@assets/images/users/avatar-1.png';
-import { selectCurrentUser , logout } from '@/store/slices/authSlice';
+import { useLogout } from '@/hooks/useAuth';
+import { selectCurrentUser } from '@/store/slices/authSlice';
 // tab panel wrapper
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -49,13 +50,14 @@ function a11yProps(index) {
 // ==============================|| HEADER CONTENT - PROFILE ||============================== //
 
 export default function Profile() {
-  const dispatch = useDispatch();
+
   const theme = useTheme();
   const reduxUser = useSelector(selectCurrentUser);
   const currentUser = reduxUser ?? JSON.parse(localStorage.getItem('userData'));
 
   const anchorRef = useRef(null);
   const [open, setOpen] = useState(false);
+  const logout = useLogout();
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
   };
@@ -69,9 +71,9 @@ export default function Profile() {
 
   const [value, setValue] = useState(0);
 
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-  };
+  // const handleChange = (event, newValue) => {
+  //   setValue(newValue);
+  // };
 
   const iconBackColorOpen = 'grey.100';
 
@@ -139,7 +141,8 @@ export default function Profile() {
                         <IconButton 
                         size="large" 
                         sx={{ color: 'text.primary' }}
-                        onClick={() => dispatch(logout())}
+                          onClick={() => logout.mutate()}
+
                       >
                         <LogoutOutlined />
                       </IconButton>

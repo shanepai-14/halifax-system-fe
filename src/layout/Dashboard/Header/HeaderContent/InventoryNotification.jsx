@@ -115,7 +115,7 @@ export default function Notification() {
 
   const anchorRef = useRef(null);
   const [open, setOpen] = useState(false);
-  const [filter, setFilter] = useState('all'); // 'all', 'read', 'unread'
+  const [filter, setFilter] = useState('unread'); // 'all', 'read', 'unread'
 
   // Load notifications data
   const { data: notifications = [], isLoading, refetch } = useGetNotifications({
@@ -267,6 +267,8 @@ export default function Notification() {
                       component="nav"
                       sx={{
                         p: 0,
+                        maxHeight: '70vh', // Set maximum height
+                        overflowY: 'auto', // Enable vertical scrolling
                         '& .MuiListItemButton-root': {
                           py: 0.5,
                           '&.Mui-selected': { bgcolor: 'grey.50', color: 'text.primary' },
