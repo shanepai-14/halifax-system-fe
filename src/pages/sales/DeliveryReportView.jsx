@@ -365,58 +365,94 @@ const DeliveryReportView = ({ refresh , report }) => {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                  <TableCell >Qty</TableCell>
+                  <TableCell align="right">Qty</TableCell>
                     <TableCell>Item</TableCell>
                       <TableCell align="right">Price</TableCell>
-                    <TableCell align="right">Subtotal</TableCell>
+                    <TableCell align="right">Net Price</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {report.items.map((item) => {
-                    const itemSubtotal = parseFloat(item.sold_price) * item.quantity;
-                    const discountAmount = itemSubtotal * (parseFloat(item.discount) / 100);
-                    const finalAmount = itemSubtotal - discountAmount;
-                    
-                    return (
-                      <React.Fragment key={item.id}>
-                        {/* Regular item row */}
-                        <TableRow>
-                           <TableCell >{item.quantity}</TableCell>
-                          <TableCell>{item.product?.product_name}</TableCell>
-                          <TableCell align="right">₱{parseFloat(item.sold_price).toFixed(2)}</TableCell>
-                          <TableCell align="right">₱{finalAmount.toFixed(2)}</TableCell>
-                        </TableRow>
-                        
-                        {/* Composition row - only shown when composition exists */}
-                        {item.composition && (
-                          <TableRow>
-                            <TableCell colSpan={6} sx={{ pt: 0, pb: 2 }}>
-                              <Box 
-                                sx={{ 
-                                  pl: 2, 
-                                  pr: 2,
-                                  pt: 1,
-                                  pb: 1,
-                                }}
-                              >
-                                <Typography variant="subtitle2" color="primary">
-                                  Composition:
-                                </Typography>
-                                <div 
-                                  className="composition-content"
-                                  dangerouslySetInnerHTML={{ __html: item.composition }}
-                                  sx={{ 
-                                    '& ul, & ol': { pl: 2, m: 0 },
-                                    '& p': { m: 0 }
-                                  }}
-                                />
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
+              {(() => {
+  // Group items by category
+  const groupedItems = report.items.reduce((acc, item) => {
+    const categoryName = item.product?.category?.name || 'Uncategorized';
+    if (!acc[categoryName]) {
+      acc[categoryName] = [];
+    }
+    acc[categoryName].push(item);
+    return acc;
+  }, {});
+
+  // Sort categories alphabetically (optional)
+  const sortedCategories = Object.keys(groupedItems).sort();
+
+  return sortedCategories.map((categoryName) => (
+    <React.Fragment key={categoryName}>
+      {/* Category Header Row */}
+      <TableRow sx={{border:'none'}}>
+        <TableCell 
+          colSpan={4} 
+          sx={{ 
+            fontWeight: 'bold',
+            fontSize: '1rem',
+            fontStyle:"italic",
+            py:0,
+            border:'none'
+          }}
+        >
+          {categoryName}
+        </TableCell>
+      </TableRow>
+      
+      {/* Items under this category */}
+      {groupedItems[categoryName].map((item) => {
+        const itemSubtotal = parseFloat(item.sold_price) * item.quantity;
+        const discountAmount = itemSubtotal * (parseFloat(item.discount) / 100);
+        const finalAmount = itemSubtotal - discountAmount;
+        
+        return (
+          <React.Fragment key={item.id}>
+            {/* Regular item row */}
+            <TableRow sx={{py:0.5 , border:'none'}}>
+              <TableCell align="right" sx={{py:0.5 , border:'none'}}>{item.quantity}</TableCell>
+              <TableCell sx={{ pl: 3 , py:0.5 , border:'none'}}>{item.product?.product_name}</TableCell>
+              <TableCell align="right" sx={{py:0.5 , border:'none'}}>₱{parseFloat(item.sold_price).toFixed(2)}</TableCell>
+              <TableCell align="right" sx={{py:0.5 , border:'none'}}>₱{finalAmount.toFixed(2)}</TableCell>
+            </TableRow>
+            
+            {/* Composition row - only shown when composition exists */}
+            {item.composition && (
+              <TableRow>
+                <TableCell colSpan={4} sx={{ pt: 0, pb: 2 }}>
+                  <Box 
+                    sx={{ 
+                      pl: 4, // Extra indentation for composition under categorized items
+                      pr: 2,
+                      pt: 1,
+                      pb: 1,
+                    }}
+                  >
+                    <Typography variant="subtitle2" color="primary">
+                      Composition:
+                    </Typography>
+                    <div 
+                      className="composition-content"
+                      dangerouslySetInnerHTML={{ __html: item.composition }}
+                      style={{ 
+                        paddingLeft: '16px',
+                        margin: 0
+                      }}
+                    />
+                  </Box>
+                </TableCell>
+              </TableRow>
+            )}
+          </React.Fragment>
+        );
+      })}
+    </React.Fragment>
+  ));
+})()}
                 </TableBody>
               </Table>
             </TableContainer>

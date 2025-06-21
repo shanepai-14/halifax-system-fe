@@ -153,22 +153,24 @@ const NewOrderPage = () => {
     }
   }, [orderItems]);
 
-  const handleQuantityChange = useCallback((productId, change, newQuantity = null) => {
-    setOrderItems(prev => prev.map(item => {
-      if (item.id === productId) {
-        const oldQuantity = item.quantity;
-        const updatedQuantity = newQuantity !== null ? newQuantity : Math.max(0, item.quantity + change);
-        
-        // Update the product quantity in the product list
-        setProducts(prevProducts => prevProducts.map(p =>
-          p.id === productId ? { ...p, quantity: p.quantity + (oldQuantity - updatedQuantity) } : p
-        ));
-        
-        return { ...item, quantity: updatedQuantity };
-      }
-      return item;
-    }).filter(item => item.quantity > 0));
-  }, []);
+const handleQuantityChange = useCallback((productId, change, newQuantity = null) => {
+  setOrderItems(prev => prev.map(item => {
+    if (item.id === productId) {
+      const oldQuantity = item.quantity;
+      const updatedQuantity = newQuantity !== null ? newQuantity : Math.max(0, item.quantity + change);
+      
+      // Update the product quantity in the product list
+      setProducts(prevProducts => prevProducts.map(p =>
+        p.id === productId ? { ...p, quantity: p.quantity + (oldQuantity - updatedQuantity) } : p
+      ));
+      
+      return { ...item, quantity: updatedQuantity };
+    }
+    return item;
+  })); // Removed .filter(item => item.quantity > 0) to keep zero-quantity items
+}, []);
+
+
 
   const handleDiscountChange = useCallback((productId, discountValue) => {
     const discount = discountValue === '' ? 0 : Math.min(Math.max(0, parseFloat(discountValue) || 0), 100);
