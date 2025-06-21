@@ -260,21 +260,31 @@ const OrderItemRow = memo(({
   calculateItemSubtotal
 }) => {
   const handleQuantityDecrease = useCallback(() => {
-    onQuantityChange(item.id, -1);
-  }, [item.id, onQuantityChange]);
+    // Prevent going below 0
+    if (item.quantity > 0) {
+      onQuantityChange(item.id, -1);
+    }
+  }, [item.id, item.quantity, onQuantityChange]);
 
   const handleQuantityIncrease = useCallback(() => {
     onQuantityChange(item.id, 1);
   }, [item.id, onQuantityChange]);
 
   const handleQuantityChange = useCallback((e) => {
-    onQuantityChange(item.id, 0, parseInt(e.target.value) || 0);
+    const newQuantity = parseInt(e.target.value) || 0;
+    // Ensure quantity doesn't go below 0
+    const validQuantity = Math.max(0, newQuantity);
+    onQuantityChange(item.id, 0, validQuantity);
   }, [item.id, onQuantityChange]);
 
   const handleQuantityKeyDown = useCallback((e) => {
-    if (e.key === 'ArrowLeft') onQuantityChange(item.id, -1);
-    if (e.key === 'ArrowRight') onQuantityChange(item.id, 1);
-  }, [item.id, onQuantityChange]);
+    if (e.key === 'ArrowLeft' && item.quantity > 0) {
+      onQuantityChange(item.id, -1);
+    }
+    if (e.key === 'ArrowRight') {
+      onQuantityChange(item.id, 1);
+    }
+  }, [item.id, item.quantity, onQuantityChange]);
 
   const handleDiscountChange = useCallback((e) => {
     onDiscountChange(item.id, e.target.value);
@@ -295,11 +305,14 @@ const OrderItemRow = memo(({
   const itemPrice = useMemo(() => getPriceByPriceType(item), [item, getPriceByPriceType]);
   const bracketPrice = useMemo(() => calculateBracketPrice(item, item.quantity), [item, calculateBracketPrice]);
   const subtotal = useMemo(() => calculateItemSubtotal(item), [item, calculateItemSubtotal]);
-
+  const isZeroQuantity = item.quantity === 0;
   return (
     <React.Fragment>
-      <TableRow>
-        <TableCell>{item.name}</TableCell>
+      <TableRow sx={{ 
+        opacity: isZeroQuantity ? 0.6 : 1,
+        backgroundColor: isZeroQuantity ? '#f5f5f5' : 'inherit'
+      }}>
+        <TableCell >{item.name}</TableCell>
         
         {/* Bracket Pricing Checkbox Cell */}
         <TableCell align="center">
@@ -337,15 +350,23 @@ const OrderItemRow = memo(({
         
         {/* Quantity Cell */}
         <TableCell align="center" sx={{ display: 'flex', justifyContent: 'center', alignItems: "center"}} >
-          <IconButton size="small" onClick={handleQuantityDecrease}>
+          <IconButton size="small" onClick={handleQuantityDecrease} disabled={item.quantity <= 0} >
             <MinusCircleOutlined />
           </IconButton>
           <TextField
             value={item.quantity || 0}
             onChange={handleQuantityChange}
             onKeyDown={handleQuantityKeyDown}
-            inputProps={{ style: { textAlign: 'center', width: '40px' } }}
+            inputProps={{ 
+              style: { 
+                textAlign: 'center', 
+                width: '40px',
+                color: isZeroQuantity ? '#f57c00' : 'inherit' // Orange color for zero
+              },
+              min: 0 // HTML5 validation
+            }}
             size="small"
+             error={isZeroQuantity}
           />
           <IconButton size="small" onClick={handleQuantityIncrease}>
             <PlusCircleOutlined />
@@ -565,6 +586,10 @@ const DeliveryReport = forwardRef(({
     return orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0);
   }, [orderItems, calculateItemSubtotal]);
 
+ const hasZeroQuantityItems = orderItems.some(item => item.quantity === 0);
+
+  console.log(hasZeroQuantityItems);
+
   return (
     <>
       <Formik
@@ -704,7 +729,10 @@ const DeliveryReport = forwardRef(({
                   size="large"
                   fullWidth
                   startIcon={isSubmitting ? <CircularProgress size={24} color="inherit" /> : <SaveOutlined />}
-                  disabled={orderItems.length === 0 || isSubmitting || !isValid}
+                  disabled={ orderItems.length === 0 ||  
+                            hasZeroQuantityItems || 
+                            isSubmitting || 
+                            !isValid}
                 >
                   {isSubmitting ? 'Submitting...' : 'Submit Delivery Report'}
                 </Button>
