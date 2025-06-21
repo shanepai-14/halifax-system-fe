@@ -157,7 +157,29 @@ const handleQuantityChange = useCallback((productId, change, newQuantity = null)
   setOrderItems(prev => prev.map(item => {
     if (item.id === productId) {
       const oldQuantity = item.quantity;
-      const updatedQuantity = newQuantity !== null ? newQuantity : Math.max(0, item.quantity + change);
+      let updatedQuantity;
+      
+      if (newQuantity !== null) {
+        updatedQuantity = Math.max(0, newQuantity);
+      } else {
+        updatedQuantity = Math.max(0, item.quantity + change);
+      }
+      
+      // Find the corresponding product to check available inventory
+      const product = products.find(p => p.id === productId);
+      const availableInventory = product ? product.quantity : 0;
+      const maxAllowedQuantity = availableInventory + oldQuantity; // Current inventory + what was already taken
+      
+      // Prevent exceeding available inventory
+      if (updatedQuantity > maxAllowedQuantity) {
+        // Show alert if user tries to exceed inventory
+        setAlertInfo({
+          open: true,
+          message: `Cannot exceed available inventory. Maximum available: ${maxAllowedQuantity}`,
+          type: 'warning'
+        });
+        updatedQuantity = maxAllowedQuantity;
+      }
       
       // Update the product quantity in the product list
       setProducts(prevProducts => prevProducts.map(p =>
@@ -167,8 +189,8 @@ const handleQuantityChange = useCallback((productId, change, newQuantity = null)
       return { ...item, quantity: updatedQuantity };
     }
     return item;
-  })); // Removed .filter(item => item.quantity > 0) to keep zero-quantity items
-}, []);
+  }));
+}, [products, setAlertInfo]);
 
 
 
@@ -338,6 +360,7 @@ const handleQuantityChange = useCallback((productId, change, newQuantity = null)
               orderItems={orderItems} 
               totalPrice={totalPrice} 
               customers={customers}
+              products={products} 
               onSubmit={handleSubmitOrder}
               onRemoveProduct={handleRemoveProduct}
               onQuantityChange={handleQuantityChange}
