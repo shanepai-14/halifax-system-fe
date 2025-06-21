@@ -257,7 +257,8 @@ const OrderItemRow = memo(({
   onOpenCompositionModal,
   getPriceByPriceType,
   calculateBracketPrice,
-  calculateItemSubtotal
+  calculateItemSubtotal,
+  availableInventory = 0
 }) => {
   const handleQuantityDecrease = useCallback(() => {
     // Prevent going below 0
@@ -267,8 +268,11 @@ const OrderItemRow = memo(({
   }, [item.id, item.quantity, onQuantityChange]);
 
   const handleQuantityIncrease = useCallback(() => {
-    onQuantityChange(item.id, 1);
-  }, [item.id, onQuantityChange]);
+    // Check if we can increase (don't exceed available inventory)
+    if (item.quantity < availableInventory) {
+      onQuantityChange(item.id, 1);
+    }
+  }, [item.id, item.quantity, onQuantityChange, availableInventory]);
 
   const handleQuantityChange = useCallback((e) => {
     const newQuantity = parseInt(e.target.value) || 0;
@@ -306,6 +310,8 @@ const OrderItemRow = memo(({
   const bracketPrice = useMemo(() => calculateBracketPrice(item, item.quantity), [item, calculateBracketPrice]);
   const subtotal = useMemo(() => calculateItemSubtotal(item), [item, calculateItemSubtotal]);
   const isZeroQuantity = item.quantity === 0;
+
+
   return (
     <React.Fragment>
       <TableRow sx={{ 
@@ -363,7 +369,8 @@ const OrderItemRow = memo(({
                 width: '40px',
                 color: isZeroQuantity ? '#f57c00' : 'inherit' // Orange color for zero
               },
-              min: 0 // HTML5 validation
+              min: 0,
+              max: availableInventory
             }}
             size="small"
              error={isZeroQuantity}
