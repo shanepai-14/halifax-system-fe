@@ -43,12 +43,7 @@ const validationSchema = Yup.object().shape({
     "File is too large",
     (value) => !value || value.size <= 5000000
   ), // 5MB limit
-  attributes: Yup.array().of(
-    Yup.object().shape({
-      attribute_id: Yup.number().required("Required"),
-      value: Yup.number().required("Required"),
-    })
-  ),
+  attribute_id: Yup.number().required("Attribute is required"), // Single attribute (required)
 });
 
 const fileTypes = ["JPG", "JPEG", "PNG", "GIF"];
@@ -72,14 +67,6 @@ const AddProductModal = ({ open, handleClose, categories }) => {
     setImagePreview(null);
   }
 
-
-  const isAttributeSelected = (attributeId, currentIndex, attributes) => {
-    return attributes.some(
-      (attr, idx) => attr.attribute_id === attributeId && idx !== currentIndex
-    );
-  };
-
-
   return (
     <Dialog open={open} onClose={handleCloseModal} maxWidth="md" fullWidth>
       <DialogTitle>Add New Product</DialogTitle>
@@ -90,7 +77,7 @@ const AddProductModal = ({ open, handleClose, categories }) => {
           reorder_level: 0,
           product_type: "raw",
           product_image: null,
-          attributes: [],
+          attribute_id: "", // Single attribute
         }}
         validationSchema={validationSchema}
         onSubmit={async (values, { setSubmitting, resetForm }) => {
@@ -251,9 +238,29 @@ const AddProductModal = ({ open, handleClose, categories }) => {
               <Divider sx={{ my: 2 }} />
 
               <Typography variant="subtitle1" gutterBottom>
-                Product Attributes
+                Product Attribute *
               </Typography>
 
+              {/* Single attribute field */}
+              <Field
+                as={TextField}
+                select
+                name="attribute_id"
+                label="Attribute *"
+                fullWidth
+                margin="normal"
+                error={touched.attribute_id && errors.attribute_id}
+                helperText={touched.attribute_id && errors.attribute_id}
+              >
+                {attributes.map((attr) => (
+                  <MenuItem key={attr.id} value={attr.id}>
+                    {attr.attribute_name} ({attr.unit_of_measurement})
+                  </MenuItem>
+                ))}
+              </Field>
+
+              {/* Commented out FieldArray for multiple attributes */}
+              {/* 
               <FieldArray name="attributes">
                 {({ push, remove }) => (
                   <Box>
@@ -318,6 +325,7 @@ const AddProductModal = ({ open, handleClose, categories }) => {
                   </Box>
                 )}
               </FieldArray>
+              */}
             </DialogContent>
             <DialogActions>
               <Button onClick={handleCloseModal}>Cancel</Button>
