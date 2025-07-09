@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
-import { useCreateCategory } from '@/hooks/useProducts';
+import { useCreateCategory ,  useCategories  } from '@/hooks/useProducts';
 
 const validationSchema = Yup.object().shape({
   name: Yup.string()
@@ -18,6 +18,7 @@ const validationSchema = Yup.object().shape({
 
 const AddCategoryModal = ({ open, handleClose }) => {
   const createCategory = useCreateCategory();
+  const { refetch: refetchCategories } = useCategories();
 
   return (
     <Dialog open={open} onClose={handleClose}>
@@ -32,6 +33,7 @@ const AddCategoryModal = ({ open, handleClose }) => {
         onSubmit={async (values, { setSubmitting, resetForm }) => {
           try {
             await createCategory.mutateAsync(values);
+            refetchCategories();
             resetForm();
             handleClose();
           } catch (error) {

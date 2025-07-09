@@ -25,7 +25,8 @@ const ReceivedItemRow = React.memo(({
   disabled,
   isCompleted,
   isCancelled,
-  distributionCostPerUnit
+  distributionCostPerUnit,
+  isEditing
 }) => {
   // Calculate the distribution cost display value
   const distributionCostDisplay = useMemo(() => {
@@ -140,19 +141,19 @@ const ReceivedItemRow = React.memo(({
         {!isCompleted && !isCancelled ? (
           <TextField
             type="number"
-            value={item.received_quantity}
+            value={parseInt(item.received_quantity)}
             onChange={handleQuantityChange}
             error={!!errors[`received_items.${index}.received_quantity`]}
             helperText={
               errors[`received_items.${index}.received_quantity`] ||
               "Required"
             }
-            inputProps={{ min: 0, step: "0.01" }}
-            disabled={disabled}
+            inputProps={{ min: 0, step: "0" }}
+            disabled={isEditing && parseInt(item.received_quantity) != 0 ? isEditing : disabled}
             size="small"
           />
         ) : (
-          item.received_quantity
+          parseInt(item.received_quantity)
         )}
       </TableCell>
       <TableCell sx={{ verticalAlign: "top" }}>
@@ -276,7 +277,8 @@ const PurchaseOrderReceivedItems = ({
   errors = {},
   disabled = false,
   status,
-  totalAdditonalCost
+  totalAdditonalCost,
+  isEditing
 }) => {
   const isCompleted = status === 'completed';
   const isCancelled = status === 'cancelled';
@@ -348,6 +350,7 @@ const PurchaseOrderReceivedItems = ({
               isCancelled={isCancelled}
               distributionCostPerUnit={distributionCostPerUnit}
               isLastItem={receivedItems.length === 1}
+              isEditing={isEditing}
             />
           ))}
           <TableRow>

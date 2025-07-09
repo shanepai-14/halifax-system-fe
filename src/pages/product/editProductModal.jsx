@@ -43,12 +43,7 @@ const validationSchema = Yup.object().shape({
     "File is too large",
     (value) => !value || value.size <= 5000000
   ),
-  attributes: Yup.array().of(
-    Yup.object().shape({
-      attribute_id: Yup.number().required("Required"),
-      value: Yup.number().required("Required"),
-    })
-  ),
+  attribute_id: Yup.number().required("Attribute is required"), // Single attribute (required)
 });
 
 const fileTypes = ["JPG", "JPEG", "PNG", "GIF"];
@@ -59,8 +54,6 @@ const EditProductModal = ({ open, handleClose, categories, product }) => {
   const { data: attributes = [] } = useAttributes();
   const [imagePreview, setImagePreview] = useState(null);
   const { refetch: refetchProducts } = useProducts();
-
-
 
   useEffect(() => {
     if (product?.product_image) {
@@ -80,28 +73,18 @@ const EditProductModal = ({ open, handleClose, categories, product }) => {
     setImagePreview(null);
   }
 
-
-  const isAttributeSelected = (attributeId, currentIndex, attributes) => {
-    return attributes.some(
-      (attr, idx) => attr.attribute_id === attributeId && idx !== currentIndex
-    );
-  };
-
   if (!product) return null;
 
   return (
     <Dialog open={open} onClose={handleCloseModal} maxWidth="md" fullWidth>
       <DialogTitle>Edit Product</DialogTitle>
       <Formik
-      initialValues={{
+        initialValues={{
           product_name: product.product_name || "",
           product_category_id: product.product_category_id || "",
           reorder_level: product.reorder_level || 0,
           product_type: product.product_type || "raw",
-          attributes: product.attributes.map(attr => ({
-            attribute_id: attr.id,
-            value: parseFloat(attr.pivot.value)
-          })) || [],
+          attribute_id: product.attribute_id || "", // Single attribute
         }}
         validationSchema={validationSchema}
         onSubmit={async (values, { setSubmitting }) => {
@@ -247,9 +230,29 @@ const EditProductModal = ({ open, handleClose, categories, product }) => {
               <Divider sx={{ my: 2 }} />
 
               <Typography variant="subtitle1" gutterBottom>
-                Product Attributes
+                Product Attribute *
               </Typography>
 
+              {/* Single attribute field */}
+              <Field
+                as={TextField}
+                select
+                name="attribute_id"
+                label="Attribute *"
+                fullWidth
+                margin="normal"
+                error={touched.attribute_id && errors.attribute_id}
+                helperText={touched.attribute_id && errors.attribute_id}
+              >
+                {attributes.map((attr) => (
+                  <MenuItem key={attr.id} value={attr.id}>
+                    {attr.attribute_name} ({attr.unit_of_measurement})
+                  </MenuItem>
+                ))}
+              </Field>
+
+              {/* Commented out FieldArray for multiple attributes */}
+              {/* 
               <FieldArray name="attributes">
               {({ push, remove }) => (
                 <Box>
@@ -292,14 +295,6 @@ const EditProductModal = ({ open, handleClose, categories, product }) => {
                         }`}
                         type="number"
                         fullWidth
-                        error={
-                          touched.attributes?.[index]?.value &&
-                          errors.attributes?.[index]?.value
-                        }
-                        helperText={
-                          touched.attributes?.[index]?.value &&
-                          errors.attributes?.[index]?.value
-                        }
                       />
                       <IconButton onClick={() => remove(index)} color="error">
                         <DeleteOutlined />
@@ -319,6 +314,7 @@ const EditProductModal = ({ open, handleClose, categories, product }) => {
                 </Box>
               )}
             </FieldArray>
+            */}
             </DialogContent>
             <DialogActions>
               <Button onClick={handleCloseModal}>Cancel</Button>

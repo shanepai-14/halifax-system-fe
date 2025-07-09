@@ -109,12 +109,11 @@ const [sortConfig, setSortConfig] = useState({
   });
 
 
-  const renderAttributes = (attributes) => {
-    if (!attributes || attributes.length === 0) return 'No attributes';
-    return attributes.map(attr => 
-      `${attr.attribute_name}: ${attr.pivot.value}${attr.unit_of_measurement}`
-    ).join(', ');
+  const renderAttributes = (attribute) => {
+    if (!attribute) return 'No attribute';
+    return `${attribute.attribute_name} (${attribute.unit_of_measurement})`;
   };
+
 
   const handleViewChange = (event, newView) => {
     if (newView !== null) {
@@ -192,6 +191,7 @@ const [sortConfig, setSortConfig] = useState({
             </TableSortLabel>
           </TableCell>
           <TableCell>Category</TableCell>
+           <TableCell>Attribute</TableCell>
           {/* <TableCell>
           <TableSortLabel
             active={sortConfig.field === 'attributes'}
@@ -258,7 +258,8 @@ const [sortConfig, setSortConfig] = useState({
                 <TableCell>{row.product_code}</TableCell>
                 <TableCell>{row.product_name}</TableCell>
                 <TableCell>{<CategoryChip category={row.category} />}</TableCell>
-                {/* <TableCell>{renderAttributes(row.attributes)}</TableCell> */}
+              
+                 <TableCell>{renderAttributes(row.attribute)}</TableCell> 
                 <TableCell align="right">{Number(row.quantity)}</TableCell>
                 
                 <TableCell align="right">{row.reorder_level}</TableCell>

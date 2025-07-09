@@ -477,6 +477,7 @@ const PurchaseOrderReceivingReports = ({
           disabled={false}
           status={status}
           totalAdditonalCost={calculateAdditionalCosts()} 
+          isEditing={isEditing}
         />
         <PurchaseOrderAdditionalCosts
           costTypes={costTypes}
