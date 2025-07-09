@@ -366,7 +366,8 @@ const DeliveryReportView = ({ refresh , report }) => {
                 <TableHead>
                   <TableRow>
                   <TableCell align="right">Qty</TableCell>
-                    <TableCell>Item</TableCell>
+                  <TableCell align="left" width={'15px'}>Unit</TableCell>
+                    <TableCell align="left" >Item</TableCell>
                       <TableCell align="right">Price</TableCell>
                     <TableCell align="right">Net Price</TableCell>
                   </TableRow>
@@ -415,7 +416,8 @@ const DeliveryReportView = ({ refresh , report }) => {
             {/* Regular item row */}
             <TableRow sx={{py:0.5 , border:'none'}}>
               <TableCell align="right" sx={{py:0.5 , border:'none'}}>{item.quantity}</TableCell>
-              <TableCell sx={{ pl: 3 , py:0.5 , border:'none'}}>{item.product?.product_name}</TableCell>
+              <TableCell align="left" sx={{py:0.5 , border:'none'}}>{item.product.attribute.unit_of_measurement}</TableCell>
+              <TableCell align="left"  sx={{py:0.5 , border:'none'}}>{item.product?.product_name}</TableCell>
               <TableCell align="right" sx={{py:0.5 , border:'none'}}>₱{parseFloat(item.sold_price).toFixed(2)}</TableCell>
               <TableCell align="right" sx={{py:0.5 , border:'none'}}>₱{finalAmount.toFixed(2)}</TableCell>
             </TableRow>

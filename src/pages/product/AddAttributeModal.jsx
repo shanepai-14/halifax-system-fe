@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
-import { useCreateAttribute } from '@/hooks/useProducts';
+import { useCreateAttribute , useAttributes  } from '@/hooks/useProducts';
 
 const validationSchema = Yup.object().shape({
   attribute_name: Yup.string()
@@ -16,6 +16,7 @@ const validationSchema = Yup.object().shape({
 
 const AddAttributeModal = ({ open, handleClose }) => {
   const createAttribute = useCreateAttribute();
+  const { refetch : refetchAtrributes } = useAttributes();
 
   return (
     <Dialog open={open} onClose={handleClose}>
@@ -30,6 +31,7 @@ const AddAttributeModal = ({ open, handleClose }) => {
           try {
             await createAttribute.mutateAsync(values);
             resetForm();
+            refetchAtrributes();
             handleClose();
           } catch (error) {
             console.error('Error creating attribute:', error);
