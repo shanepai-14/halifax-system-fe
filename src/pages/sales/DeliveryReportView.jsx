@@ -418,8 +418,8 @@ const DeliveryReportView = ({ refresh , report }) => {
               <TableCell align="right" sx={{py:0.5 , border:'none'}}>{item.quantity}</TableCell>
               <TableCell align="left" sx={{py:0.5 , border:'none'}}>{item.product.attribute?.unit_of_measurement ?? " "}</TableCell>
               <TableCell align="left"  sx={{py:0.5 , border:'none'}}>{item.product?.product_name}</TableCell>
-              <TableCell align="right" sx={{py:0.5 , border:'none'}}>₱{parseFloat(item.sold_price).toFixed(2)}</TableCell>
-              <TableCell align="right" sx={{py:0.5 , border:'none'}}>₱{finalAmount.toFixed(2)}</TableCell>
+              <TableCell align="right" sx={{py:0.5 , border:'none'}}>₱{parseFloat(item.sold_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+              <TableCell align="right" sx={{py:0.5 , border:'none'}}>₱{finalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
             </TableRow>
             
             {/* Composition row - only shown when composition exists */}
@@ -474,14 +474,14 @@ const DeliveryReportView = ({ refresh , report }) => {
                     <Typography  align="right">Subtotal:</Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography  align="right">₱{subtotal.toFixed(2)}</Typography>
+                    <Typography  align="right">₱{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
                   </Grid>
 
                   <Grid item xs={6}>
                     <Typography  align="right">Discount:</Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography  align="right">₱{totalDiscount.toFixed(2)}</Typography>
+                    <Typography  align="right">₱{totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
                   </Grid>
 
                   {/* Credit Memo Total - Only show when returns exist */}
@@ -518,14 +518,16 @@ const DeliveryReportView = ({ refresh , report }) => {
                     </>
                   )}
 
-                  <Grid item xs={6}>
-                    <Typography  fontWeight="bold" align="right">Total Amount:</Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                  <Typography  fontWeight="bold" align="right">
-                    ₱{totalAmount.toFixed(2)}
-                  </Typography>
-                  </Grid>
+          <Grid item xs={6}>
+            <Typography fontWeight="bold" align="right" fontSize="1.2rem">
+              Total Amount:
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography fontWeight="bold" align="right" fontSize="1.2rem">
+              ₱{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Typography>
+          </Grid>
                   {report.amount_received !== '0.00' && report.amount_received && (
                   <>
                     <Grid item xs={6}>
