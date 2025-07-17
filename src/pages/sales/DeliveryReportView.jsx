@@ -175,13 +175,18 @@ const DeliveryReportView = ({ refresh , report }) => {
     return sum + (parseFloat(item.sold_price) * item.quantity);
   }, 0);
 
+
+  const deliveryFee = parseFloat(report.delivery_fee) || 0;
+  const cuttingCharges = parseFloat(report.cutting_charges) || 0;
+
+
   const totalDiscount = report.items.reduce((sum, item) => {
     const itemSubtotal = parseFloat(item.sold_price) * item.quantity;
     const discountAmount = itemSubtotal * (parseFloat(item.discount) / 100);
     return sum + discountAmount;
   }, 0);
 
-  const totalAmount = subtotal - totalDiscount;
+  const totalAmount = (subtotal + deliveryFee + cuttingCharges) - totalDiscount;
 
   return (
     <>
@@ -475,6 +480,18 @@ const DeliveryReportView = ({ refresh , report }) => {
                   </Grid>
                   <Grid item xs={6}>
                     <Typography  align="right">₱{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
+                  </Grid>
+                  <Grid item xs={6} >
+                    <Typography  align="right">Delivery Fee:</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography  align="right">₱{deliveryFee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
+                  </Grid>
+                      <Grid item xs={6} >
+                    <Typography  align="right">Cutting Charges:</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography  align="right">₱{cuttingCharges.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
                   </Grid>
 
                   <Grid item xs={6}>

@@ -527,6 +527,8 @@ const DeliveryReport = forwardRef(({
     deliveryDate: formatDateForInput(new Date(Date.now() + 86400000)),
     paymentMethod: '',
     term_days: '',
+    delivery_fee : 0,
+    cutting_charges :0
   }), []);
 
   // Memoized utility functions
@@ -588,10 +590,7 @@ const DeliveryReport = forwardRef(({
     setCompositionModalOpen(false);
   }, []);
 
-  // Memoized total calculation
-  const calculatedTotal = useMemo(() => {
-    return orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0);
-  }, [orderItems, calculateItemSubtotal]);
+
 
  const hasZeroQuantityItems = orderItems.some(item => item.quantity === 0);
 
@@ -599,14 +598,23 @@ const DeliveryReport = forwardRef(({
 
   return (
     <>
-      <Formik
-        initialValues={initialValues}
-        validationSchema={validationSchema}
-        onSubmit={(values, { setSubmitting }) => {
-          onSubmit(values);
-        }}
-      >
-        {({ errors, touched, setFieldValue, values, isValid, dirty }) => (
+  <Formik
+      initialValues={initialValues}
+      validationSchema={validationSchema}
+      onSubmit={(values, { setSubmitting }) => {
+        onSubmit(values);
+      }}
+    >
+      {({ errors, touched, setFieldValue, values, isValid, dirty }) => {
+        // Add this calculatedTotal inside the Formik render function
+        const calculatedTotal = useMemo(() => {
+          const itemsTotal = orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0);
+          const deliveryFee = parseFloat(values.delivery_fee) || 0;
+          const cuttingCharges = parseFloat(values.cutting_charges) || 0;
+          return itemsTotal + deliveryFee + cuttingCharges;
+        }, [orderItems, calculateItemSubtotal, values.delivery_fee, values.cutting_charges]);
+
+        return (
           <Form>
             <div ref={ref}>
               <Box sx={{ width: '100%', border: (ref ? '1px solid transparent' : 'none') }}>
@@ -637,7 +645,7 @@ const DeliveryReport = forwardRef(({
                 <Divider sx={{ mb: 1 }} />
                 
                 {/* Order Items Header */}
-                <Box sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                <Box sx={{display:'flex', justifyContent:'space-between', alignItems:'start'}}>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent:'space-between' , width: '100%'  }}>
                     <Typography variant="h6" gutterBottom>Order Items</Typography>
                     {onOpenProductModal && (
@@ -661,7 +669,7 @@ const DeliveryReport = forwardRef(({
                       label="Term"
                       type="number"
                       width={50}
-                      sx={{ mb: 1 }}
+                      sx={{ mb: 1 , ml:1 }}
                       slotProps={{
                         inputLabel: {
                           sx: { top: '1px' }, 
@@ -715,13 +723,47 @@ const DeliveryReport = forwardRef(({
                 </TableContainer>
                 
                 {/* Total Section */}
-                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                   <Typography variant="body2">
                     Payment Method: {values.paymentMethod.charAt(0).toUpperCase() + values.paymentMethod.slice(1)}
                   </Typography>
+                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1 }}>
+                      <Field
+                      size="small"
+                      as={TextField}
+                      name="delivery_fee"
+                      label="Delivery fee"
+                      type="number"
+                      width={50}
+                      sx={{ mb: 1 }}
+                      slotProps={{
+                        inputLabel: {
+                          sx: { top: '1px' }, 
+                        },
+                      }}
+                      margin="small"
+                      InputProps={{ min: 0 }}
+                    />
+                  <Field
+                      size="small"
+                      as={TextField}
+                      name="cutting_charges"
+                      label="Cutting charges"
+                      type="number"
+                      width={50}
+                      sx={{ mb: 1 }}
+                      slotProps={{
+                        inputLabel: {
+                          sx: { top: '1px' }, 
+                        },
+                      }}
+                      margin="small"
+                      InputProps={{ min: 0 }}
+                    />
                   <Typography variant="h6">
                     Total Amount: ₱{calculatedTotal.toFixed(2)}
                   </Typography>
+                </Box>
                 </Box>
               </Box>
             </div>
@@ -746,7 +788,8 @@ const DeliveryReport = forwardRef(({
               </Box>
             </Box>
           </Form>
-        )}
+          );
+      }}
       </Formik>
 
       {/* Composition Modal */}
