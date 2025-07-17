@@ -268,11 +268,8 @@ const OrderItemRow = memo(({
   }, [item.id, item.quantity, onQuantityChange]);
 
   const handleQuantityIncrease = useCallback(() => {
-    // Check if we can increase (don't exceed available inventory)
-    if (item.quantity < availableInventory) {
       onQuantityChange(item.id, 1);
-    }
-  }, [item.id, item.quantity, onQuantityChange, availableInventory]);
+  }, [item.id, item.quantity, onQuantityChange]);
 
   const handleQuantityChange = useCallback((e) => {
     const newQuantity = parseInt(e.target.value) || 0;
@@ -282,10 +279,10 @@ const OrderItemRow = memo(({
   }, [item.id, onQuantityChange]);
 
   const handleQuantityKeyDown = useCallback((e) => {
-    if (e.key === 'ArrowLeft' && item.quantity > 0) {
+    if ((e.key === 'ArrowLeft' || e.key === 'ArrowDown')  && item.quantity > 0) {
       onQuantityChange(item.id, -1);
     }
-    if (e.key === 'ArrowRight') {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
       onQuantityChange(item.id, 1);
     }
   }, [item.id, item.quantity, onQuantityChange]);
