@@ -180,6 +180,23 @@ export const useSales = () => {
     }
   };
 
+  const updateDeliveryDate = async (id, newDeliveryDate) => {
+  try {
+    dispatch(updateSaleStart());
+    const response = await api.patch(`/sales/${id}/delivery-date`, {
+      delivery_date: newDeliveryDate
+    });
+    dispatch(updateSaleSuccess(response.data.data));
+    toast.success('Delivery date updated successfully');
+    return response.data.data;
+  } catch (err) {
+    console.error('Error updating delivery date:', err);
+    dispatch(updateSaleFailed(err.message));
+    toast.error(err.response?.data?.message || 'Failed to update delivery date');
+    return null;
+  }
+};
+
   // Fetch sales statistics
   const getSalesStats = async (filters = {}) => {
     try {
@@ -245,6 +262,7 @@ export const useSales = () => {
     getSalesStats,
     resetCurrentSale,
     createCreditMemo,
-    getCustomerPurchaseHistory
+    getCustomerPurchaseHistory,
+     updateDeliveryDate 
   };
 };

@@ -231,6 +231,7 @@ const DeliveryReportView = ({ refresh , report }) => {
             </Button>
 
             <SaleKebabMenu 
+            refresh={refresh}
             sale={report}
             />
           </Box>

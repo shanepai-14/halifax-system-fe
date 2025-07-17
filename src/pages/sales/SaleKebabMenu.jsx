@@ -13,21 +13,29 @@ import {
   CircularProgress
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { CloseCircleOutlined } from '@ant-design/icons';
+import { CloseCircleOutlined, EditOutlined } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
+import { formatDateForInput } from '@/utils/dateUtils';
 
-const SaleKebabMenu = ({ sale }) => {
+const SaleKebabMenu = ({ sale , refresh }) => {
   // State for menu
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
-  
+  console.log(sale);
   // State for cancel dialog
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Get cancelSale function from useSales hook
-  const { cancelSale } = useSales();
+  // State for delivery date update dialog
+  const [deliveryDateDialogOpen, setDeliveryDateDialogOpen] = useState(false);
+  const [newDeliveryDate, setNewDeliveryDate] = useState('');
+  const [isUpdatingDeliveryDate, setIsUpdatingDeliveryDate] = useState(false);
+  
+  // Get functions from useSales hook
+  const { cancelSale, updateDeliveryDate } = useSales();
+
+ 
 
   // Open menu
   const handleClick = (event) => {
@@ -41,7 +49,7 @@ const SaleKebabMenu = ({ sale }) => {
 
   // Open cancel dialog
   const handleOpenCancelDialog = () => {
-    handleClose(); // Close the menu
+    handleClose();
     setCancelDialogOpen(true);
   };
 
@@ -51,16 +59,32 @@ const SaleKebabMenu = ({ sale }) => {
     setCancelReason('');
   };
 
+  // Open delivery date dialog
+  const handleOpenDeliveryDateDialog = () => {
+    handleClose();
+    console.log(sale.delivery_date);
+    setNewDeliveryDate(formatDateForInput(sale.delivery_date));
+    console.log(formatDateForInput(sale.delivery_date));
+    setDeliveryDateDialogOpen(true);
+  };
+
+  // Close delivery date dialog
+  const handleCloseDeliveryDateDialog = () => {
+    setDeliveryDateDialogOpen(false);
+    setNewDeliveryDate('');
+  };
+
   // Handle cancel sale
   const handleCancelSale = async () => {
     if (!cancelReason.trim()) {
-      return; // Don't proceed if no reason is provided
+      return;
     }
     
     setIsSubmitting(true);
     
     try {
       await cancelSale(sale.id, cancelReason);
+      refresh(sale.id, true);
       handleCloseCancelDialog();
     } catch (error) {
       console.error('Error cancelling sale:', error);
@@ -69,10 +93,33 @@ const SaleKebabMenu = ({ sale }) => {
     }
   };
 
-  // Disable cancel option for sales that are already cancelled or completed
+  // Handle delivery date update
+  const handleUpdateDeliveryDate = async () => {
+    if (!newDeliveryDate) {
+      return;
+    }
+    
+    setIsUpdatingDeliveryDate(true);
+    
+    try {
+      await updateDeliveryDate(sale.id, newDeliveryDate);
+      refresh(sale.id, true);
+      handleCloseDeliveryDateDialog();
+    } catch (error) {
+      console.error('Error updating delivery date:', error);
+    } finally {
+      setIsUpdatingDeliveryDate(false);
+    }
+  };
+
+  // Disable options for certain sale statuses
   const isCancelDisabled = sale.status === 'cancelled' || 
                            sale.status === 'completed' || 
                            sale.status === 'returned';
+
+  const isDeliveryDateUpdateDisabled = sale.status === 'cancelled' || 
+                                       sale.status === 'completed' || 
+                                       sale.status === 'returned';
 
   return (
     <>
@@ -84,7 +131,7 @@ const SaleKebabMenu = ({ sale }) => {
         onClick={handleClick}
         size="small"
       >
-        <MoreVertIcon  />
+        <MoreVertIcon />
       </IconButton>
       
       <Menu
@@ -101,6 +148,18 @@ const SaleKebabMenu = ({ sale }) => {
         }}
       >
         <MenuItem 
+          onClick={handleOpenDeliveryDateDialog} 
+          disabled={isDeliveryDateUpdateDisabled}
+          sx={{ 
+            color: isDeliveryDateUpdateDisabled ? 'text.disabled' : 'primary.main',
+            '&.Mui-disabled': { opacity: 0.6 }
+          }}
+        >
+          <EditOutlined style={{ marginRight: 8 }} />
+          Edit Delivery Date
+        </MenuItem>
+        
+        <MenuItem 
           onClick={handleOpenCancelDialog} 
           disabled={isCancelDisabled}
           sx={{ 
@@ -111,8 +170,57 @@ const SaleKebabMenu = ({ sale }) => {
           <CloseCircleOutlined style={{ marginRight: 8 }} />
           Cancel Sale
         </MenuItem>
-        {/* Add other menu items here */}
       </Menu>
+
+      {/* Update Delivery Date Dialog */}
+      <Dialog
+        open={deliveryDateDialogOpen}
+        onClose={handleCloseDeliveryDateDialog}
+        aria-labelledby="delivery-date-dialog-title"
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle id="delivery-date-dialog-title">
+          Edit Delivery Date
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Edit the delivery date for sale #{sale.invoice_number}.
+          </DialogContentText>
+          <TextField
+            autoFocus
+            id="new-delivery-date"
+            label="Delivery Date"
+            type="date"
+            fullWidth
+            value={newDeliveryDate}
+            onChange={(e) => setNewDeliveryDate(e.target.value)}
+            variant="outlined"
+            required
+            InputLabelProps={{ shrink: true }}
+            inputProps={{
+              min: formatDateForInput(new Date()) // Prevent selecting past dates
+            }}
+            error={!newDeliveryDate}
+            helperText={!newDeliveryDate ? "Delivery date is required" : ""}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeliveryDateDialog} color="primary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleUpdateDeliveryDate} 
+            color="primary" 
+            variant="contained"
+            disabled={!newDeliveryDate || isUpdatingDeliveryDate}
+            startIcon={isUpdatingDeliveryDate ? <CircularProgress size={20} color="inherit" /> : null}
+          >
+            {isUpdatingDeliveryDate ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Cancel Sale Dialog */}
       <Dialog
