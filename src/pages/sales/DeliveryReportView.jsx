@@ -5,6 +5,7 @@ import {
   TableContainer, TableHead, TableRow, Button, Dialog,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { PrinterOutlined, RollbackOutlined, HomeOutlined , DownOutlined , UpOutlined , CheckCircleOutlined  } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
 import { formatDate } from '@/utils/dateUtils';
@@ -14,6 +15,7 @@ import PaymentButton from './PaymentButton';
 import PaymentHistory from './PaymentHistory';
 import PaymentReceipt from './PaymentReceipt';
 import SaleKebabMenu from './SaleKebabMenu';
+
 
 const DeliveryReportView = ({ refresh , report }) => {
   const [createMemoOpen, setCreateMemoOpen] = useState(false);
@@ -26,7 +28,25 @@ const DeliveryReportView = ({ refresh , report }) => {
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const { createCreditMemo , markAsDelivered } = useSales();
 
-  
+  const courierTheme = createTheme({
+  typography: {
+    fontFamily: '"Courier New", "Lucida Console", monospace',
+    // Override all Typography variants
+    h1: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    h2: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    h3: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    h4: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    h5: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    h6: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    subtitle1: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    subtitle2: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    body1: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    body2: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    button: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    caption: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    overline: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+  },
+});
 
   // Initialize return items from report items
   React.useEffect(() => {
@@ -236,8 +256,10 @@ const DeliveryReportView = ({ refresh , report }) => {
             />
           </Box>
         </Box>
-
-<Box ref={contentRef} sx={{ p: 2, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+<ThemeProvider theme={courierTheme}>
+<Box ref={contentRef} sx={{ p: 2, minHeight: '100vh', display: 'flex', flexDirection: 'column' ,
+     fontFamily: '"Courier New", "Lucida Console" '
+}}>
           {/* Company Header with Logo */}
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid item xs={12} md={12}>
@@ -625,6 +647,7 @@ const DeliveryReportView = ({ refresh , report }) => {
             </Box>
           </Box>
         </Box>
+        </ThemeProvider>
       </Paper>
 
       <Box sx={{ mt: 3, mb: 2 }}>
