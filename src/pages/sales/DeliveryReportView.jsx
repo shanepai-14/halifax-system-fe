@@ -5,6 +5,7 @@ import {
   TableContainer, TableHead, TableRow, Button, Dialog,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { PrinterOutlined, RollbackOutlined, HomeOutlined , DownOutlined , UpOutlined , CheckCircleOutlined  } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
 import { formatDate } from '@/utils/dateUtils';
@@ -14,6 +15,7 @@ import PaymentButton from './PaymentButton';
 import PaymentHistory from './PaymentHistory';
 import PaymentReceipt from './PaymentReceipt';
 import SaleKebabMenu from './SaleKebabMenu';
+
 
 const DeliveryReportView = ({ refresh , report }) => {
   const [createMemoOpen, setCreateMemoOpen] = useState(false);
@@ -26,7 +28,25 @@ const DeliveryReportView = ({ refresh , report }) => {
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const { createCreditMemo , markAsDelivered } = useSales();
 
-  
+  const courierTheme = createTheme({
+  typography: {
+    fontFamily: '"Courier New", "Lucida Console", monospace',
+    // Override all Typography variants
+    h1: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    h2: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    h3: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    h4: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    h5: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    h6: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    subtitle1: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    subtitle2: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    body1: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    body2: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    button: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    caption: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+    overline: { fontFamily: '"Courier New", "Lucida Console", monospace' },
+  },
+});
 
   // Initialize return items from report items
   React.useEffect(() => {
@@ -175,13 +195,18 @@ const DeliveryReportView = ({ refresh , report }) => {
     return sum + (parseFloat(item.sold_price) * item.quantity);
   }, 0);
 
+
+  const deliveryFee = parseFloat(report.delivery_fee) || 0;
+  const cuttingCharges = parseFloat(report.cutting_charges) || 0;
+
+
   const totalDiscount = report.items.reduce((sum, item) => {
     const itemSubtotal = parseFloat(item.sold_price) * item.quantity;
     const discountAmount = itemSubtotal * (parseFloat(item.discount) / 100);
     return sum + discountAmount;
   }, 0);
 
-  const totalAmount = subtotal - totalDiscount;
+  const totalAmount = (subtotal + deliveryFee + cuttingCharges) - totalDiscount;
 
   return (
     <>
@@ -226,12 +251,15 @@ const DeliveryReportView = ({ refresh , report }) => {
             </Button>
 
             <SaleKebabMenu 
+            refresh={refresh}
             sale={report}
             />
           </Box>
         </Box>
-
-<Box ref={contentRef} sx={{ p: 2, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+<ThemeProvider theme={courierTheme}>
+<Box ref={contentRef} sx={{ p: 2, minHeight: '100vh', display: 'flex', flexDirection: 'column' ,
+     fontFamily: '"Courier New", "Lucida Console" '
+}}>
           {/* Company Header with Logo */}
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid item xs={12} md={12}>
@@ -416,10 +444,10 @@ const DeliveryReportView = ({ refresh , report }) => {
             {/* Regular item row */}
             <TableRow sx={{py:0.5 , border:'none'}}>
               <TableCell align="right" sx={{py:0.5 , border:'none'}}>{item.quantity}</TableCell>
-              <TableCell align="left" sx={{py:0.5 , border:'none'}}>{item.product.attribute.unit_of_measurement}</TableCell>
+              <TableCell align="left" sx={{py:0.5 , border:'none'}}>{item.product.attribute?.unit_of_measurement ?? " "}</TableCell>
               <TableCell align="left"  sx={{py:0.5 , border:'none'}}>{item.product?.product_name}</TableCell>
-              <TableCell align="right" sx={{py:0.5 , border:'none'}}>₱{parseFloat(item.sold_price).toFixed(2)}</TableCell>
-              <TableCell align="right" sx={{py:0.5 , border:'none'}}>₱{finalAmount.toFixed(2)}</TableCell>
+              <TableCell align="right" sx={{py:0.5 , border:'none'}}>₱{parseFloat(item.sold_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+              <TableCell align="right" sx={{py:0.5 , border:'none'}}>₱{finalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
             </TableRow>
             
             {/* Composition row - only shown when composition exists */}
@@ -474,14 +502,26 @@ const DeliveryReportView = ({ refresh , report }) => {
                     <Typography  align="right">Subtotal:</Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography  align="right">₱{subtotal.toFixed(2)}</Typography>
+                    <Typography  align="right">₱{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
+                  </Grid>
+                  <Grid item xs={6} >
+                    <Typography  align="right">Delivery Fee:</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography  align="right">₱{deliveryFee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
+                  </Grid>
+                      <Grid item xs={6} >
+                    <Typography  align="right">Cutting Charges:</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography  align="right">₱{cuttingCharges.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
                   </Grid>
 
                   <Grid item xs={6}>
                     <Typography  align="right">Discount:</Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography  align="right">₱{totalDiscount.toFixed(2)}</Typography>
+                    <Typography  align="right">₱{totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
                   </Grid>
 
                   {/* Credit Memo Total - Only show when returns exist */}
@@ -518,14 +558,16 @@ const DeliveryReportView = ({ refresh , report }) => {
                     </>
                   )}
 
-                  <Grid item xs={6}>
-                    <Typography  fontWeight="bold" align="right">Total Amount:</Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                  <Typography  fontWeight="bold" align="right">
-                    ₱{totalAmount.toFixed(2)}
-                  </Typography>
-                  </Grid>
+          <Grid item xs={6}>
+            <Typography fontWeight="bold" align="right" fontSize="1.2rem">
+              Total Amount:
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography fontWeight="bold" align="right" fontSize="1.2rem">
+              ₱{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Typography>
+          </Grid>
                   {report.amount_received !== '0.00' && report.amount_received && (
                   <>
                     <Grid item xs={6}>
@@ -605,6 +647,7 @@ const DeliveryReportView = ({ refresh , report }) => {
             </Box>
           </Box>
         </Box>
+        </ThemeProvider>
       </Paper>
 
       <Box sx={{ mt: 3, mb: 2 }}>

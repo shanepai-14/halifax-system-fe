@@ -162,7 +162,7 @@ const OverviewTabContent = ({
                       />
                     </TableCell>
                     <TableCell>
-                      {transaction.transaction_type === 'purchase' || transaction.transaction_type === 'adjustment_in'
+                      {transaction.transaction_type === 'purchase' || transaction.transaction_type === 'adjustment_in' || transaction.transaction_type === 'return'
                         ? `+${transaction.quantity}` 
                         : `-${transaction.quantity}`}
                     </TableCell>

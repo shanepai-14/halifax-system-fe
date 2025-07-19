@@ -260,7 +260,7 @@ const [sortConfig, setSortConfig] = useState({
                 <TableCell>{<CategoryChip category={row.category} />}</TableCell>
               
                  <TableCell>{renderAttributes(row.attribute)}</TableCell> 
-                <TableCell align="right">{Number(row.quantity)}</TableCell>
+                <TableCell align="right">{Number(row.inventory_quantity)}</TableCell>
                 
                 <TableCell align="right">{row.reorder_level}</TableCell>
                                   <TableCell align="right">
@@ -268,6 +268,7 @@ const [sortConfig, setSortConfig] = useState({
                       product={row}
                       variant="contained"
                       showStatus={true}
+                      size='meduim'
                     />
                   </TableCell>
                   <TableCell align="right">

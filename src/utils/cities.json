@@ -1,8 +1,5 @@
 [
 
-
-
-
   { "name": "Baliguian", "province": "ZAN" },
   { "name": "Dapitan", "province": "ZAN", "city": true },
   { "name": "Dipolog", "province": "ZAN", "city": true },
@@ -30,6 +27,7 @@
   { "name": "Siocon", "province": "ZAN" },
   { "name": "Sirawai", "province": "ZAN" },
   { "name": "Tampilisan", "province": "ZAN" },
+
 
   { "name": "Aurora", "province": "ZAS" },
   { "name": "Bayog", "province": "ZAS" },
@@ -61,6 +59,24 @@
   { "name": "Zamboanga", "province": "ZAS", "city": true },
 
 
+  { "name": "Alicia", "province": "ZSI" },
+  { "name": "Buug", "province": "ZSI" },
+  { "name": "Diplahan", "province": "ZSI" },
+  { "name": "Imelda", "province": "ZSI" },
+  { "name": "Ipil", "province": "ZSI" },
+  { "name": "Kabasalan", "province": "ZSI" },
+  { "name": "Mabuhay", "province": "ZSI" },
+  { "name": "Malangas", "province": "ZSI" },
+  { "name": "Naga", "province": "ZSI" },
+  { "name": "Olutanga", "province": "ZSI" },
+  { "name": "Payao", "province": "ZSI" },
+  { "name": "Roseller Lim", "province": "ZSI" },
+  { "name": "Siay", "province": "ZSI" },
+  { "name": "Talusan", "province": "ZSI" },
+  { "name": "Titay", "province": "ZSI" },
+  { "name": "Tungawan", "province": "ZSI" },
+
+ 
   { "name": "Alubijid", "province": "MSR" },
   { "name": "Balingasag", "province": "MSR" },
   { "name": "Balingoan", "province": "MSR" },
@@ -88,6 +104,122 @@
   { "name": "Talisayan", "province": "MSR" },
   { "name": "Villanueva", "province": "MSR" },
 
+ 
+  { "name": "Aloran", "province": "MSO" },
+  { "name": "Baliangao", "province": "MSO" },
+  { "name": "Bonifacio", "province": "MSO" },
+  { "name": "Calamba", "province": "MSO" },
+  { "name": "Clarin", "province": "MSO" },
+  { "name": "Concepcion", "province": "MSO" },
+  { "name": "Don Victoriano Chiongbian", "province": "MSO" },
+  { "name": "Jimenez", "province": "MSO" },
+  { "name": "Lopez Jaena", "province": "MSO" },
+  { "name": "Oroquieta", "province": "MSO", "city": true },
+  { "name": "Ozamiz", "province": "MSO", "city": true },
+  { "name": "Panaon", "province": "MSO" },
+  { "name": "Plaridel", "province": "MSO" },
+  { "name": "Sapang Dalaga", "province": "MSO" },
+  { "name": "Sinacaban", "province": "MSO" },
+  { "name": "Tangub", "province": "MSO", "city": true },
+  { "name": "Tudela", "province": "MSO" },
+
+
+  { "name": "Baungon", "province": "BUK" },
+  { "name": "Cabanglasan", "province": "BUK" },
+  { "name": "Damulog", "province": "BUK" },
+  { "name": "Dangcagan", "province": "BUK" },
+  { "name": "Don Carlos", "province": "BUK" },
+  { "name": "Impasugong", "province": "BUK" },
+  { "name": "Kadingilan", "province": "BUK" },
+  { "name": "Kalilangan", "province": "BUK" },
+  { "name": "Kibawe", "province": "BUK" },
+  { "name": "Kitaotao", "province": "BUK" },
+  { "name": "Lantapan", "province": "BUK" },
+  { "name": "Libona", "province": "BUK" },
+  { "name": "Malaybalay", "province": "BUK", "city": true },
+  { "name": "Malitbog", "province": "BUK" },
+  { "name": "Manolo Fortich", "province": "BUK" },
+  { "name": "Maramag", "province": "BUK" },
+  { "name": "Pangantucan", "province": "BUK" },
+  { "name": "Quezon", "province": "BUK" },
+  { "name": "San Fernando", "province": "BUK" },
+  { "name": "Sumilao", "province": "BUK" },
+  { "name": "Talakag", "province": "BUK" },
+  { "name": "Valencia", "province": "BUK", "city": true },
+
+
+  { "name": "Catarman", "province": "CAM" },
+  { "name": "Guinsiliban", "province": "CAM" },
+  { "name": "Mahinog", "province": "CAM" },
+  { "name": "Mambajao", "province": "CAM" },
+  { "name": "Sagay", "province": "CAM" },
+
+
+  { "name": "Bacolod", "province": "LAN" },
+  { "name": "Baloi", "province": "LAN" },
+  { "name": "Bayang", "province": "LAN" },
+  { "name": "Iligan", "province": "LAN", "city": true },
+  { "name": "Kapatagan", "province": "LAN" },
+  { "name": "Kauswagan", "province": "LAN" },
+  { "name": "Kolambugan", "province": "LAN" },
+  { "name": "Lala", "province": "LAN" },
+  { "name": "Linamon", "province": "LAN" },
+  { "name": "Magsaysay", "province": "LAN" },
+  { "name": "Maigo", "province": "LAN" },
+  { "name": "Matungao", "province": "LAN" },
+  { "name": "Munai", "province": "LAN" },
+  { "name": "Nunungan", "province": "LAN" },
+  { "name": "Pantao Ragat", "province": "LAN" },
+  { "name": "Pantar", "province": "LAN" },
+  { "name": "Poona Piagapo", "province": "LAN" },
+  { "name": "Salvador", "province": "LAN" },
+  { "name": "Sapad", "province": "LAN" },
+  { "name": "Sultan Naga Dimaporo", "province": "LAN" },
+  { "name": "Tagoloan", "province": "LAN" },
+  { "name": "Tangcal", "province": "LAN" },
+  { "name": "Tubod", "province": "LAN" },
+
+
+  { "name": "Amai Manabilang", "province": "LAS" },
+  { "name": "Bacolod-Kalawi", "province": "LAS" },
+  { "name": "Balabagan", "province": "LAS" },
+  { "name": "Balindong", "province": "LAS" },
+  { "name": "Bayang", "province": "LAS" },
+  { "name": "Binidayan", "province": "LAS" },
+  { "name": "Buadiposo-Buntong", "province": "LAS" },
+  { "name": "Bubong", "province": "LAS" },
+  { "name": "Bumbaran", "province": "LAS" },
+  { "name": "Butig", "province": "LAS" },
+  { "name": "Ganassi", "province": "LAS" },
+  { "name": "Kapai", "province": "LAS" },
+  { "name": "Lumba-Bayabao", "province": "LAS" },
+  { "name": "Lumbaca-Unayan", "province": "LAS" },
+  { "name": "Lumbatan", "province": "LAS" },
+  { "name": "Lumbayanague", "province": "LAS" },
+  { "name": "Madalum", "province": "LAS" },
+  { "name": "Madamba", "province": "LAS" },
+  { "name": "Maguing", "province": "LAS" },
+  { "name": "Malabang", "province": "LAS" },
+  { "name": "Marantao", "province": "LAS" },
+  { "name": "Marawi", "province": "LAS", "city": true },
+  { "name": "Marogong", "province": "LAS" },
+  { "name": "Masiu", "province": "LAS" },
+  { "name": "Mulondo", "province": "LAS" },
+  { "name": "Pagayawan", "province": "LAS" },
+  { "name": "Piagapo", "province": "LAS" },
+  { "name": "Picong", "province": "LAS" },
+  { "name": "Poona Bayabao", "province": "LAS" },
+  { "name": "Pualas", "province": "LAS" },
+  { "name": "Saguiaran", "province": "LAS" },
+  { "name": "Sultan Dumalondong", "province": "LAS" },
+  { "name": "Tagoloan II", "province": "LAS" },
+  { "name": "Tamparan", "province": "LAS" },
+  { "name": "Taraka", "province": "LAS" },
+  { "name": "Tubaran", "province": "LAS" },
+  { "name": "Tugaya", "province": "LAS" },
+  { "name": "Wao", "province": "LAS" },
+
+
   { "name": "Compostela", "province": "COM" },
   { "name": "Laak", "province": "COM" },
   { "name": "Mabini", "province": "COM" },
@@ -99,6 +231,7 @@
   { "name": "Nabunturan", "province": "COM" },
   { "name": "New Bataan", "province": "COM" },
   { "name": "Pantukan", "province": "COM" },
+
 
   { "name": "Asuncion", "province": "DAV" },
   { "name": "Braulio E. Dujali", "province": "DAV" },
@@ -112,6 +245,7 @@
   { "name": "Tagum", "province": "DAV", "city": true },
   { "name": "Talaingod", "province": "DAV" },
 
+
   { "name": "Bansalan", "province": "DAS" },
   { "name": "Davao", "province": "DAS", "city": true },
   { "name": "Digos", "province": "DAS", "city": true },
@@ -124,11 +258,13 @@
   { "name": "Santa Cruz", "province": "DAS" },
   { "name": "Sulop", "province": "DAS" },
 
+
   { "name": "Don Marcelino", "province": "DAC" },
   { "name": "Jose Abad Santos", "province": "DAC" },
   { "name": "Malita", "province": "DAC" },
   { "name": "Santa Maria", "province": "DAC" },
   { "name": "Sarangani", "province": "DAC" },
+
 
   { "name": "Baganga", "province": "DAO" },
   { "name": "Banaybanay", "province": "DAO" },
@@ -141,6 +277,7 @@
   { "name": "Mati", "province": "DAO", "city": true },
   { "name": "San Isidro", "province": "DAO" },
   { "name": "Tarragona", "province": "DAO" },
+
 
   { "name": "Alamada", "province": "NCO" },
   { "name": "Aleosan", "province": "NCO" },
@@ -160,6 +297,7 @@
   { "name": "President Roxas", "province": "NCO" },
   { "name": "Tulunan", "province": "NCO" },
 
+
   { "name": "Alabel", "province": "SAR" },
   { "name": "Glan", "province": "SAR" },
   { "name": "Kiamba", "province": "SAR" },
@@ -167,6 +305,7 @@
   { "name": "Maitum", "province": "SAR" },
   { "name": "Malapatan", "province": "SAR" },
   { "name": "Malungon", "province": "SAR" },
+
 
   { "name": "Banga", "province": "SCO" },
   { "name": "General Santos", "province": "SCO", "city": true },
@@ -181,6 +320,7 @@
   { "name": "Tantangan", "province": "SCO" },
   { "name": "Tupi", "province": "SCO" },
 
+
   { "name": "Bagumbayan", "province": "SUK" },
   { "name": "Columbio", "province": "SUK" },
   { "name": "Esperanza", "province": "SUK" },
@@ -194,6 +334,7 @@
   { "name": "Senator Ninoy Aquino", "province": "SUK" },
   { "name": "Tacurong", "province": "SUK", "city": true },
 
+
   { "name": "Buenavista", "province": "AGN" },
   { "name": "Butuan", "province": "AGN", "city": true },
   { "name": "Cabadbaran", "province": "AGN", "city": true },
@@ -205,6 +346,7 @@
   { "name": "Remedios T. Romualdez", "province": "AGN" },
   { "name": "Santiago", "province": "AGN" },
   { "name": "Tubay", "province": "AGN" },
+
 
   { "name": "Bayugan", "province": "AGS", "city": true },
   { "name": "Bunawan", "province": "AGS" },
@@ -221,6 +363,7 @@
   { "name": "Trento", "province": "AGS" },
   { "name": "Veruela", "province": "AGS" },
 
+
   { "name": "Basilisa", "province": "DIN" },
   { "name": "Cagdianao", "province": "DIN" },
   { "name": "Dinagat", "province": "DIN" },
@@ -228,6 +371,7 @@
   { "name": "Loreto", "province": "DIN" },
   { "name": "San Jose", "province": "DIN" },
   { "name": "Tubajon", "province": "DIN" },
+
 
   { "name": "Alegria", "province": "SUN" },
   { "name": "Bacuag", "province": "SUN" },
@@ -251,6 +395,7 @@
   { "name": "Tagana-an", "province": "SUN" },
   { "name": "Tubod", "province": "SUN" },
 
+
   { "name": "Barobo", "province": "SUR" },
   { "name": "Bayabas", "province": "SUR" },
   { "name": "Bislig", "province": "SUR", "city": true },
@@ -269,9 +414,6 @@
   { "name": "Tagbina", "province": "SUR" },
   { "name": "Tago", "province": "SUR" },
   { "name": "Tandag", "province": "SUR", "city": true },
-
-
-
   { "name": "Ampatuan", "province": "MAG" },
   { "name": "Barira", "province": "MAG" },
   { "name": "Buldon", "province": "MAG" },
@@ -308,7 +450,54 @@
   { "name": "Sultan sa Barongis", "province": "MAG" },
   { "name": "Sultan Sumagka", "province": "MAG" },
   { "name": "Talayan", "province": "MAG" },
-  { "name": "Upi", "province": "MAG" }
+  { "name": "Upi", "province": "MAG" },
 
 
+  { "name": "Banguingui", "province": "SUL" },
+  { "name": "Hadji Panglima Tahil", "province": "SUL" },
+  { "name": "Indanan", "province": "SUL" },
+  { "name": "Jolo", "province": "SUL" },
+  { "name": "Kalingalan Caluang", "province": "SUL" },
+  { "name": "Lugus", "province": "SUL" },
+  { "name": "Luuk", "province": "SUL" },
+  { "name": "Maimbung", "province": "SUL" },
+  { "name": "Old Panamao", "province": "SUL" },
+  { "name": "Omar", "province": "SUL" },
+  { "name": "Pandami", "province": "SUL" },
+  { "name": "Panglima Estino", "province": "SUL" },
+  { "name": "Pangutaran", "province": "SUL" },
+  { "name": "Parang", "province": "SUL" },
+  { "name": "Pata", "province": "SUL" },
+  { "name": "Patikul", "province": "SUL" },
+  { "name": "Siasi", "province": "SUL" },
+  { "name": "Talipao", "province": "SUL" },
+  { "name": "Tapul", "province": "SUL" },
+
+
+  { "name": "Bongao", "province": "TAW" },
+  { "name": "Languyan", "province": "TAW" },
+  { "name": "Mapun", "province": "TAW" },
+  { "name": "Panglima Sugala", "province": "TAW" },
+  { "name": "Sapa-Sapa", "province": "TAW" },
+  { "name": "Sibutu", "province": "TAW" },
+  { "name": "Simunul", "province": "TAW" },
+  { "name": "Sitangkai", "province": "TAW" },
+  { "name": "South Ubian", "province": "TAW" },
+  { "name": "Tandubas", "province": "TAW" },
+  { "name": "Turtle Islands", "province": "TAW" },
+
+
+  { "name": "Akbar", "province": "BAS" },
+  { "name": "Al-Barka", "province": "BAS" },
+  { "name": "Hadji Mohammad Ajul", "province": "BAS" },
+  { "name": "Hadji Muhtamad", "province": "BAS" },
+  { "name": "Isabela", "province": "BAS", "city": true },
+  { "name": "Lamitan", "province": "BAS", "city": true },
+  { "name": "Lantawan", "province": "BAS" },
+  { "name": "Maluso", "province": "BAS" },
+  { "name": "Sumisip", "province": "BAS" },
+  { "name": "Tabuan-Lasa", "province": "BAS" },
+  { "name": "Tipo-Tipo", "province": "BAS" },
+  { "name": "Tuburan", "province": "BAS" },
+  { "name": "Ungkaya Pukan", "province": "BAS" }
 ]

@@ -113,6 +113,7 @@ const InventoryManagement = () => {
       return {
         ...item,
         ...product,
+        current_quantity : item.quantity,
         status: determineStockStatus(item.quantity, product?.reorder_level || 0)
       };
     });
@@ -388,7 +389,7 @@ const InventoryManagement = () => {
                           <TableCell>
                             {categories.find(c => c.id === item.product_category_id)?.name || '-'}
                           </TableCell>
-                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>{item.current_quantity}</TableCell>
                           <TableCell>{item.reorder_level}</TableCell>
                           <TableCell>
                             <Chip 
