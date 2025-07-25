@@ -55,13 +55,13 @@ const BracketPricingButton = ({
             disabled={!canCreateBracket}
             fullWidth={fullWidth}
             onClick={handleOpen}
-            startIcon={<BracketIcon />}
+            startIcon={<BracketIcon sx={{ fontSize: '1.5rem' }} />}
             sx={{
               borderColor: status.active ? 'success.main' : undefined,
               backgroundColor: status.active ? 'success.main' : undefined
             }}
           >
-            Bracket Pricing
+            Bracket 
           </Button>
         </Tooltip>
         

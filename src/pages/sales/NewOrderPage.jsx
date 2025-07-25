@@ -272,6 +272,8 @@ const handleQuantityChange = useCallback((productId, change, newQuantity = null)
         phone: formData.phone,
         amount_received: 0, 
         term_days: formData.term_days,
+        delivery_fee: parseFloat(formData.delivery_fee) || 0,      // ADD THIS
+        cutting_charges: parseFloat(formData.cutting_charges) || 0,
         items: orderItems.map(item => ({
           product_id: item.id,
           quantity: item.quantity,
