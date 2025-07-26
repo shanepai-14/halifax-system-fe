@@ -748,18 +748,33 @@ your dot matrix printer setup is working correctly.
                   <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>0939 924 3876</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
-                    <strong>Order Date:</strong> {formatDate(report.order_date)}
-                  </Typography>
-                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
-                    <strong>Delivery Date:</strong> {formatDate(report.delivery_date)}
-                  </Typography>
-                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
-                    <strong>Payment Method:</strong> {report.payment_method.toUpperCase()}
-                  </Typography>
-                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
-                    <strong>Status:</strong> {report.status.toUpperCase()}
-                  </Typography>
+                 <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
+                <Typography component="strong" sx={{ fontSize: `${itemsFontSize}px!important` ,fontWeight: 'bold!important', display: 'inline' }}>
+                  Order Date:
+                </Typography>{' '}
+                {formatDate(report.order_date)}
+              </Typography>
+              <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
+                <Typography component="strong" sx={{ fontSize: `${itemsFontSize}px!important` ,fontWeight: 'bold!important', display: 'inline!important' }}>
+                  Delivery Date:
+                </Typography>{' '}
+                {formatDate(report.delivery_date)}
+              </Typography>
+
+              <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
+                <Typography component="strong" sx={{ fontSize: `${itemsFontSize}px!important` ,fontWeight: 'bold!important', display: 'inline!important' }}>
+                  Payment Method:
+                </Typography>{' '}
+                {report.payment_method.toUpperCase()}
+              </Typography>
+
+              <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
+                <Typography component="strong" sx={{ fontSize: `${itemsFontSize}px!important` ,fontWeight: 'bold!important', display: 'inline!important' }}>
+                  Status:
+                </Typography>{' '}
+                {report.status.toUpperCase()}
+              </Typography>
+
                 </Box>
               </Grid>
             </Grid>
@@ -771,43 +786,51 @@ your dot matrix printer setup is working correctly.
                   <Table>
                     <TableBody>
                       <TableRow >
-                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0',  verticalAlign: 'top' }}>
-                          <Typography lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
-                            <strong>Delivered to:</strong>
+                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0',  verticalAlign: 'bottom'  , width: '20%'}}>
+                          <Typography lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` , fontWeight: '600!important' , marginBottom:'0!important'}}>
+                            Delivered to:
                           </Typography>
                         </TableCell>
-                        <TableCell colSpan={3} sx={{ border: 'none', padding: '8px 16px 8px 0',  verticalAlign: 'top' }}>
-                          <Typography lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
-                            <span style={{ textDecoration: 'underline' }}>
-                              {report.customer?.business_name || report.customer?.customer_name}
-                            </span>
-                          </Typography>
-                        </TableCell>
+                        <TableCell colSpan={3} sx={{ border: 'none', padding: '8px 16px 8px 0',  verticalAlign: 'bottom' }}>
+                        <Typography
+                          component="span" lineHeight={1}
+                          sx={{ textDecoration: 'underline!important' ,fontSize: `${itemsFontSize + 6}px!important` , display: 'inline!important', }}
+                        >
+                          {report.customer?.business_name || report.customer?.customer_name}
+                        </Typography>
 
+                        </TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', verticalAlign: 'top' }}>
-                          <Typography  lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
-                            <strong>Address:</strong>
+                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '20%' ,verticalAlign: 'top' }}>
+                          <Typography  lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` ,fontWeight: '600!important' }}>
+                            Address:
                           </Typography>
                         </TableCell>
                         <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0',  verticalAlign: 'top' }}>
-                          <Typography lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
-                            <span style={{ textDecoration: 'underline' }}>
+                           <Typography
+                          component="span" lineHeight={1}
+                          sx={{ textDecoration: 'underline!important' ,fontSize: `${itemsFontSize + 6}px!important` , display: 'inline!important', }}
+                        >
+                    
                               {report.customer?.business_address || report.address}
-                            </span>
+                            
                           </Typography>
                         </TableCell>
-                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0',  verticalAlign: 'top' }}>
-                          <Typography  lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
-                            <strong>Phone:</strong>
+                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0',  verticalAlign: 'top' , width: '0.5%'  }}>
+                          <Typography lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` , fontWeight: '600!important' , marginBottom:'0!important'}}>
+                           Phone:
                           </Typography>
                         </TableCell>
                         <TableCell sx={{ border: 'none', padding: '8px 0',  verticalAlign: 'top' }}>
-                          <Typography lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
-                            <span style={{ textDecoration: 'underline' }}>
+                           <Typography
+                          component="span" lineHeight={1}
+                          sx={{ textDecoration: 'underline!important' ,fontSize: `${itemsFontSize + 6}px!important` , display: 'inline!important', }}
+                        >
+                    
+                       
                               {report.phone}
-                            </span>
+                          
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -932,10 +955,16 @@ your dot matrix printer setup is working correctly.
               <Box sx={{ display: 'flex',justifyContent: 'space-between' }}>
                 <Box sx={{ display: 'flex', flexDirection:'column',justifyContent: 'flex-start' }}>
                   <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
-                    <strong>Delivery Status:</strong> {report.is_delivered ? 'Delivered' : 'Pending'}
+                   <Typography component="strong" sx={{ fontSize: `${itemsFontSize}px!important` ,fontWeight: 'bold!important', display: 'inline' }}>
+                    Delivery Status: 
+                    </Typography>
+                    {report.is_delivered ? 'Delivered' : 'Pending'}
                   </Typography>
                   <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
-                    <strong>Encoded By:</strong> {report.user?.name}
+                    <Typography component="strong" sx={{ fontSize: `${itemsFontSize}px!important` ,fontWeight: 'bold!important', display: 'inline' }}>
+                      Encoded By: 
+                      </Typography>
+                       {report.user?.name}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
