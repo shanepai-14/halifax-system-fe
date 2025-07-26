@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState , useEffect } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import {
   Typography, Box, Paper, Grid, Divider, Table, TableBody, TableCell,
@@ -25,10 +25,17 @@ const DeliveryReportView = ({ refresh , report }) => {
   const contentRef = useRef();
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
-  const [itemsFontSize, setItemsFontSize] = useState(12); // New state for font size
+  const [itemsFontSize, setItemsFontSize] = useState(() => {
+  const saved = localStorage.getItem('deliveryReport_fontSize');
+  return saved ? parseInt(saved) : 12;
+});
   const { createCreditMemo , markAsDelivered } = useSales();
 
-  // Enhanced theme for dot matrix printing
+  
+  useEffect(() => {
+  localStorage.setItem('deliveryReport_fontSize', itemsFontSize.toString());
+}, [itemsFontSize]);
+
   const courierTheme = createTheme({
     typography: {
       fontFamily: '"Courier New", "Courier", "Liberation Mono", monospace',
@@ -729,28 +736,28 @@ your dot matrix printer setup is working correctly.
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={12} md={12}>
                 <Box sx={{ textAlign: 'center', mb: 2 }}>
-                  <Typography variant="h4">DELIVERY REPORT</Typography>
-                  <Typography variant="h6">{report.invoice_number}</Typography>
+                  <Typography variant="h4" sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>DELIVERY REPORT</Typography>
+                  <Typography variant="h6" sx={{ fontSize: `${itemsFontSize + 2}px!important` }}>{report.invoice_number}</Typography>
                 </Box>
               </Grid>
               <Grid item xs={12} md={12} sx={{ display: 'flex', justifyContent:'space-between'}}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                  <Typography variant="h5">Halifax Glass & Aluminum Supply</Typography>
-                  <Typography>Malagamot Road, Panacan</Typography>
-                  <Typography>glasshalifax@gmail.com</Typography>
-                  <Typography>0939 924 3876</Typography>
+                  <Typography variant="h5" sx={{ fontSize: `${itemsFontSize + 4}px!important` }}>Halifax Glass & Aluminum Supply</Typography>
+                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>Malagamot Road, Panacan</Typography>
+                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>glasshalifax@gmail.com</Typography>
+                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>0939 924 3876</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                  <Typography>
+                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
                     <strong>Order Date:</strong> {formatDate(report.order_date)}
                   </Typography>
-                  <Typography>
+                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
                     <strong>Delivery Date:</strong> {formatDate(report.delivery_date)}
                   </Typography>
-                  <Typography>
+                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
                     <strong>Payment Method:</strong> {report.payment_method.toUpperCase()}
                   </Typography>
-                  <Typography>
+                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
                     <strong>Status:</strong> {report.status.toUpperCase()}
                   </Typography>
                 </Box>

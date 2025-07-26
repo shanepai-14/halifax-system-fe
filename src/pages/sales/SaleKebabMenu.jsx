@@ -93,13 +93,15 @@ const SaleKebabMenu = ({ sale, refresh, itemsFontSize, setItemsFontSize }) => {
 
   // Apply font size changes
   const handleApplyFontSize = () => {
-    setItemsFontSize(tempFontSize);
-    setFontSizeDialogOpen(false);
+  setItemsFontSize(tempFontSize);
+  localStorage.setItem('deliveryReport_fontSize', tempFontSize.toString()); // Add this line
+  setFontSizeDialogOpen(false);
   };
 
   // Reset font size to default
   const handleResetFontSize = () => {
-    setTempFontSize(12);
+  setTempFontSize(12);
+  localStorage.setItem('deliveryReport_fontSize', '12'); // Add this line
   };
 
   // Handle cancel sale
