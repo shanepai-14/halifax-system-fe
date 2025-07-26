@@ -9,7 +9,7 @@ import {
   Chip
 } from '@mui/material';
 import { EditOutlined, PrinterOutlined  } from '@ant-design/icons';
-import { getFileUrl } from '@/utils/fileHelper';
+import { getFileUrl } from '@/utils/formatUtils';
 
 // Status indicators with colors
 const inventoryStatus = {

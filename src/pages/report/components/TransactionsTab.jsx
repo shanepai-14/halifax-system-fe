@@ -11,8 +11,8 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import SearchIcon from '@mui/icons-material/Search';
 import * as XLSX from 'xlsx';
 
-import { formatDate } from '@/utils/dateUtils';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatDate } from '@/utils/formatUtils';
+import { formatCurrency } from '@/utils/formatUtils';
 import TableSalesRowSkeleton from '@/components/loader/TableSalesRowSkeleton';
 import { useProfitReport } from '@/hooks/useProfitReport';
 

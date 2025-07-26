@@ -35,8 +35,8 @@ import {
 } from '@ant-design/icons';
 import { usePettyCash } from '@/hooks/usePettyCash';
 import SettleTransactionModal from './SettleTransactionModal';
-import { formatDate } from '@/utils/dateUtils';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatDate } from '@/utils/formatUtils';
+import { formatCurrency } from '@/utils/formatUtils';
 
 const EmployeeTransactionsModal = ({ open, onClose, employee }) => {
   const [startDate, setStartDate] = useState(

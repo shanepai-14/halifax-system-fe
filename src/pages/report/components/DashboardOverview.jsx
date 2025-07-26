@@ -14,7 +14,7 @@ import {
   ArrowsAltOutlined
 } from '@ant-design/icons';
 import { Line } from 'react-chartjs-2';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatCurrency } from '@/utils/formatUtils';
 
 const DashboardOverview = ({ dashboardData, selectedYear, selectedMonth }) => {
   // Memoized calculations

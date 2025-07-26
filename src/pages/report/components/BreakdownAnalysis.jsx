@@ -6,7 +6,7 @@ import {
 } from '@mui/material';
 import { Pie, Bar } from 'react-chartjs-2';
 import { useReports } from '@/hooks/useReports';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatCurrency } from '@/utils/formatUtils';
 
 const BreakdownAnalysis = ({ selectedYear, selectedMonth }) => {
   const [paymentMethodsData, setPaymentMethodsData] = useState({});

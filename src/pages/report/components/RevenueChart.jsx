@@ -12,7 +12,7 @@ import {
 } from '@ant-design/icons';
 import { Line, Bar } from 'react-chartjs-2';
 import { useReports } from '@/hooks/useReports';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatCurrency } from '@/utils/formatUtils';
 import { parse } from 'filepond';
 
 const CHART_TYPES = [

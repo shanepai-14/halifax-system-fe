@@ -26,7 +26,7 @@ import {
 import { usePayments } from '@/hooks/usePayments';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@/store/slices/authSlice';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatCurrency } from '@/utils/formatUtils';
 import { toast } from 'sonner';
 
 const PaymentHistory = ({ sale, onPaymentUpdate , setSelectedReceipt }) => {

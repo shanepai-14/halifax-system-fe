@@ -17,8 +17,8 @@ import {
 } from '@ant-design/icons';
 import MainCard from '@components/MainCard';
 import api from '@/lib/axios';
-import { formatDate } from '@/utils/dateUtils';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatDate } from '@/utils/formatUtils';
+import { formatCurrency } from '@/utils/formatUtils';
 import * as XLSX from 'xlsx';
 
 // TabPanel component for the tabs

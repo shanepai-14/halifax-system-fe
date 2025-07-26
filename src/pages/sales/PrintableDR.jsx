@@ -11,7 +11,7 @@ import React from 'react';
     Grid,
     Paper,
   } from '@mui/material';
-  import { formatDate } from '@/utils/dateUtils';
+  import { formatDate } from '@/utils/formatUtils';
 
 const PrintableDR = ({ deliveryReportData, contentRef }) => {
     if (!deliveryReportData || !deliveryReportData.orderItems) return null;

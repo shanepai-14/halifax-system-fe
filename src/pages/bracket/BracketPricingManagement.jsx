@@ -39,7 +39,7 @@ import { useBracketPricing } from '@/hooks/useBracketPricing';
 import BracketForm from './BracketForm';
 import PricingBreakdown from './PricingBreakdown';
 import OptimalPricingSuggestions from './OptimalPricingSuggestions';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatCurrency } from '@/utils/formatUtils';
 
 const BracketPricingManagement = ({ product, onClose }) => {
   const {

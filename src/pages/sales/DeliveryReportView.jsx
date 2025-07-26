@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { PrinterOutlined, RollbackOutlined, HomeOutlined , DownOutlined , UpOutlined , CheckCircleOutlined  } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
-import { formatDate } from '@/utils/dateUtils';
+import { formatDate } from '@/utils/formatUtils';
 import CreditMemoModal from './CreditMemoModal';
 import CreditMemoReportModal from './CreditMemoReportModal';
 import PaymentButton from './PaymentButton';

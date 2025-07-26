@@ -19,7 +19,7 @@ import {
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { CloseCircleOutlined, EditOutlined, FontSizeOutlined } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
-import { formatDateForInput } from '@/utils/dateUtils';
+import { formatDateForInput } from '@/utils/formatUtils';
 
 const SaleKebabMenu = ({ sale, refresh, itemsFontSize, setItemsFontSize }) => {
   // State for menu

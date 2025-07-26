@@ -29,7 +29,7 @@ import {
   Info as InfoIcon
 } from '@mui/icons-material';
 import { useBracketPricing } from '@/hooks/useBracketPricing';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatCurrency } from '@/utils/formatUtils';
 
 const OptimalPricingSuggestions = ({ productId }) => {
   const { getOptimalPricingSuggestions, loading } = useBracketPricing();
