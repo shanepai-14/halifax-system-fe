@@ -25,6 +25,7 @@ const DeliveryReportView = ({ refresh , report }) => {
   const contentRef = useRef();
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [itemsFontSize, setItemsFontSize] = useState(12); // New state for font size
   const { createCreditMemo , markAsDelivered } = useSales();
 
   // Enhanced theme for dot matrix printing
@@ -106,40 +107,50 @@ const DeliveryReportView = ({ refresh , report }) => {
   }, [report]);
 
   // Enhanced print handler with dot matrix optimizations
-const handlePrint = useReactToPrint({
-  contentRef, // This is preferred over `contentRef` directly
-  pageStyle: `
-    @page {
-      size: A4;
-      margin: 0.5in;
-    }
-
-    body {
-      font-family: "Courier New", Courier, monospace !important;
-      font-size: 12px !important;
-      font-weight: normal !important;
-      -webkit-font-smoothing: none !important;
-      -moz-osx-font-smoothing: auto !important;
-      color-adjust: exact !important;
-      -webkit-print-color-adjust: exact !important;
-      text-rendering: optimizeSpeed !important;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th, td {
-      padding: 2px 4px;
-      white-space: nowrap;
-      border: none;
-    }
-
-    .no-print {
-      display: none !important;
-    }
-  `,
+  const handlePrint = useReactToPrint({
+    contentRef,
+    pageStyle: `
+      @page {
+        size: A4;
+        margin: 0.5in;
+      }
+      @media print {
+        html, body {
+          zoom: 1 !important;
+          transform: scale(1) !important;
+          -webkit-transform: scale(1) !important;
+        }
+        
+        * {
+          font-family: "Courier New", "Courier", monospace !important;
+          font-size: 12px !important;
+          font-weight: normal !important;
+          -webkit-font-smoothing: none !important;
+          -moz-osx-font-smoothing: unset !important;
+          font-smooth: never !important;
+          text-rendering: optimizeSpeed !important;
+          -webkit-print-color-adjust: exact !important;
+          color-adjust: exact !important;
+          letter-spacing: 0 !important;
+          word-spacing: 0 !important;
+        }
+        
+        table {
+          border-collapse: collapse;
+          width: 100%;
+        }
+        
+        td, th {
+          padding: 2px 4px;
+          border: none;
+          white-space: nowrap;
+        }
+        
+        .no-print {
+          display: none !important;
+        }
+      }
+    `,
   onBeforePrint: async ()  => {
     document.body.style.zoom = "1";
     document.body.style.transform = "scale(1)";
@@ -148,13 +159,13 @@ const handlePrint = useReactToPrint({
     document.body.style.zoom = "";
     document.body.style.transform = "";
   }
-});
-
+  });
 
   // Alternative print method for better dot matrix compatibility
- const handleAlternativePrint = () => {
+  const handleAlternativePrint = () => {
     const printWindow = window.open('', '_blank');
-  
+    const printContent = contentRef.current;
+    
     // Create a clean HTML structure
     const cleanHTML = `
       <html>
@@ -233,7 +244,7 @@ const handlePrint = useReactToPrint({
               padding: 2px 8px;
             }
             .content-area {
-              min-height: calc(100vh - 50px);
+              min-height: calc(100vh - 200px);
               display: flex;
               flex-direction: column;
             }
@@ -407,13 +418,13 @@ const handlePrint = useReactToPrint({
             
             <!-- Footer Section - Always at bottom -->
             <div class="footer-section">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 40px;">
                 <div class="signature-line">Prepared By</div>
                 <div class="signature-line">Checked By</div>
                 <div class="signature-line">Released By</div>
               </div>
               
-              <div style="display: flex; justify-content: center; gap: 100px; margin-bottom: 10px;">
+              <div style="display: flex; justify-content: center; gap: 100px; margin-bottom: 40px;">
                 <div class="signature-line">Delivered By</div>
                 <div class="signature-line">Received By</div>
               </div>
@@ -433,7 +444,6 @@ const handlePrint = useReactToPrint({
     printWindow.print();
     printWindow.close();
   };
-
 
   // Test print quality function
   const testPrintQuality = () => {
@@ -673,14 +683,14 @@ your dot matrix printer setup is working correctly.
             >
               Alt Print
             </Button>
-            {/* <Button
+            <Button
               variant="outlined"
               color="warning"
               onClick={testPrintQuality}
               sx={{ mr: 1 }}
             >
               Test Print
-            </Button> */}
+            </Button>
             <Button
               variant="outlined"
               color="secondary"
@@ -694,6 +704,8 @@ your dot matrix printer setup is working correctly.
             <SaleKebabMenu 
               refresh={refresh}
               sale={report}
+              itemsFontSize={itemsFontSize}
+              setItemsFontSize={setItemsFontSize}
             />
           </Box>
         </Box>
@@ -764,18 +776,7 @@ your dot matrix printer setup is working correctly.
                             </span>
                           </Typography>
                         </TableCell>
-                        {/* <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '0.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1}>
-                            <strong>City:</strong>
-                          </Typography>
-                        </TableCell>
-                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '12.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1}>
-                            <span style={{ textDecoration: 'underline' }}>
-                              {report.city}
-                            </span>
-                          </Typography>
-                        </TableCell> */}
+
                       </TableRow>
                       <TableRow>
                         <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '2.5%', verticalAlign: 'top' }}>
@@ -815,7 +816,7 @@ your dot matrix printer setup is working correctly.
             <Box sx={{ flex: 1 }}>
               {/* Items Table */}
               <Box display='flex' justifyContent="space-between">
-                <Typography variant="subtitle1" gutterBottom>Order Items</Typography>
+                <Typography variant="subtitle1" gutterBottom sx={{fontSize: `${itemsFontSize}px!important`}}>Order Items</Typography>
                 {report.term_days !== 0 && report.term_days && (
                   <Typography variant="h6">
                     <strong>Term :</strong> {report.term_days}
@@ -826,11 +827,11 @@ your dot matrix printer setup is working correctly.
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell align="right">Qty</TableCell>
-                      <TableCell align="left" width={'15px'}>Unit</TableCell>
-                      <TableCell align="left">Item</TableCell>
-                      <TableCell align="right">Price</TableCell>
-                      <TableCell align="right">Net Price</TableCell>
+                      <TableCell align="right" sx={{fontSize: `${itemsFontSize}px!important`}}>Qty</TableCell>
+                      <TableCell align="left" width={'15px'} sx={{fontSize: `${itemsFontSize}px!important`}}>Unit</TableCell>
+                      <TableCell align="left" sx={{fontSize: `${itemsFontSize}px!important`}}>Item</TableCell>
+                      <TableCell align="right" sx={{ fontSize: `${itemsFontSize}px!important`}}>Price</TableCell>
+                      <TableCell align="right" sx={{fontSize: `${itemsFontSize}px!important`}}>Net Price</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -856,7 +857,7 @@ your dot matrix printer setup is working correctly.
                               colSpan={4} 
                               sx={{ 
                                 fontWeight: 'bold',
-                                fontSize: '1rem',
+                                fontSize: `${itemsFontSize}px!important`,
                                 fontStyle:"italic",
                                 py:0,
                                 border:'none'
@@ -875,12 +876,12 @@ your dot matrix printer setup is working correctly.
                             return (
                               <React.Fragment key={item.id}>
                                 {/* Regular item row */}
-                                <TableRow sx={{py:0.5 , border:'none'}}>
-                                  <TableCell align="right" sx={{py:0.5 , border:'none'}}>{item.quantity}</TableCell>
-                                  <TableCell align="left" sx={{py:0.5 , border:'none'}}>{item.product.attribute?.unit_of_measurement ?? " "}</TableCell>
-                                  <TableCell align="left" sx={{py:0.5 , border:'none'}}>{item.product?.product_name}</TableCell>
-                                  <TableCell align="right" sx={{py:0.5 , border:'none'}}>{formatCurrency(parseFloat(item.sold_price))}</TableCell>
-                                  <TableCell align="right" sx={{py:0.5 , border:'none'}}>{formatCurrency(finalAmount)}</TableCell>
+                                <TableRow sx={{py:0.5 , border:'none' }}>
+                                  <TableCell align="right" sx={{py:0.5 , border:'none', fontSize: `${itemsFontSize}px!important`}}>{item.quantity}</TableCell>
+                                  <TableCell align="left" sx={{py:0.5 , border:'none', fontSize: `${itemsFontSize}px!important`}}>{item.product.attribute?.unit_of_measurement ?? " "}</TableCell>
+                                  <TableCell align="left" sx={{py:0.5 , border:'none', fontSize: `${itemsFontSize}px!important`}}>{item.product?.product_name}</TableCell>
+                                  <TableCell align="right" sx={{py:0.5 , border:'none', fontSize: `${itemsFontSize}px!important`}}>{formatCurrency(parseFloat(item.sold_price))}</TableCell>
+                                  <TableCell align="right" sx={{py:0.5 , border:'none', fontSize: `${itemsFontSize}px!important`}}>{formatCurrency(finalAmount)}</TableCell>
                                 </TableRow>
                                 
                                 {/* Composition row - only shown when composition exists */}
@@ -895,7 +896,7 @@ your dot matrix printer setup is working correctly.
                                           pb: 1,
                                         }}
                                       >
-                                        <Typography variant="subtitle2" color="primary">
+                                        <Typography variant="subtitle2" color="primary" sx={{ fontSize: `${itemsFontSize - 1}px!important` }}>
                                           Composition:
                                         </Typography>
                                         <div 
@@ -903,7 +904,8 @@ your dot matrix printer setup is working correctly.
                                           dangerouslySetInnerHTML={{ __html: item.composition }}
                                           style={{ 
                                             paddingLeft: '16px',
-                                            margin: 0
+                                            margin: 0,
+                                            fontSize: `${itemsFontSize - 1}px!important`
                                           }}
                                         />
                                       </Box>
