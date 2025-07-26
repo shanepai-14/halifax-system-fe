@@ -675,7 +675,7 @@ your dot matrix printer setup is working correctly.
             >
               Print
             </Button>
-            <Button
+            {/* <Button
               variant="outlined"
               color="info"
               onClick={handleAlternativePrint}
@@ -690,7 +690,7 @@ your dot matrix printer setup is working correctly.
               sx={{ mr: 1 }}
             >
               Test Print
-            </Button>
+            </Button> */}
             <Button
               variant="outlined"
               color="secondary"
