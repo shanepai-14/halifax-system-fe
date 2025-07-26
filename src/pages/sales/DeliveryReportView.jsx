@@ -771,13 +771,13 @@ your dot matrix printer setup is working correctly.
                   <Table>
                     <TableBody>
                       <TableRow >
-                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '2.5%', verticalAlign: 'top' }}>
+                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0',  verticalAlign: 'top' }}>
                           <Typography lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
                             <strong>Delivered to:</strong>
                           </Typography>
                         </TableCell>
-                        <TableCell colSpan={3} sx={{ border: 'none', padding: '8px 16px 8px 0', width: '10.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
+                        <TableCell colSpan={3} sx={{ border: 'none', padding: '8px 16px 8px 0',  verticalAlign: 'top' }}>
+                          <Typography lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
                             <span style={{ textDecoration: 'underline' }}>
                               {report.customer?.business_name || report.customer?.customer_name}
                             </span>
@@ -786,24 +786,24 @@ your dot matrix printer setup is working correctly.
 
                       </TableRow>
                       <TableRow>
-                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '2.5%', verticalAlign: 'top' }}>
+                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', verticalAlign: 'top' }}>
                           <Typography  lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
                             <strong>Address:</strong>
                           </Typography>
                         </TableCell>
-                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '10.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
+                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0',  verticalAlign: 'top' }}>
+                          <Typography lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
                             <span style={{ textDecoration: 'underline' }}>
                               {report.customer?.business_address || report.address}
                             </span>
                           </Typography>
                         </TableCell>
-                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '0.5%', verticalAlign: 'top' }}>
+                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0',  verticalAlign: 'top' }}>
                           <Typography  lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
                             <strong>Phone:</strong>
                           </Typography>
                         </TableCell>
-                        <TableCell sx={{ border: 'none', padding: '8px 0', width: '12.5%', verticalAlign: 'top' }}>
+                        <TableCell sx={{ border: 'none', padding: '8px 0',  verticalAlign: 'top' }}>
                           <Typography lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
                             <span style={{ textDecoration: 'underline' }}>
                               {report.phone}
