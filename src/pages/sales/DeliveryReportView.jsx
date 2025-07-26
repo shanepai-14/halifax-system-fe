@@ -772,7 +772,7 @@ your dot matrix printer setup is working correctly.
                         <TableCell colSpan={3} sx={{ border: 'none', padding: '8px 16px 8px 0', width: '10.5%', verticalAlign: 'top' }}>
                           <Typography fontSize={18} lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
                             <span style={{ textDecoration: 'underline' }}>
-                              {report.customer?.business_name || report.customer?.customer_name} asdasda asdasd dasdas sdasdasdasdasdasdasdasd
+                              {report.customer?.business_name || report.customer?.customer_name}
                             </span>
                           </Typography>
                         </TableCell>
@@ -924,10 +924,10 @@ your dot matrix printer setup is working correctly.
 
               <Box sx={{ display: 'flex',justifyContent: 'space-between' }}>
                 <Box sx={{ display: 'flex', flexDirection:'column',justifyContent: 'flex-start' }}>
-                  <Typography sx={{ fontSize: `${itemsFontSize }px!important` }}>
+                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
                     <strong>Delivery Status:</strong> {report.is_delivered ? 'Delivered' : 'Pending'}
                   </Typography>
-                  <Typography sx={{ fontSize: `${itemsFontSize }px!important` }}>
+                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
                     <strong>Encoded By:</strong> {report.user?.name}
                   </Typography>
                 </Box>
