@@ -763,16 +763,16 @@ your dot matrix printer setup is working correctly.
                 <Box sx={{ mb: 0.5 }}>
                   <Table>
                     <TableBody>
-                      <TableRow>
+                      <TableRow >
                         <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '2.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1}>
+                          <Typography lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
                             <strong>Delivered to:</strong>
                           </Typography>
                         </TableCell>
-                        <TableCell sx={{ border: 'none', padding: '8px 16px 8px 0', width: '10.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1}>
+                        <TableCell colSpan={3} sx={{ border: 'none', padding: '8px 16px 8px 0', width: '10.5%', verticalAlign: 'top' }}>
+                          <Typography fontSize={18} lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
                             <span style={{ textDecoration: 'underline' }}>
-                              {report.customer?.business_name || report.customer?.customer_name}
+                              {report.customer?.business_name || report.customer?.customer_name} asdasda asdasd dasdas sdasdasdasdasdasdasdasd
                             </span>
                           </Typography>
                         </TableCell>
@@ -780,24 +780,24 @@ your dot matrix printer setup is working correctly.
                       </TableRow>
                       <TableRow>
                         <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '2.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1}>
+                          <Typography  lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
                             <strong>Address:</strong>
                           </Typography>
                         </TableCell>
                         <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '10.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1}>
+                          <Typography fontSize={18} lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
                             <span style={{ textDecoration: 'underline' }}>
                               {report.customer?.business_address || report.address}
                             </span>
                           </Typography>
                         </TableCell>
                         <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '0.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1}>
+                          <Typography  lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
                             <strong>Phone:</strong>
                           </Typography>
                         </TableCell>
                         <TableCell sx={{ border: 'none', padding: '8px 0', width: '12.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1}>
+                          <Typography lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>
                             <span style={{ textDecoration: 'underline' }}>
                               {report.phone}
                             </span>
@@ -857,7 +857,7 @@ your dot matrix printer setup is working correctly.
                               colSpan={4} 
                               sx={{ 
                                 fontWeight: 'bold',
-                                fontSize: `${itemsFontSize}px!important`,
+                                fontSize: `${itemsFontSize - 1.5}px!important`,
                                 fontStyle:"italic",
                                 py:0,
                                 border:'none'
@@ -924,38 +924,38 @@ your dot matrix printer setup is working correctly.
 
               <Box sx={{ display: 'flex',justifyContent: 'space-between' }}>
                 <Box sx={{ display: 'flex', flexDirection:'column',justifyContent: 'flex-start' }}>
-                  <Typography>
-                    <strong>Delivery Status:</strong> {report.is_delivered ? 'Delivered' : 'Pending Delivery'}
+                  <Typography sx={{ fontSize: `${itemsFontSize }px!important` }}>
+                    <strong>Delivery Status:</strong> {report.is_delivered ? 'Delivered' : 'Pending'}
                   </Typography>
-                  <Typography>
+                  <Typography sx={{ fontSize: `${itemsFontSize }px!important` }}>
                     <strong>Encoded By:</strong> {report.user?.name}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <Grid container spacing={0} sx={{ maxWidth: '400px' }}>
                     <Grid item xs={6}>
-                      <Typography align="right">Subtotal:</Typography>
+                      <Typography align="right" sx={{ fontSize: `${itemsFontSize }px!important` }}>Subtotal:</Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography align="right">{formatCurrency(subtotal)}</Typography>
+                      <Typography align="right" sx={{ fontSize: `${itemsFontSize }px!important` }}>{formatCurrency(subtotal)}</Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography align="right">Delivery Fee:</Typography>
+                      <Typography align="right" sx={{ fontSize: `${itemsFontSize }px!important` }}>Delivery Fee:</Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography align="right">{formatCurrency(deliveryFee)}</Typography>
+                      <Typography align="right" sx={{ fontSize: `${itemsFontSize }px!important` }}>{formatCurrency(deliveryFee)}</Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography align="right">Cutting Charges:</Typography>
+                      <Typography align="right" sx={{ fontSize: `${itemsFontSize }px!important` }}>Cutting Charges:</Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography align="right">{formatCurrency(cuttingCharges)}</Typography>
+                      <Typography align="right" sx={{ fontSize: `${itemsFontSize }px!important` }}>{formatCurrency(cuttingCharges)}</Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography align="right">Discount:</Typography>
+                      <Typography align="right" sx={{ fontSize: `${itemsFontSize }px!important` }}>Discount:</Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography align="right">{formatCurrency(totalDiscount)}</Typography>
+                      <Typography align="right" sx={{ fontSize: `${itemsFontSize }px!important` }}>{formatCurrency(totalDiscount)}</Typography>
                     </Grid>
 
                     {/* Credit Memo Total - Only show when returns exist */}
@@ -993,7 +993,7 @@ your dot matrix printer setup is working correctly.
                   )}
 
           <Grid item xs={6}>
-            <Typography fontWeight="bold" align="right" fontSize="1.2rem">
+            <Typography fontWeight="bold" align="right" fontSize="1.2rem" sx={{ fontSize: `${itemsFontSize  + 4}px!important` }}>
               Total Amount:
             </Typography>
           </Grid>
