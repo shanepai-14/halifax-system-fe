@@ -993,19 +993,19 @@ your dot matrix printer setup is working correctly.
                   )}
 
           <Grid item xs={6}>
-            <Typography fontWeight="bold" align="right" fontSize="1.2rem" sx={{ fontSize: `${itemsFontSize  + 4}px!important` }}>
+            <Typography fontWeight="bold" align="right"  sx={{ fontSize: `${itemsFontSize + 4}px!important` }}>
               Total Amount:
             </Typography>
           </Grid>
           <Grid item xs={6}>
-            <Typography fontWeight="bold" align="right" fontSize="1.2rem">
+            <Typography fontWeight="bold" align="right" sx={{ fontSize: `${itemsFontSize + 4}px!important` }}>
               ₱{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </Typography>
           </Grid>
                   {report.amount_received !== '0.00' && report.amount_received && (
                   <>
                     <Grid item xs={6}>
-                      <Typography  align="right">Amount Received:</Typography>
+                      <Typography  align="right" sx={{ fontSize: `${itemsFontSize + 4}px!important` }}>Amount Received:</Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography  align="right">
@@ -1017,10 +1017,10 @@ your dot matrix printer setup is working correctly.
              {report.change !== '0.00' && report.change && (
                <>
                   <Grid item xs={6}>
-                    <Typography  align="right">Change:</Typography>
+                    <Typography  align="right" sx={{ fontSize: `${itemsFontSize + 4}px!important` }}>Change:</Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography  align="right">₱{parseFloat(report.change).toFixed(2)} {typeof(report.change)}</Typography>
+                    <Typography  align="right" sx={{ fontSize: `${itemsFontSize + 4}px!important` }}>₱{parseFloat(report.change).toFixed(2)} {typeof(report.change)}</Typography>
                   </Grid>
                
                 </>
@@ -1033,7 +1033,7 @@ your dot matrix printer setup is working correctly.
             {/* Additional Information */}
             {report.remarks && (
               <Box sx={{ mt: 3 }}>
-                <Typography >Remarks:</Typography>
+                <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>Remarks:</Typography>
                 <Typography variant="body2">{report.remarks}</Typography>
               </Box>
             )}
