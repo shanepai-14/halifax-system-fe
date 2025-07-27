@@ -56,7 +56,7 @@ import {
   ArrowLeftOutlined,
 } from "@ant-design/icons";
 import PrintIcon from "@mui/icons-material/Print";
-import { getFileUrl } from "@/utils/fileHelper";
+import { getFileUrl } from "@/utils/formatUtils";
 import { toast } from "sonner";
 import PrintablePO from "./PrintablePO";
 import { useReactToPrint } from "react-to-print";

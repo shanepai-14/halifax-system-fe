@@ -6,7 +6,7 @@ import {
 } from '@mui/material';
 import { Bar, Line } from 'react-chartjs-2';
 import { useReports } from '@/hooks/useReports';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatCurrency } from '@/utils/formatUtils';
 
 const PerformanceMetrics = ({ selectedYear, selectedMonth }) => {
   const [performanceData, setPerformanceData] = useState(null);

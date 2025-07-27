@@ -31,7 +31,7 @@ import {
   ContentCopy as CopyIcon
 } from '@mui/icons-material';
 import { useBracketPricing } from '@/hooks/useBracketPricing';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatCurrency } from '@/utils/formatUtils';
 
 const BracketForm = ({ open, product, bracket, onClose }) => {
   const { createBracket, updateBracket, loading } = useBracketPricing();

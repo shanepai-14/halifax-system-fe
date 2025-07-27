@@ -19,7 +19,7 @@ import {
 } from '@ant-design/icons';
 import { useReports } from '@/hooks/useReports';
 import { toast } from 'sonner';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatCurrency } from '@/utils/formatUtils';
 
 const AdminPanel = ({ open, onClose }) => {
   const [healthCheck, setHealthCheck] = useState(null);

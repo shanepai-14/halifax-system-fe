@@ -6,7 +6,7 @@ import {
   Grid, Chip, Button, Dialog, DialogTitle, 
   DialogContent, DialogActions, Tooltip, Zoom, Fade
 } from '@mui/material';
-import { getFileUrl } from '@/utils/fileHelper';
+import { getFileUrl } from '@/utils/formatUtils';
 import { 
   SearchOutlined, 
   PlusOutlined, 

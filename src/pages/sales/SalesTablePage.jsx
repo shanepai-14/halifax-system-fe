@@ -23,8 +23,8 @@ import {
     setDateRange 
   } from '@/store/slices/salesSlice'
 import { useSales } from '@/hooks/useSales';
-import { formatDate } from '@/utils/dateUtils';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatDate } from '@/utils/formatUtils';
+import { formatCurrency } from '@/utils/formatUtils';
 import TableSalesRowSkeleton from '@/components/loader/TableSalesRowSkeleton';
 
 

@@ -27,8 +27,8 @@ import {
 import { usePayments } from '@/hooks/usePayments';
 import TablePaymentRowSkeleton from '@/components/loader/TablePaymentRowSkeleton';
 import PaymentReceipt from '@/pages/sales/PaymentReceipt';
-import { formatDate , formatDateTime } from '@/utils/dateUtils';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatDate , formatDateTime } from '@/utils/formatUtils';
+import { formatCurrency } from '@/utils/formatUtils';
 
 // Map payment methods to display names
 const paymentMethodDisplay = (method) => {

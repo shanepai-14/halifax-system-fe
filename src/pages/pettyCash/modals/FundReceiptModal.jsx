@@ -15,7 +15,7 @@ import {
   Chip
 } from '@mui/material';
 import { CloseOutlined, PrinterOutlined } from '@ant-design/icons';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatCurrency } from '@/utils/formatUtils';
 
 // Helper function to format datetime
 const formatDateTime = (dateString) => {

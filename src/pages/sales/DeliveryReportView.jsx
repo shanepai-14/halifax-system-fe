@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState , useEffect } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import {
   Typography, Box, Paper, Grid, Divider, Table, TableBody, TableCell,
@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { PrinterOutlined, RollbackOutlined, HomeOutlined , DownOutlined , UpOutlined , CheckCircleOutlined  } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
-import { formatDate } from '@/utils/dateUtils';
+import { formatDate } from '@/utils/formatUtils';
 import CreditMemoModal from './CreditMemoModal';
 import CreditMemoReportModal from './CreditMemoReportModal';
 import PaymentButton from './PaymentButton';
@@ -25,9 +25,17 @@ const DeliveryReportView = ({ refresh , report }) => {
   const contentRef = useRef();
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [itemsFontSize, setItemsFontSize] = useState(() => {
+  const saved = localStorage.getItem('deliveryReport_fontSize');
+  return saved ? parseInt(saved) : 12;
+});
   const { createCreditMemo , markAsDelivered } = useSales();
 
-  // Enhanced theme for dot matrix printing
+  
+  useEffect(() => {
+  localStorage.setItem('deliveryReport_fontSize', itemsFontSize.toString());
+}, [itemsFontSize]);
+
   const courierTheme = createTheme({
     typography: {
       fontFamily: '"Courier New", "Courier", "Liberation Mono", monospace',
@@ -106,40 +114,50 @@ const DeliveryReportView = ({ refresh , report }) => {
   }, [report]);
 
   // Enhanced print handler with dot matrix optimizations
-const handlePrint = useReactToPrint({
-  contentRef, // This is preferred over `contentRef` directly
-  pageStyle: `
-    @page {
-      size: A4;
-      margin: 0.5in;
-    }
-
-    body {
-      font-family: "Courier New", Courier, monospace !important;
-      font-size: 12px !important;
-      font-weight: normal !important;
-      -webkit-font-smoothing: none !important;
-      -moz-osx-font-smoothing: auto !important;
-      color-adjust: exact !important;
-      -webkit-print-color-adjust: exact !important;
-      text-rendering: optimizeSpeed !important;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th, td {
-      padding: 2px 4px;
-      white-space: nowrap;
-      border: none;
-    }
-
-    .no-print {
-      display: none !important;
-    }
-  `,
+  const handlePrint = useReactToPrint({
+    contentRef,
+    pageStyle: `
+      @page {
+        size: A4;
+        margin: 0.5in;
+      }
+      @media print {
+        html, body {
+          zoom: 1 !important;
+          transform: scale(1) !important;
+          -webkit-transform: scale(1) !important;
+        }
+        
+        * {
+          font-family: "Courier New", "Courier", monospace !important;
+          font-size: 12px !important;
+          font-weight: normal !important;
+          -webkit-font-smoothing: none !important;
+          -moz-osx-font-smoothing: unset !important;
+          font-smooth: never !important;
+          text-rendering: optimizeSpeed !important;
+          -webkit-print-color-adjust: exact !important;
+          color-adjust: exact !important;
+          letter-spacing: 0 !important;
+          word-spacing: 0 !important;
+        }
+        
+        table {
+          border-collapse: collapse;
+          width: 100%;
+        }
+        
+        td, th {
+          padding: 2px 4px;
+          border: none;
+          white-space: nowrap;
+        }
+        
+        .no-print {
+          display: none !important;
+        }
+      }
+    `,
   onBeforePrint: async ()  => {
     document.body.style.zoom = "1";
     document.body.style.transform = "scale(1)";
@@ -148,13 +166,13 @@ const handlePrint = useReactToPrint({
     document.body.style.zoom = "";
     document.body.style.transform = "";
   }
-});
-
+  });
 
   // Alternative print method for better dot matrix compatibility
- const handleAlternativePrint = () => {
+  const handleAlternativePrint = () => {
     const printWindow = window.open('', '_blank');
-  
+    const printContent = contentRef.current;
+    
     // Create a clean HTML structure
     const cleanHTML = `
       <html>
@@ -233,7 +251,7 @@ const handlePrint = useReactToPrint({
               padding: 2px 8px;
             }
             .content-area {
-              min-height: calc(100vh - 50px);
+              min-height: calc(100vh - 200px);
               display: flex;
               flex-direction: column;
             }
@@ -407,13 +425,13 @@ const handlePrint = useReactToPrint({
             
             <!-- Footer Section - Always at bottom -->
             <div class="footer-section">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 40px;">
                 <div class="signature-line">Prepared By</div>
                 <div class="signature-line">Checked By</div>
                 <div class="signature-line">Released By</div>
               </div>
               
-              <div style="display: flex; justify-content: center; gap: 100px; margin-bottom: 10px;">
+              <div style="display: flex; justify-content: center; gap: 100px; margin-bottom: 40px;">
                 <div class="signature-line">Delivered By</div>
                 <div class="signature-line">Received By</div>
               </div>
@@ -433,7 +451,6 @@ const handlePrint = useReactToPrint({
     printWindow.print();
     printWindow.close();
   };
-
 
   // Test print quality function
   const testPrintQuality = () => {
@@ -665,7 +682,7 @@ your dot matrix printer setup is working correctly.
             >
               Print
             </Button>
-            <Button
+            {/* <Button
               variant="outlined"
               color="info"
               onClick={handleAlternativePrint}
@@ -673,7 +690,7 @@ your dot matrix printer setup is working correctly.
             >
               Alt Print
             </Button>
-            {/* <Button
+            <Button
               variant="outlined"
               color="warning"
               onClick={testPrintQuality}
@@ -694,6 +711,8 @@ your dot matrix printer setup is working correctly.
             <SaleKebabMenu 
               refresh={refresh}
               sale={report}
+              itemsFontSize={itemsFontSize}
+              setItemsFontSize={setItemsFontSize}
             />
           </Box>
         </Box>
@@ -717,30 +736,45 @@ your dot matrix printer setup is working correctly.
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={12} md={12}>
                 <Box sx={{ textAlign: 'center', mb: 2 }}>
-                  <Typography variant="h4">DELIVERY REPORT</Typography>
-                  <Typography variant="h6">{report.invoice_number}</Typography>
+                  <Typography variant="h4" sx={{ fontSize: `${itemsFontSize + 6}px!important` }}>DELIVERY REPORT</Typography>
+                  <Typography variant="h6" sx={{ fontSize: `${itemsFontSize + 2}px!important` }}>{report.invoice_number}</Typography>
                 </Box>
               </Grid>
               <Grid item xs={12} md={12} sx={{ display: 'flex', justifyContent:'space-between'}}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                  <Typography variant="h5">Halifax Glass & Aluminum Supply</Typography>
-                  <Typography>Malagamot Road, Panacan</Typography>
-                  <Typography>glasshalifax@gmail.com</Typography>
-                  <Typography>0939 924 3876</Typography>
+                  <Typography variant="h5" sx={{ fontSize: `${itemsFontSize + 4}px!important` }}>Halifax Glass & Aluminum Supply</Typography>
+                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>Malagamot Road, Panacan</Typography>
+                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>glasshalifax@gmail.com</Typography>
+                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>0939 924 3876</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                  <Typography>
-                    <strong>Order Date:</strong> {formatDate(report.order_date)}
-                  </Typography>
-                  <Typography>
-                    <strong>Delivery Date:</strong> {formatDate(report.delivery_date)}
-                  </Typography>
-                  <Typography>
-                    <strong>Payment Method:</strong> {report.payment_method.toUpperCase()}
-                  </Typography>
-                  <Typography>
-                    <strong>Status:</strong> {report.status.toUpperCase()}
-                  </Typography>
+                 <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
+                <Typography component="strong" sx={{ fontSize: `${itemsFontSize}px!important` ,fontWeight: 'bold!important', display: 'inline' }}>
+                  Order Date:
+                </Typography>{' '}
+                {formatDate(report.order_date)}
+              </Typography>
+              <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
+                <Typography component="strong" sx={{ fontSize: `${itemsFontSize}px!important` ,fontWeight: 'bold!important', display: 'inline!important' }}>
+                  Delivery Date:
+                </Typography>{' '}
+                {formatDate(report.delivery_date)}
+              </Typography>
+
+              <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
+                <Typography component="strong" sx={{ fontSize: `${itemsFontSize}px!important` ,fontWeight: 'bold!important', display: 'inline!important' }}>
+                  Payment Method:
+                </Typography>{' '}
+                {report.payment_method.toUpperCase()}
+              </Typography>
+
+              <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
+                <Typography component="strong" sx={{ fontSize: `${itemsFontSize}px!important` ,fontWeight: 'bold!important', display: 'inline!important' }}>
+                  Status:
+                </Typography>{' '}
+                {report.status.toUpperCase()}
+              </Typography>
+
                 </Box>
               </Grid>
             </Grid>
@@ -751,55 +785,52 @@ your dot matrix printer setup is working correctly.
                 <Box sx={{ mb: 0.5 }}>
                   <Table>
                     <TableBody>
-                      <TableRow>
-                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '2.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1}>
-                            <strong>Delivered to:</strong>
+                      <TableRow >
+                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0',  verticalAlign: 'bottom'  , width: '20%'}}>
+                          <Typography lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` , fontWeight: '600!important' , marginBottom:'0!important'}}>
+                            Delivered to:
                           </Typography>
                         </TableCell>
-                        <TableCell sx={{ border: 'none', padding: '8px 16px 8px 0', width: '10.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1}>
-                            <span style={{ textDecoration: 'underline' }}>
-                              {report.customer?.business_name || report.customer?.customer_name}
-                            </span>
-                          </Typography>
+                        <TableCell colSpan={3} sx={{ border: 'none', padding: '8px 16px 8px 0',  verticalAlign: 'bottom' }}>
+                        <Typography
+                          component="span" lineHeight={1}
+                          sx={{ textDecoration: 'underline!important' ,fontSize: `${itemsFontSize + 6}px!important` , display: 'inline!important', }}
+                        >
+                          {report.customer?.business_name || report.customer?.customer_name}
+                        </Typography>
+
                         </TableCell>
-                        {/* <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '0.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1}>
-                            <strong>City:</strong>
-                          </Typography>
-                        </TableCell>
-                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '12.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1}>
-                            <span style={{ textDecoration: 'underline' }}>
-                              {report.city}
-                            </span>
-                          </Typography>
-                        </TableCell> */}
                       </TableRow>
                       <TableRow>
-                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '2.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1}>
-                            <strong>Address:</strong>
+                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '20%' ,verticalAlign: 'top' }}>
+                          <Typography  lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` ,fontWeight: '600!important' }}>
+                            Address:
                           </Typography>
                         </TableCell>
-                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '10.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1}>
-                            <span style={{ textDecoration: 'underline' }}>
+                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0',  verticalAlign: 'top' }}>
+                           <Typography
+                          component="span" lineHeight={1}
+                          sx={{ textDecoration: 'underline!important' ,fontSize: `${itemsFontSize + 6}px!important` , display: 'inline!important', }}
+                        >
+                    
                               {report.customer?.business_address || report.address}
-                            </span>
+                            
                           </Typography>
                         </TableCell>
-                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', width: '0.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1}>
-                            <strong>Phone:</strong>
+                        <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0',  verticalAlign: 'top' , width: '0.5%'  }}>
+                          <Typography lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` , fontWeight: '600!important' , marginBottom:'0!important'}}>
+                           Phone:
                           </Typography>
                         </TableCell>
-                        <TableCell sx={{ border: 'none', padding: '8px 0', width: '12.5%', verticalAlign: 'top' }}>
-                          <Typography fontSize={18} lineHeight={1}>
-                            <span style={{ textDecoration: 'underline' }}>
+                        <TableCell sx={{ border: 'none', padding: '8px 0',  verticalAlign: 'top' }}>
+                           <Typography
+                          component="span" lineHeight={1}
+                          sx={{ textDecoration: 'underline!important' ,fontSize: `${itemsFontSize + 6}px!important` , display: 'inline!important', }}
+                        >
+                    
+                       
                               {report.phone}
-                            </span>
+                          
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -815,7 +846,7 @@ your dot matrix printer setup is working correctly.
             <Box sx={{ flex: 1 }}>
               {/* Items Table */}
               <Box display='flex' justifyContent="space-between">
-                <Typography variant="subtitle1" gutterBottom>Order Items</Typography>
+                <Typography variant="subtitle1" gutterBottom sx={{fontSize: `${itemsFontSize}px!important`}}>Order Items</Typography>
                 {report.term_days !== 0 && report.term_days && (
                   <Typography variant="h6">
                     <strong>Term :</strong> {report.term_days}
@@ -826,11 +857,11 @@ your dot matrix printer setup is working correctly.
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell align="right">Qty</TableCell>
-                      <TableCell align="left" width={'15px'}>Unit</TableCell>
-                      <TableCell align="left">Item</TableCell>
-                      <TableCell align="right">Price</TableCell>
-                      <TableCell align="right">Net Price</TableCell>
+                      <TableCell align="right" sx={{fontSize: `${itemsFontSize}px!important`}}>Qty</TableCell>
+                      <TableCell align="left" width={'15px'} sx={{fontSize: `${itemsFontSize}px!important`}}>Unit</TableCell>
+                      <TableCell align="left" sx={{fontSize: `${itemsFontSize}px!important`}}>Item</TableCell>
+                      <TableCell align="right" sx={{ fontSize: `${itemsFontSize}px!important`}}>Price</TableCell>
+                      <TableCell align="right" sx={{fontSize: `${itemsFontSize}px!important`}}>Net Price</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -856,7 +887,7 @@ your dot matrix printer setup is working correctly.
                               colSpan={4} 
                               sx={{ 
                                 fontWeight: 'bold',
-                                fontSize: '1rem',
+                                fontSize: `${itemsFontSize - 1.5}px!important`,
                                 fontStyle:"italic",
                                 py:0,
                                 border:'none'
@@ -875,12 +906,12 @@ your dot matrix printer setup is working correctly.
                             return (
                               <React.Fragment key={item.id}>
                                 {/* Regular item row */}
-                                <TableRow sx={{py:0.5 , border:'none'}}>
-                                  <TableCell align="right" sx={{py:0.5 , border:'none'}}>{item.quantity}</TableCell>
-                                  <TableCell align="left" sx={{py:0.5 , border:'none'}}>{item.product.attribute?.unit_of_measurement ?? " "}</TableCell>
-                                  <TableCell align="left" sx={{py:0.5 , border:'none'}}>{item.product?.product_name}</TableCell>
-                                  <TableCell align="right" sx={{py:0.5 , border:'none'}}>{formatCurrency(parseFloat(item.sold_price))}</TableCell>
-                                  <TableCell align="right" sx={{py:0.5 , border:'none'}}>{formatCurrency(finalAmount)}</TableCell>
+                                <TableRow sx={{py:0.5 , border:'none' }}>
+                                  <TableCell align="right" sx={{py:0.5 , border:'none', fontSize: `${itemsFontSize}px!important`}}>{item.quantity}</TableCell>
+                                  <TableCell align="left" sx={{py:0.5 , border:'none', fontSize: `${itemsFontSize}px!important`}}>{item.product.attribute?.unit_of_measurement ?? " "}</TableCell>
+                                  <TableCell align="left" sx={{py:0.5 , border:'none', fontSize: `${itemsFontSize}px!important`}}>{item.product?.product_name}</TableCell>
+                                  <TableCell align="right" sx={{py:0.5 , border:'none', fontSize: `${itemsFontSize}px!important`}}>{formatCurrency(parseFloat(item.sold_price))}</TableCell>
+                                  <TableCell align="right" sx={{py:0.5 , border:'none', fontSize: `${itemsFontSize}px!important`}}>{formatCurrency(finalAmount)}</TableCell>
                                 </TableRow>
                                 
                                 {/* Composition row - only shown when composition exists */}
@@ -895,7 +926,7 @@ your dot matrix printer setup is working correctly.
                                           pb: 1,
                                         }}
                                       >
-                                        <Typography variant="subtitle2" color="primary">
+                                        <Typography variant="subtitle2" color="primary" sx={{ fontSize: `${itemsFontSize - 1}px!important` }}>
                                           Composition:
                                         </Typography>
                                         <div 
@@ -903,7 +934,8 @@ your dot matrix printer setup is working correctly.
                                           dangerouslySetInnerHTML={{ __html: item.composition }}
                                           style={{ 
                                             paddingLeft: '16px',
-                                            margin: 0
+                                            margin: 0,
+                                            fontSize: `${itemsFontSize - 1}px!important`
                                           }}
                                         />
                                       </Box>
@@ -922,38 +954,44 @@ your dot matrix printer setup is working correctly.
 
               <Box sx={{ display: 'flex',justifyContent: 'space-between' }}>
                 <Box sx={{ display: 'flex', flexDirection:'column',justifyContent: 'flex-start' }}>
-                  <Typography>
-                    <strong>Delivery Status:</strong> {report.is_delivered ? 'Delivered' : 'Pending Delivery'}
+                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
+                   <Typography component="strong" sx={{ fontSize: `${itemsFontSize}px!important` ,fontWeight: 'bold!important', display: 'inline' }}>
+                    Delivery Status: 
+                    </Typography>
+                    {report.is_delivered ? 'Delivered' : 'Pending'}
                   </Typography>
-                  <Typography>
-                    <strong>Encoded By:</strong> {report.user?.name}
+                  <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>
+                    <Typography component="strong" sx={{ fontSize: `${itemsFontSize}px!important` ,fontWeight: 'bold!important', display: 'inline' }}>
+                      Encoded By: 
+                      </Typography>
+                       {report.user?.name}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <Grid container spacing={0} sx={{ maxWidth: '400px' }}>
                     <Grid item xs={6}>
-                      <Typography align="right">Subtotal:</Typography>
+                      <Typography align="right" sx={{ fontSize: `${itemsFontSize }px!important` }}>Subtotal:</Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography align="right">{formatCurrency(subtotal)}</Typography>
+                      <Typography align="right" sx={{ fontSize: `${itemsFontSize }px!important` }}>{formatCurrency(subtotal)}</Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography align="right">Delivery Fee:</Typography>
+                      <Typography align="right" sx={{ fontSize: `${itemsFontSize }px!important` }}>Delivery Fee:</Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography align="right">{formatCurrency(deliveryFee)}</Typography>
+                      <Typography align="right" sx={{ fontSize: `${itemsFontSize }px!important` }}>{formatCurrency(deliveryFee)}</Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography align="right">Cutting Charges:</Typography>
+                      <Typography align="right" sx={{ fontSize: `${itemsFontSize }px!important` }}>Cutting Charges:</Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography align="right">{formatCurrency(cuttingCharges)}</Typography>
+                      <Typography align="right" sx={{ fontSize: `${itemsFontSize }px!important` }}>{formatCurrency(cuttingCharges)}</Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography align="right">Discount:</Typography>
+                      <Typography align="right" sx={{ fontSize: `${itemsFontSize }px!important` }}>Discount:</Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography align="right">{formatCurrency(totalDiscount)}</Typography>
+                      <Typography align="right" sx={{ fontSize: `${itemsFontSize }px!important` }}>{formatCurrency(totalDiscount)}</Typography>
                     </Grid>
 
                     {/* Credit Memo Total - Only show when returns exist */}
@@ -991,19 +1029,19 @@ your dot matrix printer setup is working correctly.
                   )}
 
           <Grid item xs={6}>
-            <Typography fontWeight="bold" align="right" fontSize="1.2rem">
+            <Typography fontWeight="bold" align="right"  sx={{ fontSize: `${itemsFontSize + 4}px!important` }}>
               Total Amount:
             </Typography>
           </Grid>
           <Grid item xs={6}>
-            <Typography fontWeight="bold" align="right" fontSize="1.2rem">
+            <Typography fontWeight="bold" align="right" sx={{ fontSize: `${itemsFontSize + 4}px!important` }}>
               ₱{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </Typography>
           </Grid>
                   {report.amount_received !== '0.00' && report.amount_received && (
                   <>
                     <Grid item xs={6}>
-                      <Typography  align="right">Amount Received:</Typography>
+                      <Typography  align="right" sx={{ fontSize: `${itemsFontSize + 4}px!important` }}>Amount Received:</Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography  align="right">
@@ -1015,10 +1053,10 @@ your dot matrix printer setup is working correctly.
              {report.change !== '0.00' && report.change && (
                <>
                   <Grid item xs={6}>
-                    <Typography  align="right">Change:</Typography>
+                    <Typography  align="right" sx={{ fontSize: `${itemsFontSize + 4}px!important` }}>Change:</Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography  align="right">₱{parseFloat(report.change).toFixed(2)} {typeof(report.change)}</Typography>
+                    <Typography  align="right" sx={{ fontSize: `${itemsFontSize + 4}px!important` }}>₱{parseFloat(report.change).toFixed(2)} {typeof(report.change)}</Typography>
                   </Grid>
                
                 </>
@@ -1031,7 +1069,7 @@ your dot matrix printer setup is working correctly.
             {/* Additional Information */}
             {report.remarks && (
               <Box sx={{ mt: 3 }}>
-                <Typography >Remarks:</Typography>
+                <Typography sx={{ fontSize: `${itemsFontSize}px!important` }}>Remarks:</Typography>
                 <Typography variant="body2">{report.remarks}</Typography>
               </Box>
             )}

@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { Line } from 'react-chartjs-2';
 import { useReports } from '@/hooks/useReports';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatCurrency } from '@/utils/formatUtils';
 
 const TrendsAnalysis = ({ selectedYear, selectedMonth }) => {
   const [trendsData, setTrendsData] = useState(null);
