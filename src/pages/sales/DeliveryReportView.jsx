@@ -6,7 +6,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { PrinterOutlined, RollbackOutlined, HomeOutlined , DownOutlined , UpOutlined , CheckCircleOutlined  } from '@ant-design/icons';
+import { PrinterOutlined, RollbackOutlined, HomeOutlined , DownOutlined , UpOutlined , CheckCircleOutlined, DownloadOutlined  } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
 import { formatDate } from '@/utils/formatUtils';
 import CreditMemoModal from './CreditMemoModal';
@@ -112,6 +112,207 @@ const DeliveryReportView = ({ refresh , report }) => {
       );
     }
   }, [report]);
+
+  // Currency formatting for consistent alignment
+  const formatCurrency = (amount) => {
+    return `₱${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  // Function to strip HTML tags and format composition text
+  const formatComposition = (html) => {
+    if (!html) return '';
+    
+    // Remove HTML tags and decode entities
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    let text = tempDiv.textContent || tempDiv.innerText || '';
+    
+    // Format the text with proper indentation
+    return text.split('\n').map(line => `    ${line.trim()}`).join('\n');
+  };
+
+  // Function to pad text for alignment
+  const padRight = (text, length) => {
+    return String(text).padEnd(length, ' ');
+  };
+
+  const padLeft = (text, length) => {
+    return String(text).padStart(length, ' ');
+  };
+
+  // Generate plain text version for dot matrix printing
+  const generateTextContent = () => {
+    if (!report) return '';
+
+    // Calculate totals
+    const subtotal = report.items.reduce((sum, item) => {
+      return sum + (parseFloat(item.sold_price) * item.quantity);
+    }, 0);
+
+    const deliveryFee = parseFloat(report.delivery_fee) || 0;
+    const cuttingCharges = parseFloat(report.cutting_charges) || 0;
+
+    const totalDiscount = report.items.reduce((sum, item) => {
+      const itemSubtotal = parseFloat(item.sold_price) * item.quantity;
+      const discountAmount = itemSubtotal * (parseFloat(item.discount) / 100);
+      return sum + discountAmount;
+    }, 0);
+
+    const totalAmount = (subtotal + deliveryFee + cuttingCharges) - totalDiscount;
+
+    const totalCreditMemoAmount = report?.returns?.reduce((total, returnItem) => {
+      const returnTotal = returnItem.items?.reduce((sum, item) => {
+        return sum + parseFloat(item.quantity || 0) * parseFloat(item.price || 0);
+      }, 0) || 0;
+    
+      return total + returnTotal;
+    }, 0) || 0;
+
+    // Build the text content
+    let content = '';
+    
+    // Header
+   
+    content += '                           DELIVERY REPORT\n';
+    content += `                           ${report.invoice_number}\n\n`;
+    
+    
+    // Company info and order details
+    content += 'Halifax Glass & Aluminum Supply          ';
+    content += `   Order Date: ${formatDate(report.order_date)}\n`;
+    content += 'Malagamot Road, Panacan                 ';
+    content += `   Delivery Date: ${formatDate(report.delivery_date)}\n`;
+    content += 'glasshalifax@gmail.com                   ';
+    content += `   Payment Method: ${report.payment_method.toUpperCase()}\n`;
+    content += '0939 924 3876                            ';
+    content += `   Status: ${report.status.toUpperCase()}\n\n`;
+    
+    // Customer info
+    content += `Delivered to: ${report.customer?.business_name || report.customer?.customer_name}\n`;
+    content += `Address: ${report.customer?.business_address || report.address}\n`;
+    content += `Phone: ${report.phone}`;
+
+  
+    
+    if (report.term_days !== 0 && report.term_days) {
+      content += `${padLeft(`Term: ${report.term_days}`, 65)}\n`;
+    } else {
+      content += '\n';
+    }
+    content += '__________________________________________________________________________\n';
+    content += ' Qty Unit Item                                        Price     Net Price\n';
+    content += '__________________________________________________________________________\n';
+    
+    // Group items by category
+    const groupedItems = report.items.reduce((acc, item) => {
+      const categoryName = item.product?.category?.name || 'Uncategorized';
+      if (!acc[categoryName]) {
+        acc[categoryName] = [];
+      }
+      acc[categoryName].push(item);
+      return acc;
+    }, {});
+
+    const sortedCategories = Object.keys(groupedItems).sort();
+    
+    // Add items by category
+    sortedCategories.forEach((categoryName) => {
+      content += `${categoryName}\n`;
+      
+      groupedItems[categoryName].forEach((item) => {
+        const itemSubtotal = parseFloat(item.sold_price) * item.quantity;
+        const discountAmount = itemSubtotal * (parseFloat(item.discount) / 100);
+        const finalAmount = itemSubtotal - discountAmount;
+        
+        const qty = padLeft(item.quantity.toString(), 4);
+        const unit = padRight(item.product.attribute?.unit_of_measurement || '', 5);
+        const itemName = padRight(item.product?.product_name || '', 40);
+        const price = padLeft(formatCurrency(parseFloat(item.sold_price)), 10);
+        const netPrice = padLeft(formatCurrency(finalAmount), 10);
+        
+        content += `${qty} ${unit} ${itemName} ${price}  ${netPrice}\n`;
+        
+        // Add composition if exists
+        if (item.composition) {
+          content += '    Composition:\n';
+          const compositionText = formatComposition(item.composition);
+          content += `${compositionText}\n`;
+        }
+      });
+      content += '\n';
+    });
+    
+    content += '__________________________________________________________________________\n\n';
+    
+    // Status and totals section
+    content += `Delivery Status: ${report.is_delivered ? 'Delivered' : 'Pending Delivery'}\n`;
+    content += `Encoded By: ${report.user?.name}\n\n`;
+    
+    // Totals (right aligned)
+    const totalsSection = [
+      ['Subtotal:', formatCurrency(subtotal)],
+      ['Delivery Fee:', formatCurrency(deliveryFee)],
+      ['Cutting Charges:', formatCurrency(cuttingCharges)],
+      ['Discount:', formatCurrency(totalDiscount)]
+    ];
+    
+    if (report.returns && report.returns.length > 0) {
+      totalsSection.push(['Credit Memo Total:', formatCurrency(totalCreditMemoAmount)]);
+    }
+    
+    totalsSection.push(['Total Amount:', formatCurrency(totalAmount)]);
+    
+    if (report.amount_received !== '0.00' && report.amount_received) {
+      totalsSection.push(['Amount Received:', formatCurrency(parseFloat(report.amount_received))]);
+    }
+    
+    if (report.change !== '0.00' && report.change) {
+      totalsSection.push(['Change:', formatCurrency(parseFloat(report.change))]);
+    }
+    
+    // Right-align totals
+    totalsSection.forEach(([label, amount]) => {
+      const line = `${padLeft(label, 57)} ${padLeft(amount, 15)}`;
+      content += `${padLeft(line, 50)}\n`;
+    });
+    
+    content += '\n';
+    
+    // Remarks
+    if (report.remarks) {
+      content += `Remarks: ${report.remarks}\n\n`;
+    }
+    
+    // Signature section
+    content += '\n\n\n';
+    content += '   _____________        _____________        _____________\n';
+    content += '    Prepared By          Checked By           Released By\n\n';
+    content += '        ______________                  ______________\n';
+    content += '         Delivered By                    Received By\n';
+
+    
+    // Footer note
+    content += '\n\n';
+    content += 'Note: This Office will not entertain any claim of shortage after receipt \n';
+     content += '                         has been duly acknowledged                                       ';
+
+    
+    return content;
+  };
+
+  // Download text file function
+  const handleDownloadText = () => {
+    const textContent = generateTextContent();
+    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `delivery_report_${report.invoice_number}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   // Enhanced print handler with dot matrix optimizations
   const handlePrint = useReactToPrint({
@@ -613,11 +814,6 @@ your dot matrix printer setup is working correctly.
     setShowPaymentHistory(!showPaymentHistory);
   };
   
-  // Currency formatting for consistent alignment
-  const formatCurrency = (amount) => {
-    return `₱${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
-
   if (!report) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
@@ -681,6 +877,15 @@ your dot matrix printer setup is working correctly.
               sx={{ mr: 1 }}
             >
               Print
+            </Button>
+            <Button
+              variant="outlined"
+              color="info"
+              startIcon={<DownloadOutlined />}
+              onClick={handleDownloadText}
+              sx={{ mr: 1 }}
+            >
+              Download Text
             </Button>
             {/* <Button
               variant="outlined"
