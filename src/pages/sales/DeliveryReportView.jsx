@@ -246,7 +246,8 @@ const DeliveryReportView = ({ refresh , report }) => {
     
     // Status and totals section
     // content += `Delivery Status: ${report.is_delivered ? 'Delivered' : 'Pending'}\n`;
-    content += `Encoded By: ${report.user?.name}`;
+  const encodedByText = `Encoded By: ${report.user?.name}`;
+  const encodedByLength = encodedByText.length;
   
   // Totals (right aligned)
   const totalsSection = [
@@ -271,10 +272,15 @@ const DeliveryReportView = ({ refresh , report }) => {
   }
   
   // Add the first total on the same line as Encoded By
-  if (totalsSection.length > 0) {
+if (totalsSection.length > 0) {
     const [firstLabel, firstAmount] = totalsSection[0];
     const firstTotalLine = `${padLeft(firstLabel, 47)} ${padLeft(firstAmount, 15)}`;
-    content += `${padLeft(firstTotalLine, 25)}\n`;
+    
+    // Calculate spacing: total line width (85) minus encoded by length
+    const spacingNeeded = 85 - encodedByLength;
+    const rightAlignedTotal = padLeft(firstTotalLine, spacingNeeded);
+    
+    content += `${encodedByText}${rightAlignedTotal}\n`;
     
     // Add remaining totals
     totalsSection.slice(1).forEach(([label, amount]) => {
@@ -282,6 +288,7 @@ const DeliveryReportView = ({ refresh , report }) => {
       content += `${padLeft(line, 85)}\n`;
     });
   }
+
     
     content += '\n';
     
@@ -292,23 +299,21 @@ const DeliveryReportView = ({ refresh , report }) => {
     
     // Signature section
     content += '\n\n\n';
-    content += '               _____________        _____________        _____________\n';
-    content += '                Prepared By          Checked By           Released By\n\n';
-    content += '                    ______________                  ______________\n';
-    content += '                     Delivered By                    Received By\n';
+    content += '     _________________            _________________            _________________\n';
+    content += '        Prepared By                   Checked By                  Released By\n\n\n\n';
+    content += '                   _________________             _________________ \n';
+    content += '                     Delivered By                  Received By\n';
 
     
       const contentLines = content.split('\n').length;
       const targetPageLines = 66; // Standard for 11" paper at 6 lines per inch
-      const footerLines = 3; // Space needed for the note
+      const footerLines = 4; // Space needed for the note
       const availableLines = targetPageLines - footerLines;
       
       // Add blank lines to push note to bottom
       const linesToAdd = Math.max(0, availableLines - contentLines);
       content += '\n'.repeat(linesToAdd);
       
-      // Footer note - ALWAYS AT THE BOTTOM OF PAGE
-      content += '\n\n';
       content += 'Note: This Office will not entertain any claim of shortage after receipt has been\n';
       content += '                                 duly acknowledged\n';
       
