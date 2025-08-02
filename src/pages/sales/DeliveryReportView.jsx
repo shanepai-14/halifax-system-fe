@@ -296,24 +296,26 @@ if (totalsSection.length > 0) {
     if (report.remarks) {
       content += `Remarks: ${report.remarks}\n\n`;
     }
+
+      const contentLines = content.split('\n').length;
+      const targetPageLines = 66; // Standard for 11" paper at 6 lines per inch
+      const signatureLines = 10; // Space needed for signature section
+      const footerLines = 4; // Space needed for the note
+      const totalFooterLines = signatureLines + footerLines;
+      const availableLines = targetPageLines - totalFooterLines;
+  
+  // Add blank lines to push signatures and note to bottom
+  const linesToAdd = Math.max(0, availableLines - contentLines);
+  content += '\n'.repeat(linesToAdd);
     
     // Signature section
     content += '\n\n\n';
     content += '     _________________            _________________            _________________\n';
     content += '        Prepared By                   Checked By                  Released By\n\n\n\n';
     content += '                   _________________             _________________ \n';
-    content += '                     Delivered By                  Received By\n';
+    content += '                     Delivered By                  Received By\n\n\n';
 
-    
-      const contentLines = content.split('\n').length;
-      const targetPageLines = 66; // Standard for 11" paper at 6 lines per inch
-      const footerLines = 4; // Space needed for the note
-      const availableLines = targetPageLines - footerLines;
-      
-      // Add blank lines to push note to bottom
-      const linesToAdd = Math.max(0, availableLines - contentLines);
-      content += '\n'.repeat(linesToAdd);
-      
+      content += '\n';
       content += 'Note: This Office will not entertain any claim of shortage after receipt has been\n';
       content += '                                 duly acknowledged\n';
       
