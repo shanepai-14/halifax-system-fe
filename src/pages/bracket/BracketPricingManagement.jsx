@@ -44,17 +44,16 @@ import { formatCurrency } from '@/utils/formatUtils';
 const BracketPricingManagement = ({ product, onClose }) => {
   const {
     loading,
-    brackets,
-    activeBracket,
     getProductBrackets,
-    getActiveBracket,
     deleteBracket,
-    activateBracket,
+    activateSpecificBracket,
     deactivateBracketPricing,
     cloneBracket
   } = useBracketPricing();
 
   const [currentTab, setCurrentTab] = useState(0);
+  const [brackets, setBrackets] = useState([]);
+  const [activeBracket, setActiveBracket] = useState(null);
   const [showBracketForm, setShowBracketForm] = useState(false);
   const [editingBracket, setEditingBracket] = useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -68,8 +67,11 @@ const BracketPricingManagement = ({ product, onClose }) => {
 
   const loadBrackets = async () => {
     if (product?.id) {
-      await getProductBrackets(product.id);
-      await getActiveBracket(product.id);
+      const data = await getProductBrackets(product.id);
+      if (data) {
+        setBrackets(data.brackets || []);
+        setActiveBracket(data.active_bracket || null);
+      }
     }
   };
 
@@ -101,8 +103,10 @@ const BracketPricingManagement = ({ product, onClose }) => {
 
   const handleActivateBracket = async (bracket) => {
     try {
-      await activateBracket(bracket.id);
-      await loadBrackets();
+      const success = await activateSpecificBracket(bracket.id);
+      if (success) {
+        await loadBrackets();
+      }
     } catch (error) {
       console.error('Error activating bracket:', error);
     }
@@ -142,6 +146,63 @@ const BracketPricingManagement = ({ product, onClose }) => {
     return <Chip label="Inactive" color="default" size="small" />;
   };
 
+  // Format multiple prices per tier: "Tier 1 (1-20): $570, $550, $530"
+  const formatPriceTiers = (bracketItems) => {
+    if (!bracketItems || bracketItems.length === 0) {
+      return (
+        <Typography variant="body2">
+          0 tiers
+        </Typography>
+      );
+    }
+
+    // Group items by quantity range
+    const tierMap = new Map();
+    
+    bracketItems.forEach(item => {
+      const tierKey = `${item.min_quantity}-${item.max_quantity || 'inf'}`;
+      
+      if (!tierMap.has(tierKey)) {
+        tierMap.set(tierKey, {
+          min_quantity: item.min_quantity,
+          max_quantity: item.max_quantity,
+          prices: []
+        });
+      }
+      
+      if (item.is_active) {
+        tierMap.get(tierKey).prices.push(parseFloat(item.price));
+      }
+    });
+
+    // Convert to sorted array and format as requested
+    const tiers = Array.from(tierMap.values())
+      .sort((a, b) => a.min_quantity - b.min_quantity);
+
+    return (
+      <Box>
+        <Typography variant="body2">
+          {tiers.length} tiers
+        </Typography>
+        {tiers.map((tier, index) => {
+          const quantityRange = tier.max_quantity 
+            ? `${tier.min_quantity}-${tier.max_quantity}`
+            : `${tier.min_quantity}+`;
+          
+          // Sort prices in descending order (highest first)
+          const sortedPrices = tier.prices.sort((a, b) => b - a);
+          const pricesText = sortedPrices.map(price => formatCurrency(price)).join(', ');
+          
+          return (
+            <Typography key={index} variant="caption" display="block">
+              Tier {index + 1} ({quantityRange}): {pricesText}
+            </Typography>
+          );
+        })}
+      </Box>
+    );
+  };
+
   const TabPanel = ({ children, value, index, ...other }) => {
     return (
       <div
@@ -157,7 +218,7 @@ const BracketPricingManagement = ({ product, onClose }) => {
   };
 
   return (
-    <Paper sx={{ width: '100%', height: '80vh', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ width: '100%', height: '80vh', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Typography variant="h6" gutterBottom>
@@ -262,14 +323,7 @@ const BracketPricingManagement = ({ product, onClose }) => {
                             }
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2">
-                              {bracket.bracket_items?.length || 0} tiers
-                            </Typography>
-                            {bracket.bracket_items?.slice(0, 2).map((item, index) => (
-                              <Typography key={index} variant="caption" display="block">
-                                {item.min_quantity}{item.max_quantity ? `-${item.max_quantity}` : '+'}: {formatCurrency(item.price)}
-                              </Typography>
-                            ))}
+                            {formatPriceTiers(bracket.bracket_items)}
                           </TableCell>
                           <TableCell>
                             <Typography variant="caption">
@@ -370,8 +424,10 @@ const BracketPricingManagement = ({ product, onClose }) => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Paper>
+    </Box>
   );
 };
 
 export default BracketPricingManagement;
+
+  
