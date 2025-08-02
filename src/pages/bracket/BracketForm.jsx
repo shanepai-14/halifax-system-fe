@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect ,useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -12,29 +12,19 @@ import {
   Typography,
   Box,
   IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Chip,
-  Divider
+  Divider,
+  Card,
+  CardContent,
+  CardHeader,
+  Stack
 } from '@mui/material';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
   ContentCopy as CopyIcon,
-  ExpandMore as ExpandMoreIcon
+  DragIndicator as DragIcon
 } from '@mui/icons-material';
 import { useBracketPricing } from '@/hooks/useBracketPricing';
 import { formatCurrency } from '@/utils/formatUtils';
@@ -62,7 +52,6 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
   });
 
   const [errors, setErrors] = useState({});
-  const [expandedTiers, setExpandedTiers] = useState({ 0: true });
 
   useEffect(() => {
     if (bracket && open) {
@@ -95,13 +84,6 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
         effective_to: bracket.effective_to ? bracket.effective_to.split('T')[0] : '',
         bracket_tiers: Array.from(tierMap.values())
       });
-
-      // Expand all tiers for editing
-      const expanded = {};
-      Array.from(tierMap.values()).forEach((_, index) => {
-        expanded[index] = true;
-      });
-      setExpandedTiers(expanded);
     } else if (open) {
       // Reset form for new bracket
       setFormData({
@@ -122,7 +104,6 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
           }
         ]
       });
-      setExpandedTiers({ 0: true });
     }
     setErrors({});
   }, [bracket, open]);
@@ -162,7 +143,8 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
     }
   };
 
-  const handlePriceEntryChange = (tierIndex, entryIndex, field, value) => {
+
+const handlePriceEntryChange = useCallback((tierIndex, entryIndex, field, value) => {
     const newTiers = [...formData.bracket_tiers];
     newTiers[tierIndex].price_entries[entryIndex] = {
       ...newTiers[tierIndex].price_entries[entryIndex],
@@ -181,7 +163,8 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
         [errorKey]: null
       }));
     }
-  };
+}, [formData.bracket_tiers, errors]);
+
 
   const addTier = () => {
     const lastTier = formData.bracket_tiers[formData.bracket_tiers.length - 1];
@@ -203,13 +186,6 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
       ...prev,
       bracket_tiers: [...prev.bracket_tiers, newTier]
     }));
-
-    // Expand the new tier
-    const newTierIndex = formData.bracket_tiers.length;
-    setExpandedTiers(prev => ({
-      ...prev,
-      [newTierIndex]: true
-    }));
   };
 
   const removeTier = (tierIndex) => {
@@ -218,18 +194,6 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
         ...prev,
         bracket_tiers: prev.bracket_tiers.filter((_, i) => i !== tierIndex)
       }));
-      
-      // Update expanded tiers
-      const newExpanded = {};
-      Object.keys(expandedTiers).forEach(key => {
-        const index = parseInt(key);
-        if (index < tierIndex) {
-          newExpanded[index] = expandedTiers[key];
-        } else if (index > tierIndex) {
-          newExpanded[index - 1] = expandedTiers[key];
-        }
-      });
-      setExpandedTiers(newExpanded);
     }
   };
 
@@ -276,13 +240,6 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
     }));
   };
 
-  const toggleTierExpansion = (tierIndex) => {
-    setExpandedTiers(prev => ({
-      ...prev,
-      [tierIndex]: !prev[tierIndex]
-    }));
-  };
-
   const validateForm = () => {
     const newErrors = {};
 
@@ -302,11 +259,11 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
 
     formData.bracket_tiers.forEach((tier, tierIndex) => {
       if (!tier.min_quantity || tier.min_quantity < 1) {
-        newErrors[`bracket_tiers.${tierIndex}.min_quantity`] = 'Minimum quantity must be at least 1';
+        newErrors[`bracket_tiers.${tierIndex}.min_quantity`] = 'Min quantity must be at least 1';
       }
 
       if (tier.max_quantity && parseInt(tier.max_quantity) <= parseInt(tier.min_quantity)) {
-        newErrors[`bracket_tiers.${tierIndex}.max_quantity`] = 'Maximum quantity must be greater than minimum quantity';
+        newErrors[`bracket_tiers.${tierIndex}.max_quantity`] = 'Max quantity must be greater than min quantity';
       }
 
       // Validate price entries
@@ -315,8 +272,8 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
       }
 
       tier.price_entries.forEach((entry, entryIndex) => {
-        if (!entry.price || parseFloat(entry.price) < 0) {
-          newErrors[`bracket_tiers.${tierIndex}.price_entries.${entryIndex}.price`] = 'Price must be a positive number';
+       if (!entry.price || entry.price === '' || parseFloat(entry.price) < 0 || isNaN(parseFloat(entry.price))) {
+          newErrors[`bracket_tiers.${tierIndex}.price_entries.${entryIndex}.price`] = 'Price must be positive';
         }
       });
 
@@ -361,7 +318,7 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
             id: entry.id,
             min_quantity: tier.min_quantity,
             max_quantity: tier.max_quantity || null,
-            price: entry.price,
+            price: parseFloat(entry.price),
             price_type: entry.price_type,
             is_active: entry.is_active
           });
@@ -379,12 +336,6 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
     }
   };
 
-  const priceTypes = [
-    { value: 'regular', label: 'Regular' },
-    { value: 'wholesale', label: 'Wholesale' },
-    { value: 'walk_in', label: 'Walk-in' }
-  ];
-
   const getQuantityRangeDisplay = (tier) => {
     if (tier.max_quantity) {
       return `${tier.min_quantity} - ${tier.max_quantity}`;
@@ -393,7 +344,7 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
   };
 
   return (
-    <Dialog open={open} onClose={() => onClose(false)} maxWidth="lg" fullWidth>
+    <Dialog open={open} onClose={() => onClose(false)} maxWidth="xl" fullWidth>
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="h5">
@@ -408,18 +359,16 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
       </DialogTitle>
       
       <DialogContent sx={{ p: 0 }}>
+        {/* Basic Information */}
         <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
-          <Grid container spacing={3}>
-            {/* Basic Information */}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
-                Basic Information
-              </Typography>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
+          <Typography variant="h6" gutterBottom>
+            Basic Information
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
+                size="small"
                 label="Effective From"
                 type="date"
                 value={formData.effective_from}
@@ -430,9 +379,10 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
               />
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
+                size="small"
                 label="Effective To (Optional)"
                 type="date"
                 value={formData.effective_to}
@@ -443,7 +393,7 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
               />
             </Grid>
             
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={12} md={6}>
               <FormControlLabel
                 control={
                   <Switch
@@ -457,14 +407,15 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
           </Grid>
         </Box>
 
-        {/* Pricing Tiers */}
-        <Box sx={{ p: 3 }}>
+        {/* Pricing Tiers - Horizontal Layout */}
+        <Box sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6">
               Pricing Tiers
             </Typography>
             <Button
               variant="outlined"
+              size="small"
               startIcon={<AddIcon />}
               onClick={addTier}
             >
@@ -478,95 +429,104 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
             </Alert>
           )}
 
-          <Box sx={{ space: 2 }}>
+          {/* Horizontal Scrollable Tiers */}
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 2, 
+            overflowX: 'auto', 
+            pb: 2,
+            '&::-webkit-scrollbar': {
+              height: 8,
+            },
+            '&::-webkit-scrollbar-track': {
+              backgroundColor: 'grey.100',
+              borderRadius: 4,
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: 'grey.400',
+              borderRadius: 4,
+            },
+          }}>
             {formData.bracket_tiers.map((tier, tierIndex) => (
-              <Accordion
+              <Card
                 key={tierIndex}
-                expanded={expandedTiers[tierIndex] || false}
-                onChange={() => toggleTierExpansion(tierIndex)}
-                sx={{ mb: 2, border: 1, borderColor: 'divider' }}
+                sx={{ 
+                  minWidth: 320,
+                  maxWidth: 400,
+                  flexShrink: 0,
+                  border: 1,
+                  borderColor: 'divider'
+                }}
               >
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  sx={{ 
-                    backgroundColor: 'background.paper',
-                    '&.Mui-expanded': { 
-                      backgroundColor: 'primary.light',
-                      color: 'primary.contrastText'
-                    }
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-                    <Typography variant="h6">
-                      Tier {tierIndex + 1}
-                    </Typography>
+                <CardHeader
+                  avatar={
                     <Chip 
-                      label={`Qty: ${getQuantityRangeDisplay(tier)}`}
-                      size="small"
-                      color="secondary"
-                    />
-                    <Chip 
-                      label={`${tier.price_entries.length} Price${tier.price_entries.length !== 1 ? 's' : ''}`}
-                      size="small"
+                      label={`Tier ${tierIndex + 1}`}
                       color="primary"
+                      size="small"
                     />
-                    <Box sx={{ ml: 'auto' }}>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeTier(tierIndex);
-                        }}
-                        disabled={formData.bracket_tiers.length <= 1}
-                        color="error"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
-                  </Box>
-                </AccordionSummary>
-
-                <AccordionDetails>
-                  <Grid container spacing={2}>
-                    {/* Tier Settings */}
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle1" gutterBottom>
+                  }
+                  title={
+                    <Typography variant="subtitle1">
+                      Qty: {getQuantityRangeDisplay(tier)}
+                    </Typography>
+                  }
+                  action={
+                    <IconButton
+                      size="small"
+                      onClick={() => removeTier(tierIndex)}
+                      disabled={formData.bracket_tiers.length <= 1}
+                      color="error"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  }
+                  sx={{ pb: 1 }}
+                />
+                
+                <CardContent sx={{ pt: 0 }}>
+                  <Stack spacing={2}>
+                    {/* Quantity Range */}
+                    <Box>
+                      {/* <Typography variant="subtitle2" gutterBottom>
                         Quantity Range
-                      </Typography>
-                    </Grid>
+                      </Typography> */}
+                      <Grid container spacing={1} mt={0.1}>
+                        <Grid item xs={6}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            label="Min Qty"
+                            type="number"
+                            value={tier.min_quantity}
+                            onChange={(e) => handleTierChange(tierIndex, 'min_quantity', parseInt(e.target.value) || '')}
+                            error={!!errors[`bracket_tiers.${tierIndex}.min_quantity`]}
+                            helperText={errors[`bracket_tiers.${tierIndex}.min_quantity`]}
+                          />
+                        </Grid>
+                        <Grid item xs={6}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            label="Max Qty"
+                            type="number"
+                            value={tier.max_quantity}
+                            onChange={(e) => handleTierChange(tierIndex, 'max_quantity', e.target.value ? parseInt(e.target.value) : '')}
+                            error={!!errors[`bracket_tiers.${tierIndex}.max_quantity`]}
+                            helperText={errors[`bracket_tiers.${tierIndex}.max_quantity`]}
+                            placeholder="∞"
+                          />
+                        </Grid>
+                      </Grid>
+                    </Box>
 
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        label="Min Quantity"
-                        type="number"
-                        value={tier.min_quantity}
-                        onChange={(e) => handleTierChange(tierIndex, 'min_quantity', parseInt(e.target.value) || '')}
-                        error={!!errors[`bracket_tiers.${tierIndex}.min_quantity`]}
-                        helperText={errors[`bracket_tiers.${tierIndex}.min_quantity`]}
-                        size="small"
-                      />
-                    </Grid>
+                    <Divider />
 
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        label="Max Quantity (Optional)"
-                        type="number"
-                        value={tier.max_quantity}
-                        onChange={(e) => handleTierChange(tierIndex, 'max_quantity', e.target.value ? parseInt(e.target.value) : '')}
-                        error={!!errors[`bracket_tiers.${tierIndex}.max_quantity`]}
-                        helperText={errors[`bracket_tiers.${tierIndex}.max_quantity`]}
-                        placeholder="∞"
-                        size="small"
-                      />
-                    </Grid>
-
-                    <Grid item xs={12}>
-                      <Divider sx={{ my: 2 }} />
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                        <Typography variant="subtitle1">
-                          Price Entries
+                    {/* Price Entries */}
+                    <Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Typography variant="subtitle2">
+                          Price Entries ({tier.price_entries.length})
                         </Typography>
                         <Button
                           variant="outlined"
@@ -574,89 +534,81 @@ const BracketForm = ({ open, product, bracket, onClose }) => {
                           startIcon={<AddIcon />}
                           onClick={() => addPriceEntry(tierIndex)}
                         >
-                          Add Price
+                          Add
                         </Button>
                       </Box>
 
                       {errors[`bracket_tiers.${tierIndex}.price_entries`] && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
+                        <Alert severity="error" sx={{ mb: 1, fontSize: '0.75rem' }}>
                           {errors[`bracket_tiers.${tierIndex}.price_entries`]}
                         </Alert>
                       )}
 
-                      <TableContainer component={Paper} variant="outlined">
-                        <Table size="small">
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>Price</TableCell>
-                              {/* <TableCell>Price Type</TableCell> */}
-                              <TableCell>Active</TableCell>
-                              <TableCell align="right">Actions</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {tier.price_entries.map((entry, entryIndex) => (
-                              <TableRow key={entryIndex}>
-                                <TableCell>
-                                  <TextField
-                                    size="small"
-                                    type="number"
-                                    step="0.01"
-                                    value={entry.price}
-                                    onChange={(e) => handlePriceEntryChange(tierIndex, entryIndex, 'price', parseFloat(e.target.value) || '')}
-                                    error={!!errors[`bracket_tiers.${tierIndex}.price_entries.${entryIndex}.price`]}
-                                    helperText={errors[`bracket_tiers.${tierIndex}.price_entries.${entryIndex}.price`]}
-                                    sx={{ width: 120 }}
-                                  />
-                                </TableCell>
-                                {/* <TableCell>
-                                  <FormControl size="small" sx={{ width: 100 }}>
-                                    <Select
-                                      value={entry.price_type}
-                                      onChange={(e) => handlePriceEntryChange(tierIndex, entryIndex, 'price_type', e.target.value)}
-                                    >
-                                      {priceTypes.map(type => (
-                                        <MenuItem key={type.value} value={type.value}>
-                                          {type.label}
-                                        </MenuItem>
-                                      ))}
-                                    </Select>
-                                  </FormControl>
-                                </TableCell> */}
-                                <TableCell>
-                                  <Switch
-                                    checked={entry.is_active}
-                                    onChange={(e) => handlePriceEntryChange(tierIndex, entryIndex, 'is_active', e.target.checked)}
-                                    size="small"
-                                  />
-                                </TableCell>
-                                <TableCell align="right">
+                      <Stack spacing={1} sx={{ maxHeight: 300, overflowY: 'auto' }}>
+                        {tier.price_entries.map((entry, entryIndex) => (
+
+
+                        <Box
+                            sx={{ 
+                              pt:1.5,
+                              minWidth: 200,
+                              position: 'relative',
+                              backgroundColor: entry.is_active ? 'background.paper' : 'action.hover'
+                            }}
+                          >
+                            <Stack spacing={1}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <TextField
+                                size="small"
+                                label={`Price`}
+                                type="number"
+                                step="0.01"
+                                value={entry.price}
+                                onChange={(e) => handlePriceEntryChange(tierIndex, entryIndex, 'price', e.target.value)}
+                                error={!!errors[`bracket_tiers.${tierIndex}.price_entries.${entryIndex}.price`]}
+                                helperText={errors[`bracket_tiers.${tierIndex}.price_entries.${entryIndex}.price`]}
+                                fullWidth
+                              />
+                                <Box sx={{ display: 'flex' }}> 
                                   <IconButton
                                     size="small"
                                     onClick={() => duplicatePriceEntry(tierIndex, entryIndex)}
                                     title="Duplicate"
                                   >
-                                    <CopyIcon />
+                                    <CopyIcon fontSize="small" />
                                   </IconButton>
                                   <IconButton
                                     size="small"
                                     onClick={() => removePriceEntry(tierIndex, entryIndex)}
-                                    disabled={tier.price_entries.length <= 1}
+                                    disabled={formData.bracket_tiers[tierIndex].price_entries.length <= 1}
                                     title="Remove"
                                     color="error"
                                   >
-                                    <DeleteIcon />
+                                    <DeleteIcon fontSize="small" />
                                   </IconButton>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </Grid>
-                  </Grid>
-                </AccordionDetails>
-              </Accordion>
+                                </Box>
+                              </Box>
+                              
+
+                              
+                              {/* <FormControlLabel
+                                control={
+                                  <Switch
+                                    checked={entry.is_active}
+                                    onChange={(e) => handlePriceEntryChange(tierIndex, entryIndex, 'is_active', e.target.checked)}
+                                    size="small"
+                                  />
+                                }
+                                sx={{ m: 0 }}
+                              /> */}
+                            </Stack>
+                          </Box>
+                        ))}
+                      </Stack>
+                    </Box>
+                  </Stack>
+                </CardContent>
+              </Card>
             ))}
           </Box>
         </Box>
