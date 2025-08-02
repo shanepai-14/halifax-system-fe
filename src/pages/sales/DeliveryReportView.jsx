@@ -274,12 +274,12 @@ const DeliveryReportView = ({ refresh , report }) => {
   // Add the first total on the same line as Encoded By
 if (totalsSection.length > 0) {
     const [firstLabel, firstAmount] = totalsSection[0];
-    const firstTotalLine = `${padLeft(firstLabel, 47)} ${padLeft(firstAmount, 15)}`;
+    const firstTotalLine = `${padLeft(firstLabel, encodedByLength >= 20 ? 37 : 47)} ${padLeft(firstAmount, 15)}`;
     
     // Calculate spacing: total line width (85) minus encoded by length
     const spacingNeeded = 85 - encodedByLength;
     const rightAlignedTotal = padLeft(firstTotalLine, spacingNeeded);
-    
+
     content += `${encodedByText}${rightAlignedTotal}\n`;
     
     // Add remaining totals
