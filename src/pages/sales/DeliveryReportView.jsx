@@ -173,19 +173,19 @@ const DeliveryReportView = ({ refresh , report }) => {
     
     // Header
    
-    content += '                           DELIVERY REPORT\n';
-    content += `                           ${report.invoice_number}\n\n`;
+    content += '                                  DELIVERY  REPORT\n';
+    content += `                                   ${report.invoice_number}\n\n`;
     
     
     // Company info and order details
     content += 'Halifax Glass & Aluminum Supply          ';
-    content += `   Order Date: ${formatDate(report.order_date)}\n`;
+    content += `               Order Date: ${formatDate(report.order_date)}\n`;
     content += 'Malagamot Road, Panacan                 ';
-    content += `   Delivery Date: ${formatDate(report.delivery_date)}\n`;
+    content += `                Delivery Date: ${formatDate(report.delivery_date)}\n`;
     content += 'glasshalifax@gmail.com                   ';
-    content += `   Payment Method: ${report.payment_method.toUpperCase()}\n`;
+    content += `               Payment Method: ${report.payment_method.toUpperCase()}\n`;
     content += '0939 924 3876                            ';
-    content += `   Status: ${report.status.toUpperCase()}\n\n`;
+    content += `               Status: ${report.status.toUpperCase()}\n\n`;
     
     // Customer info
     content += `Delivered to: ${report.customer?.business_name || report.customer?.customer_name}\n`;
@@ -199,9 +199,9 @@ const DeliveryReportView = ({ refresh , report }) => {
     } else {
       content += '\n';
     }
-    content += '__________________________________________________________________________\n';
-    content += ' Qty Unit Item                                        Price     Net Price\n';
-    content += '__________________________________________________________________________\n';
+    content += '_____________________________________________________________________________________\n';
+    content += ' Qty Unit Item                                        Price               Net Price\n';
+    content += '_____________________________________________________________________________________\n';
     
     // Group items by category
     const groupedItems = report.items.reduce((acc, item) => {
@@ -230,7 +230,7 @@ const DeliveryReportView = ({ refresh , report }) => {
         const price = padLeft(formatCurrency(parseFloat(item.sold_price)), 10);
         const netPrice = padLeft(formatCurrency(finalAmount), 10);
         
-        content += `${qty} ${unit} ${itemName} ${price}  ${netPrice}\n`;
+        content += `${qty} ${unit} ${itemName} ${price}            ${netPrice}\n`;
         
         // Add composition if exists
         if (item.composition) {
@@ -242,39 +242,46 @@ const DeliveryReportView = ({ refresh , report }) => {
       content += '\n';
     });
     
-    content += '__________________________________________________________________________\n\n';
+    content += '_____________________________________________________________________________________\n\n';
     
     // Status and totals section
-    content += `Delivery Status: ${report.is_delivered ? 'Delivered' : 'Pending Delivery'}\n`;
-    content += `Encoded By: ${report.user?.name}\n\n`;
+    // content += `Delivery Status: ${report.is_delivered ? 'Delivered' : 'Pending'}\n`;
+    content += `Encoded By: ${report.user?.name}`;
+  
+  // Totals (right aligned)
+  const totalsSection = [
+    ['Subtotal:', formatCurrency(subtotal)],
+    ['Delivery Fee:', formatCurrency(deliveryFee)],
+    ['Cutting Charges:', formatCurrency(cuttingCharges)],
+    ['Discount:', formatCurrency(totalDiscount)]
+  ];
+  
+  if (report.returns && report.returns.length > 0) {
+    totalsSection.push(['Credit Memo Total:', formatCurrency(totalCreditMemoAmount)]);
+  }
+  
+  totalsSection.push(['Total Amount:', formatCurrency(totalAmount)]);
+  
+  if (report.amount_received !== '0.00' && report.amount_received) {
+    totalsSection.push(['Amount Received:', formatCurrency(parseFloat(report.amount_received))]);
+  }
+  
+  if (report.change !== '0.00' && report.change) {
+    totalsSection.push(['Change:', formatCurrency(parseFloat(report.change))]);
+  }
+  
+  // Add the first total on the same line as Encoded By
+  if (totalsSection.length > 0) {
+    const [firstLabel, firstAmount] = totalsSection[0];
+    const firstTotalLine = `${padLeft(firstLabel, 47)} ${padLeft(firstAmount, 15)}`;
+    content += `${padLeft(firstTotalLine, 25)}\n`;
     
-    // Totals (right aligned)
-    const totalsSection = [
-      ['Subtotal:', formatCurrency(subtotal)],
-      ['Delivery Fee:', formatCurrency(deliveryFee)],
-      ['Cutting Charges:', formatCurrency(cuttingCharges)],
-      ['Discount:', formatCurrency(totalDiscount)]
-    ];
-    
-    if (report.returns && report.returns.length > 0) {
-      totalsSection.push(['Credit Memo Total:', formatCurrency(totalCreditMemoAmount)]);
-    }
-    
-    totalsSection.push(['Total Amount:', formatCurrency(totalAmount)]);
-    
-    if (report.amount_received !== '0.00' && report.amount_received) {
-      totalsSection.push(['Amount Received:', formatCurrency(parseFloat(report.amount_received))]);
-    }
-    
-    if (report.change !== '0.00' && report.change) {
-      totalsSection.push(['Change:', formatCurrency(parseFloat(report.change))]);
-    }
-    
-    // Right-align totals
-    totalsSection.forEach(([label, amount]) => {
+    // Add remaining totals
+    totalsSection.slice(1).forEach(([label, amount]) => {
       const line = `${padLeft(label, 57)} ${padLeft(amount, 15)}`;
-      content += `${padLeft(line, 50)}\n`;
+      content += `${padLeft(line, 85)}\n`;
     });
+  }
     
     content += '\n';
     
@@ -285,19 +292,27 @@ const DeliveryReportView = ({ refresh , report }) => {
     
     // Signature section
     content += '\n\n\n';
-    content += '   _____________        _____________        _____________\n';
-    content += '    Prepared By          Checked By           Released By\n\n';
-    content += '        ______________                  ______________\n';
-    content += '         Delivered By                    Received By\n';
+    content += '               _____________        _____________        _____________\n';
+    content += '                Prepared By          Checked By           Released By\n\n';
+    content += '                    ______________                  ______________\n';
+    content += '                     Delivered By                    Received By\n';
 
     
-    // Footer note
-    content += '\n\n';
-    content += 'Note: This Office will not entertain any claim of shortage after receipt \n';
-     content += '                         has been duly acknowledged                                       ';
-
-    
-    return content;
+      const contentLines = content.split('\n').length;
+      const targetPageLines = 66; // Standard for 11" paper at 6 lines per inch
+      const footerLines = 3; // Space needed for the note
+      const availableLines = targetPageLines - footerLines;
+      
+      // Add blank lines to push note to bottom
+      const linesToAdd = Math.max(0, availableLines - contentLines);
+      content += '\n'.repeat(linesToAdd);
+      
+      // Footer note - ALWAYS AT THE BOTTOM OF PAGE
+      content += '\n\n';
+      content += 'Note: This Office will not entertain any claim of shortage after receipt has been\n';
+      content += '                                 duly acknowledged\n';
+      
+      return content;
   };
 
   // Download text file function
