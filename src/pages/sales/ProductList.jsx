@@ -235,9 +235,31 @@ const ProductList = memo(({
   }, [onCloseDialog]);
 
   const handleShowBracket = useCallback((product) => {
-    setSelectedBracket(product.price_bracket);
+    const groupedItems = Object.values(
+      product.price_bracket.items.reduce((acc, item) => {
+        const key = `${item.min_quantity}-${item.max_quantity ?? '∞'}`;
+        if (!acc[key]) {
+          acc[key] = {
+            min_quantity: item.min_quantity,
+            max_quantity: item.max_quantity,
+            is_active: item.is_active,
+            prices: [],
+          };
+        }
+        acc[key].prices.push(Number(item.price).toFixed(2));
+        return acc;
+      }, {})
+    );
+
+    const groupedBracket = {
+      ...product.price_bracket,
+      items: groupedItems,
+    };
+
+    setSelectedBracket(groupedBracket);
     setBracketModalOpen(true);
   }, []);
+
 
   // Memoized filtered products - only recalculates when dependencies change
   const filteredProducts = useMemo(() => {
@@ -393,7 +415,7 @@ const ProductList = memo(({
             </DialogActions>
           </Dialog>
 
-          <Dialog open={bracketModalOpen} onClose={() => setBracketModalOpen(false)} maxWidth="md" fullWidth>
+          <Dialog open={bracketModalOpen} onClose={() => setBracketModalOpen(false)} maxWidth="sm" fullWidth>
             <DialogTitle>
               Pricing Brackets - {selectedBracket && products.find(p => p.price_bracket?.id === selectedBracket.id)?.name}
             </DialogTitle>
@@ -405,22 +427,18 @@ const ProductList = memo(({
                       <TableRow>
                         <TableCell>Quantity Range</TableCell>
                         <TableCell align="right">Price</TableCell>
-                        <TableCell>Status</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {selectedBracket.items.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell>
-                            {item.min_quantity} - {item.max_quantity || '∞'}
-                          </TableCell>
-                          <TableCell align="right">₱{Number(item.price).toFixed(2)}</TableCell>
-                          <TableCell>
-                            <Chip 
-                              label={item.is_active ? 'Active' : 'Inactive'} 
-                              size="small"
-                              color={item.is_active ? 'success' : 'default'}
-                            />
+                      {selectedBracket.items.map((group) => (
+                        <TableRow key={`${group.min_quantity}-${group.max_quantity}`}>
+                          <TableCell><Typography variant="h3">{group.min_quantity} - {group.max_quantity ?? '∞'}</Typography></TableCell>
+                          <TableCell align="right">
+                            {group.prices.map((price, index) => (
+                              <>
+                              <Chip variant="outlined" sx={{mb:1}} key={index} label={`₱${price}`}/><br/>
+                              </>
+                            ))}
                           </TableCell>
                         </TableRow>
                       ))}
