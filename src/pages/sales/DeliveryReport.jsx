@@ -5,11 +5,12 @@ import {
   TableRow, IconButton, InputAdornment, Button,
   Radio, RadioGroup, FormControlLabel, FormControl, FormLabel,
   Paper, Divider, Grid, Select, MenuItem, Checkbox,
-  CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions
+  CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions,
+  Chip, Tooltip
 } from '@mui/material';
 import { 
   DeleteOutlined, PlusCircleOutlined, MinusCircleOutlined, 
-  SaveOutlined, ShoppingCartOutlined, EditOutlined 
+  SaveOutlined, ShoppingCartOutlined, EditOutlined, StarFilled 
 } from '@ant-design/icons';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
@@ -40,7 +41,7 @@ const validationSchema = Yup.object().shape({
   }),
 });
 
-// Memoized CustomerFormSection
+// Memoized CustomerFormSection with valued customer indicator
 const CustomerFormSection = memo(({ values, touched, errors, setFieldValue, customers }) => {
   const handleCustomerChange = useCallback((_, value) => {
     setFieldValue('customer', value);
@@ -52,7 +53,6 @@ const CustomerFormSection = memo(({ values, touched, errors, setFieldValue, cust
   }, [setFieldValue]);
 
   const handleCityChange = useCallback((event, newValue) => {
-    // Store the full display value (city + province) or just city name
     const cityValue = newValue ? 
       (newValue.province ? `${newValue.name}, ${newValue.province}` : newValue.name) : "";
     setFieldValue("city", cityValue);
@@ -67,6 +67,16 @@ const CustomerFormSection = memo(({ values, touched, errors, setFieldValue, cust
           size="small" 
           options={customers}
           getOptionLabel={(option) => option.customer_name}
+          renderOption={(props, option) => (
+            <li {...props}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                <span>{option.customer_name}</span>
+                {option.is_valued_customer && (
+                   <StarFilled style={{ color: '#ffa726' }} />
+                )}
+              </Box>
+            </li>
+          )}
           renderInput={(params) => (
             <TextField
               {...params}
@@ -80,6 +90,19 @@ const CustomerFormSection = memo(({ values, touched, errors, setFieldValue, cust
               helperText={touched.customer && errors.customer}
               fullWidth
               margin="normal"
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {values.customer?.is_valued_customer && (
+                      <Tooltip title="Valued Customer - Custom pricing available">
+                        <StarFilled style={{ color: '#ffa726', marginRight: 8 }} />
+                      </Tooltip>
+                    )}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
             />
           )}
           onChange={handleCustomerChange}
@@ -247,39 +270,40 @@ const PaymentSection = memo(({ values, setFieldValue, touched, errors }) => {
   );
 });
 
-// Memoized OrderItemRow
+// Enhanced OrderItemRow with custom pricing support
 const OrderItemRow = memo(({ 
   item, 
+  customer,
   onQuantityChange, 
   onDiscountChange, 
   onBracketPricingChange,
+  onCustomPriceChange,
   onRemoveProduct,
   onOpenCompositionModal,
   getPriceByPriceType,
   calculateBracketPrice,
+  calculateCustomPrice,
   calculateItemSubtotal,
   availableInventory = 0
 }) => {
   const handleQuantityDecrease = useCallback(() => {
-    // Prevent going below 0
     if (item.quantity > 0) {
       onQuantityChange(item.id, -1);
     }
   }, [item.id, item.quantity, onQuantityChange]);
 
   const handleQuantityIncrease = useCallback(() => {
-      onQuantityChange(item.id, 1);
+    onQuantityChange(item.id, 1);
   }, [item.id, item.quantity, onQuantityChange]);
 
   const handleQuantityChange = useCallback((e) => {
     const newQuantity = parseInt(e.target.value) || 0;
-    // Ensure quantity doesn't go below 0
     const validQuantity = Math.max(0, newQuantity);
     onQuantityChange(item.id, 0, validQuantity);
   }, [item.id, onQuantityChange]);
 
   const handleQuantityKeyDown = useCallback((e) => {
-    if ((e.key === 'ArrowLeft' || e.key === 'ArrowDown')  && item.quantity > 0) {
+    if ((e.key === 'ArrowLeft' || e.key === 'ArrowDown') && item.quantity > 0) {
       onQuantityChange(item.id, -1);
     }
     if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
@@ -295,6 +319,10 @@ const OrderItemRow = memo(({
     onBracketPricingChange(item.id, e.target.checked);
   }, [item.id, onBracketPricingChange]);
 
+  const handleCustomPriceChange = useCallback((e) => {
+    onCustomPriceChange(item.id, parseFloat(e.target.value));
+  }, [item.id, onCustomPriceChange]);
+
   const handleRemoveProduct = useCallback(() => {
     onRemoveProduct(item.id);
   }, [item.id, onRemoveProduct]);
@@ -303,11 +331,105 @@ const OrderItemRow = memo(({
     onOpenCompositionModal(item.id);
   }, [item.id, onOpenCompositionModal]);
 
-  const itemPrice = useMemo(() => getPriceByPriceType(item), [item, getPriceByPriceType]);
-  const bracketPrice = useMemo(() => calculateBracketPrice(item, item.quantity), [item, calculateBracketPrice]);
-  const subtotal = useMemo(() => calculateItemSubtotal(item), [item, calculateItemSubtotal]);
-  const isZeroQuantity = item.quantity === 0;
+  const handleBracketPriceSelection = useCallback((e) => {
+  const selectedPrice = parseFloat(e.target.value);
+  // Update the item's selected bracket price
+  if (onCustomPriceChange) {
+    onCustomPriceChange(item.id, selectedPrice);
+  }
+}, [item.id, onCustomPriceChange]);
 
+  // Calculate pricing options
+  const customPricing = useMemo(() => 
+    calculateCustomPrice(item, item.quantity, customer), 
+    [item, calculateCustomPrice, customer]
+  );
+  
+  const bracketPricing = useMemo(() => 
+    calculateBracketPrice(item, item.quantity), 
+    [item, calculateBracketPrice]
+  );
+
+  const itemPrice = useMemo(() => 
+    getPriceByPriceType(item, customer), 
+    [item, customer, getPriceByPriceType]
+  );
+
+  const subtotal = useMemo(() => 
+    calculateItemSubtotal(item, customer), 
+    [item, customer, calculateItemSubtotal]
+  );
+
+  const isZeroQuantity = item.quantity === 0;
+  const isValuedCustomer = customer?.is_valued_customer;
+
+  // Determine price display and options
+  const getPriceDisplay = () => {
+    // For valued customers, prioritize custom pricing
+    if (isValuedCustomer && customPricing) {
+        return (
+          <Box>
+            <Typography variant="body2">
+              ₱{customPricing.price.toFixed(2)}
+            </Typography>
+            <Typography variant="caption" display="block" color="primary">
+              Custom Price
+            </Typography>
+          </Box>
+        );
+      }
+    
+
+    // Fallback to bracket pricing if available and enabled
+    if (item.use_bracket_pricing && item.price_bracket && bracketPricing) {
+      if (bracketPricing.options && bracketPricing.options.length > 1) {
+        // Multiple bracket prices - show dropdown
+        return (
+          <Box>
+            <Select
+              size="small"
+              value={item.selected_bracket_price || bracketPricing.options[0]}
+              onChange={handleBracketPriceSelection}
+              sx={{ minWidth: 80 }}
+            >
+              {bracketPricing.options.map((price, index) => (
+                <MenuItem key={index} value={price}>
+                  ₱{price.toFixed(2)}
+                </MenuItem>
+              ))}
+            </Select>
+            <Typography variant="caption" display="block" color="secondary">
+              Bracket Price
+            </Typography>
+          </Box>
+        );
+      } else {
+        // Single bracket price
+        return (
+          <Box>
+            <Typography variant="body2">
+              ₱{bracketPricing.price.toFixed(2)}
+            </Typography>
+            <Typography variant="caption" display="block" color="secondary">
+              Bracket Price
+            </Typography>
+          </Box>
+        );
+      }
+    }
+
+    // Standard pricing
+    return (
+      <Box>
+        <Typography variant="body2">
+          ₱{itemPrice.toFixed(2)}
+        </Typography>
+        <Typography variant="caption" display="block" color="text.secondary">
+          Standard Price
+        </Typography>
+      </Box>
+    );
+  };
 
   return (
     <React.Fragment>
@@ -315,40 +437,46 @@ const OrderItemRow = memo(({
         opacity: isZeroQuantity ? 0.6 : 1,
         backgroundColor: isZeroQuantity ? '#f5f5f5' : 'inherit'
       }}>
-        <TableCell >{item.name}</TableCell>
+        <TableCell>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <span>{item.name}</span>
+            {isValuedCustomer && customPricing && (
+              <StarFilled style={{ color: '#ffa726' }} />
+            )}
+          </Box>
+        </TableCell>
         
-        {/* Bracket Pricing Checkbox Cell */}
+        {/* Bracket Pricing Checkbox Cell - only show for non-valued customers or when no custom pricing */}
         <TableCell align="center">
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={item.use_bracket_pricing || false}
-                onChange={handleBracketPricingChange}
-                size="small"
-                disabled={!item.price_bracket}
+          {(!isValuedCustomer || !customPricing) && (
+            <>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={item.use_bracket_pricing || false}
+                    onChange={handleBracketPricingChange}
+                    size="small"
+                    disabled={!item.price_bracket}
+                  />
+                }
+                label=""
+                sx={{ 
+                  m: 0,
+                  opacity: item.price_bracket ? 1 : 0.3 
+                }}
               />
-            }
-            label=""
-            sx={{ 
-              m: 0,
-              opacity: item.price_bracket ? 1 : 0.3 
-            }}
-          />
-          {item.price_bracket && (
-            <Typography variant="caption" display="block" color="primary" sx={{ fontSize: '0.6rem' }}>
-              Available
+            </>
+          )}
+          {isValuedCustomer && customPricing && (
+            <Typography variant="caption" color="warning.main" sx={{ fontSize: '0.7rem' }}>
+              Auto Applied
             </Typography>
           )}
         </TableCell>
         
-        {/* Price Cell */}
+        {/* Price Cell with enhanced display */}
         <TableCell align="right">
-          ₱{Number(itemPrice).toFixed(2)}
-          {item.use_bracket_pricing && item.price_bracket && bracketPrice !== null && (
-            <Typography variant="caption" display="block" color="primary">
-              (Bracket)
-            </Typography>
-          )}
+          {getPriceDisplay()}
         </TableCell>
         
         {/* Quantity Cell */}
@@ -364,33 +492,18 @@ const OrderItemRow = memo(({
               style: { 
                 textAlign: 'center', 
                 width: '40px',
-                color: isZeroQuantity ? '#f57c00' : 'inherit' // Orange color for zero
+                color: isZeroQuantity ? '#f57c00' : 'inherit'
               },
               min: 0,
               max: availableInventory
             }}
             size="small"
-             error={isZeroQuantity}
+            error={isZeroQuantity}
           />
           <IconButton size="small" onClick={handleQuantityIncrease}>
             <PlusCircleOutlined />
           </IconButton>
         </TableCell>
-        
-        {/* Discount Cell */}
-        {/* <TableCell align="right">
-          <TextField
-            value={item.discount || 0}
-            onChange={handleDiscountChange}
-            InputProps={{
-              style: { textAlign: 'right', width: '80px' },
-              min: 0,
-              max: 100,
-              endAdornment: <InputAdornment position="end">%</InputAdornment>,
-            }}
-            size="small"
-          />
-        </TableCell> */}
         
         {/* Subtotal Cell */}
         <TableCell align="right">₱{subtotal.toFixed(2)}</TableCell>
@@ -493,7 +606,7 @@ const CompositionModal = memo(({
   );
 });
 
-// Main DeliveryReport component
+// Main DeliveryReport component with enhanced pricing logic
 const DeliveryReport = forwardRef(({ 
   orderItems, 
   totalPrice, 
@@ -505,6 +618,7 @@ const DeliveryReport = forwardRef(({
   onPriceTypeChange,
   onUpdateItemComposition,
   onBracketPricingChange,
+  onCustomPriceChange,
   isSubmitting = false,
   onOpenProductModal
 }, ref) => {
@@ -524,47 +638,158 @@ const DeliveryReport = forwardRef(({
     deliveryDate: formatDateForInput(new Date(Date.now() + 86400000)),
     paymentMethod: '',
     term_days: '',
-    delivery_fee : 0,
-    cutting_charges :0
+    delivery_fee: 0,
+    cutting_charges: 0
   }), []);
 
-  // Memoized utility functions
+  // Enhanced custom pricing calculation - automatically applies based on quantity
+  const calculateCustomPrice = useCallback((item, quantity, customer) => {
+    if (!customer?.is_valued_customer || !customer.custom_pricing_groups) {
+      return null;
+    }
+
+    // Find custom pricing for this product
+    const productPricing = customer.custom_pricing_groups.find(
+      group => group.product_id === item.id
+    );
+
+    if (!productPricing) {
+      return null;
+    }
+
+    // Find the best matching price range for the quantity (prefer higher quantity tiers)
+    const matchingRange = productPricing.price_ranges
+      .filter(range => 
+        range.is_active &&
+        quantity >= range.min_quantity &&
+        (range.max_quantity === null || quantity <= range.max_quantity)
+      )
+      .sort((a, b) => b.min_quantity - a.min_quantity)[0]; // Get highest tier that matches
+
+    if (!matchingRange) {
+      return null;
+    }
+
+    return {
+      available: true,
+      price: parseFloat(matchingRange.price),
+      range: matchingRange.quantity_range,
+      label: matchingRange.label,
+      source: 'custom_pricing'
+    };
+  }, []);
+
+  // Enhanced bracket pricing calculation to handle multiple prices by grouping quantity ranges
   const calculateBracketPrice = useCallback((item, quantity) => {
     if (!item.price_bracket || !item.use_bracket_pricing) return null;
     
     const priceType = item.price_type || 'regular';
-    const bracketItem = item.price_bracket.items.find(bracket => 
-      bracket.price_type === priceType &&
-      bracket.is_active &&
-      bracket.min_quantity <= quantity &&
-      (bracket.max_quantity === null || bracket.max_quantity >= quantity)
-    );
     
-    return bracketItem ? bracketItem.price : null;
+    // Group bracket items by quantity range
+    const quantityGroups = {};
+    item.price_bracket.items.forEach(bracketItem => {
+      if (bracketItem.price_type === priceType && bracketItem.is_active) {
+        const key = `${bracketItem.min_quantity}-${bracketItem.max_quantity || '∞'}`;
+        if (!quantityGroups[key]) {
+          quantityGroups[key] = {
+            min_quantity: bracketItem.min_quantity,
+            max_quantity: bracketItem.max_quantity,
+            prices: []
+          };
+        }
+        quantityGroups[key].prices.push(parseFloat(bracketItem.price));
+      }
+    });
+
+    // Find matching quantity group
+    const matchingGroup = Object.values(quantityGroups).find(group =>
+      quantity >= group.min_quantity &&
+      (group.max_quantity === null || quantity <= group.max_quantity)
+    );
+
+    if (!matchingGroup) return null;
+
+    // Sort prices for consistent ordering
+    matchingGroup.prices.sort((a, b) => a - b);
+
+    return {
+      available: true,
+      price: item.selected_bracket_price || matchingGroup.prices[0],
+      options: matchingGroup.prices.length > 1 ? matchingGroup.prices : null,
+      source: 'bracket_pricing'
+    };
   }, []);
 
-  const getPriceByPriceType = useCallback((item) => {
+  // Enhanced price calculation with priority order and proper bracket price selection
+  // const getPriceByPriceType = useCallback((item, customer) => {
+  //   // 1. First priority: Custom pricing for valued customers
+  //   const customPricing = calculateCustomPrice(item, item.quantity, customer);
+  //   if (customPricing && customPricing.price) {
+  //     return customPricing.price;
+  //   }
+
+  //   // 2. Second priority: Bracket pricing if enabled
+  //   if (item.use_bracket_pricing && item.price_bracket) {
+  //     const bracketPricing = calculateBracketPrice(item, item.quantity);
+  //     if (bracketPricing && bracketPricing.price) {
+  //       // Use selected bracket price if available, otherwise use default
+  //       return item.selected_bracket_price || bracketPricing.price;
+  //     }
+  //   }
+
+  //   // 3. Fallback to standard pricing
+  //   const standardPrice = (() => {
+  //     switch(item.price_type || 'regular') {
+  //       case 'walkin':
+  //         return item.walk_in_price || item.regular_price;
+  //       case 'wholesale':
+  //         return item.wholesale_price || item.regular_price;
+  //       case 'regular':
+  //       default:
+  //         return item.regular_price;
+  //     }
+  //   })();
+
+  //   return parseFloat(standardPrice) || 0;
+  // }, [calculateCustomPrice, calculateBracketPrice]);
+
+ const getPriceByPriceType = useCallback((item, customer) => {
+    // 1. First priority: Custom pricing for valued customers
+    const customPricing = calculateCustomPrice(item, item.quantity, customer);
+    if (customPricing && customPricing.price) {
+      return customPricing.price;
+    }
+
+    // 2. Second priority: Bracket pricing if enabled
     if (item.use_bracket_pricing && item.price_bracket) {
-      const bracketPrice = calculateBracketPrice(item, item.quantity);
-      if (bracketPrice !== null) {
-        return bracketPrice;
+      const bracketPricing = calculateBracketPrice(item, item.quantity);
+      if (bracketPricing && bracketPricing.price) {
+        // Use selected bracket price if available, otherwise use default
+        return item.selected_bracket_price || bracketPricing.price;
       }
     }
-    
-    switch(item.price_type || 'regular') {
-      case 'walkin':
-        return item.walk_in_price || item.regular_price;
-      case 'wholesale':
-        return item.wholesale_price || item.regular_price;
-      case 'regular':
-      default:
-        return item.regular_price;
-    }
-  }, [calculateBracketPrice]);
 
-  const calculateItemSubtotal = useCallback((item) => {
-    const price = getPriceByPriceType(item);
-    const subtotal = Number(price) * item.quantity;
+    // 3. Fallback to standard pricing
+    const standardPrice = (() => {
+      switch(item.price_type || 'regular') {
+        case 'walkin':
+          return item.walk_in_price || item.regular_price;
+        case 'wholesale':
+          return item.wholesale_price || item.regular_price;
+        case 'regular':
+        default:
+          return item.regular_price;
+      }
+    })();
+
+    return parseFloat(standardPrice) || 0;
+  }, [calculateCustomPrice, calculateBracketPrice]);
+
+
+  const calculateItemSubtotal = useCallback((item, customer) => {
+    const price = getPriceByPriceType(item, customer);
+    const numericPrice = parseFloat(price) || 0;
+    const subtotal = numericPrice * (item.quantity || 0);
     const discountPercentage = parseFloat(item.discount) || 0;
     const discountAmount = subtotal * (discountPercentage / 100);
     return subtotal - discountAmount;
@@ -587,206 +812,237 @@ const DeliveryReport = forwardRef(({
     setCompositionModalOpen(false);
   }, []);
 
-
-
- const hasZeroQuantityItems = orderItems.some(item => item.quantity === 0);
-
-  console.log(hasZeroQuantityItems);
+  const hasZeroQuantityItems = orderItems.some(item => item.quantity === 0);
 
   return (
     <>
-  <Formik
-      initialValues={initialValues}
-      validationSchema={validationSchema}
-      onSubmit={(values, { setSubmitting }) => {
-        onSubmit(values);
-      }}
-    >
-      {({ errors, touched, setFieldValue, values, isValid, dirty }) => {
-        // Add this calculatedTotal inside the Formik render function
-        const calculatedTotal = useMemo(() => {
-          const itemsTotal = orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0);
-          const deliveryFee = parseFloat(values.delivery_fee) || 0;
-          const cuttingCharges = parseFloat(values.cutting_charges) || 0;
-          return itemsTotal + deliveryFee + cuttingCharges;
-        }, [orderItems, calculateItemSubtotal, values.delivery_fee, values.cutting_charges]);
+      <Formik
+        initialValues={initialValues}
+        validationSchema={validationSchema}
+        onSubmit={(values, { setSubmitting }) => {
+          onSubmit(values);
+        }}
+      >
+        {({ errors, touched, setFieldValue, values, isValid, dirty }) => {
+          // Calculate total with enhanced pricing
+          const calculatedTotal = useMemo(() => {
+            const itemsTotal = orderItems.reduce((sum, item) => 
+              sum + calculateItemSubtotal(item, values.customer), 0
+            );
+            const deliveryFee = parseFloat(values.delivery_fee) || 0;
+            const cuttingCharges = parseFloat(values.cutting_charges) || 0;
+            return itemsTotal + deliveryFee + cuttingCharges;
+          }, [orderItems, calculateItemSubtotal, values.customer, values.delivery_fee, values.cutting_charges]);
 
-        return (
-          <Form>
-            <div ref={ref}>
-              <Box sx={{ width: '100%', border: (ref ? '1px solid transparent' : 'none') }}>
-                {/* Header */}
-                <Box sx={{ mb:0, textAlign: 'center' }}>
-                  <Typography variant="h5" gutterBottom>
-                    DELIVERY REPORT
-                  </Typography>
-                </Box>
-              
-                {/* Customer Form Section */}
-                <CustomerFormSection
-                  values={values}
-                  touched={touched}
-                  errors={errors}
-                  setFieldValue={setFieldValue}
-                  customers={customers}
-                />
-
-                {/* Payment Section */}
-                <PaymentSection
-                  values={values}
-                  setFieldValue={setFieldValue}
-                  touched={touched}
-                  errors={errors}
-                />
-
-                <Divider sx={{ mb: 1 }} />
+          return (
+            <Form>
+              <div ref={ref}>
+                <Box sx={{ width: '100%', border: (ref ? '1px solid transparent' : 'none') }}>
+                  {/* Header */}
+                  <Box sx={{ mb:0, textAlign: 'center' }}>
+                    <Typography variant="h5" gutterBottom>
+                      DELIVERY REPORT
+                    </Typography>
+                  </Box>
                 
-                {/* Order Items Header */}
-                <Box sx={{display:'flex', justifyContent:'space-between', alignItems:'start'}}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent:'space-between' , width: '100%'  }}>
-                    <Typography variant="h6" gutterBottom>Order Items</Typography>
-                    {onOpenProductModal && (
-                      <Button
-                        variant="outlined"
-                        color="primary"
+                  {/* Customer Form Section */}
+                  <CustomerFormSection
+                    values={values}
+                    touched={touched}
+                    errors={errors}
+                    setFieldValue={setFieldValue}
+                    customers={customers}
+                  />
+
+                  {/* Payment Section */}
+                  <PaymentSection
+                    values={values}
+                    setFieldValue={setFieldValue}
+                    touched={touched}
+                    errors={errors}
+                  />
+
+                  <Divider sx={{ mb: 1 }} />
+                  
+                  {/* Order Items Header */}
+                  <Box sx={{display:'flex', justifyContent:'space-between', alignItems:'start'}}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent:'space-between' , width: '100%'  }}>
+                      <Typography variant="h6" gutterBottom>
+                        Order Items
+                      </Typography>
+                      {onOpenProductModal && (
+                        <Button
+                          variant="outlined"
+                          color="primary"
+                          size="small"
+                          startIcon={<ShoppingCartOutlined />}
+                          onClick={onOpenProductModal}
+                          sx={{ ml: 2, mb: 1 }}
+                        >
+                          Add Products
+                        </Button>
+                      )}
+                    </Box>
+                    {values.paymentMethod === 'term' && (
+                      <Field
                         size="small"
-                        startIcon={<ShoppingCartOutlined />}
-                        onClick={onOpenProductModal}
-                        sx={{ ml: 2, mb: 1 }}
-                      >
-                        Add Products
-                      </Button>
+                        as={TextField}
+                        name="term_days"
+                        label="Term"
+                        type="number"
+                        width={50}
+                        sx={{ mb: 1 , ml:1 }}
+                        slotProps={{
+                          inputLabel: {
+                            sx: { top: '1px' }, 
+                          },
+                        }}
+                        margin="small"
+                        InputProps={{ min: 0 }}
+                        error={touched.term_days && !!errors.term_days}
+                        helperText={touched.term_days && errors.term_days}
+                      />
                     )}
                   </Box>
-                  {values.paymentMethod === 'term' && (
-                    <Field
-                      size="small"
-                      as={TextField}
-                      name="term_days"
-                      label="Term"
-                      type="number"
-                      width={50}
-                      sx={{ mb: 1 , ml:1 }}
-                      slotProps={{
-                        inputLabel: {
-                          sx: { top: '1px' }, 
-                        },
-                      }}
-                      margin="small"
-                      InputProps={{ min: 0 }}
-                      error={touched.term_days && !!errors.term_days}
-                      helperText={touched.term_days && errors.term_days}
-                    />
-                  )}
-                </Box>
-                
-                {/* Order Items Table */}
-                <TableContainer component={Paper} sx={{ mb: 2}}>
-                  <Table size="small" stickyHeader>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Product</TableCell>
-                        <TableCell align="center">Bracket</TableCell>
-                        <TableCell align="right">Price</TableCell>
-                        <TableCell align="center">Qty</TableCell>
-                        {/* <TableCell align="right">Discount (%)</TableCell> */}
-                        <TableCell align="right">Subtotal</TableCell>
-                        <TableCell align="right">Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {orderItems.length === 0 ? (
+                  
+                  {/* Order Items Table */}
+                  <TableContainer component={Paper} sx={{ mb: 2}}>
+                    <Table size="small" stickyHeader>
+                      <TableHead>
                         <TableRow>
-                          <TableCell colSpan={7} align="center">No items added to order</TableCell>
+                          <TableCell>Product</TableCell>
+                          <TableCell align="center">
+                            {values.customer?.is_valued_customer ? 'Pricing' : 'Bracket'}
+                          </TableCell>
+                          <TableCell align="right">Price</TableCell>
+                          <TableCell align="center">Qty</TableCell>
+                          <TableCell align="right">Subtotal</TableCell>
+                          <TableCell align="right">Actions</TableCell>
                         </TableRow>
-                      ) : (
-                        orderItems.map((item) => (
-                          <OrderItemRow
-                            key={item.id}
-                            item={item}
-                            onQuantityChange={onQuantityChange}
-                            onDiscountChange={onDiscountChange}
-                            onBracketPricingChange={onBracketPricingChange}
-                            onRemoveProduct={onRemoveProduct}
-                            onOpenCompositionModal={handleOpenCompositionModal}
-                            getPriceByPriceType={getPriceByPriceType}
-                            calculateBracketPrice={calculateBracketPrice}
-                            calculateItemSubtotal={calculateItemSubtotal}
-                          />
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-                
-                {/* Total Section */}
-                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                  <Typography variant="body2">
-                    Payment Method: {values.paymentMethod.charAt(0).toUpperCase() + values.paymentMethod.slice(1)}
-                  </Typography>
-                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1 }}>
+                      </TableHead>
+                      <TableBody>
+                        {orderItems.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} align="center">No items added to order</TableCell>
+                          </TableRow>
+                        ) : (
+                          orderItems.map((item) => (
+                            <OrderItemRow
+                              key={item.id}
+                              item={item}
+                              customer={values.customer}
+                              onQuantityChange={onQuantityChange}
+                              onDiscountChange={onDiscountChange}
+                              onBracketPricingChange={onBracketPricingChange}
+                              onCustomPriceChange={onCustomPriceChange}
+                              onRemoveProduct={onRemoveProduct}
+                              onOpenCompositionModal={handleOpenCompositionModal}
+                              getPriceByPriceType={getPriceByPriceType}
+                              calculateBracketPrice={calculateBracketPrice}
+                              calculateCustomPrice={calculateCustomPrice}
+                              calculateItemSubtotal={calculateItemSubtotal}
+                            />
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  
+                  {/* Pricing Summary for Valued Customers */}
+                  {/* {values.customer?.is_valued_customer && orderItems.length > 0 && (
+                    <Paper sx={{ p: 2, mb: 2, backgroundColor: '#fff8e1' }}>
+                      <Typography variant="subtitle2" color="warning.dark" gutterBottom>
+                        <StarFilled style={{ marginRight: 4 }} />
+                        Valued Customer Pricing Summary
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {orderItems.map((item) => {
+                          const customPricing = calculateCustomPrice(item, item.quantity, values.customer);
+                          if (customPricing) {
+                            return (
+                              <Chip
+                                key={item.id}
+                                label={`${item.name}: ₱${customPricing.price.toFixed(2)} (${customPricing.range})`}
+                                size="small"
+                                color="warning"
+                                variant="outlined"
+                              />
+                            );
+                          }
+                          return null;
+                        })}
+                      </Box>
+                    </Paper>
+                  )} */}
+                  
+                  {/* Total Section */}
+                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                    <Typography variant="body2">
+                      Payment Method: {values.paymentMethod.charAt(0).toUpperCase() + values.paymentMethod.slice(1)}
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1 }}>
                       <Field
-                      size="small"
-                      as={TextField}
-                      name="delivery_fee"
-                      label="Delivery fee"
-                      type="number"
-                      width={50}
-                      sx={{ mb: 1 }}
-                      slotProps={{
-                        inputLabel: {
-                          sx: { top: '1px' }, 
-                        },
-                      }}
-                      margin="small"
-                      InputProps={{ min: 0 }}
-                    />
-                  <Field
-                      size="small"
-                      as={TextField}
-                      name="cutting_charges"
-                      label="Cutting charges"
-                      type="number"
-                      width={50}
-                      sx={{ mb: 1 }}
-                      slotProps={{
-                        inputLabel: {
-                          sx: { top: '1px' }, 
-                        },
-                      }}
-                      margin="small"
-                      InputProps={{ min: 0 }}
-                    />
-                  <Typography variant="h6">
-                    Total Amount: ₱{calculatedTotal.toFixed(2)}
-                  </Typography>
+                        size="small"
+                        as={TextField}
+                        name="delivery_fee"
+                        label="Delivery fee"
+                        type="number"
+                        width={50}
+                        sx={{ mb: 1 }}
+                        slotProps={{
+                          inputLabel: {
+                            sx: { top: '1px' }, 
+                          },
+                        }}
+                        margin="small"
+                        InputProps={{ min: 0 }}
+                      />
+                      <Field
+                        size="small"
+                        as={TextField}
+                        name="cutting_charges"
+                        label="Cutting charges"
+                        type="number"
+                        width={50}
+                        sx={{ mb: 1 }}
+                        slotProps={{
+                          inputLabel: {
+                            sx: { top: '1px' }, 
+                          },
+                        }}
+                        margin="small"
+                        InputProps={{ min: 0 }}
+                      />
+                      <Typography variant="h6">
+                        Total Amount: ₱{calculatedTotal.toFixed(2)}
+                      </Typography>
+                    </Box>
+                  </Box>
                 </Box>
+              </div>
+              
+              {/* Submit Button */}
+              <Box sx={{ mt: 3 }}>
+                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    fullWidth
+                    startIcon={isSubmitting ? <CircularProgress size={24} color="inherit" /> : <SaveOutlined />}
+                    disabled={ orderItems.length === 0 ||  
+                              hasZeroQuantityItems || 
+                              isSubmitting || 
+                              !isValid}
+                  >
+                    {isSubmitting ? 'Submitting...' : 'Submit Delivery Report'}
+                  </Button>
                 </Box>
               </Box>
-            </div>
-            
-            {/* Submit Button */}
-            <Box sx={{ mt: 3 }}>
-              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  size="large"
-                  fullWidth
-                  startIcon={isSubmitting ? <CircularProgress size={24} color="inherit" /> : <SaveOutlined />}
-                  disabled={ orderItems.length === 0 ||  
-                            hasZeroQuantityItems || 
-                            isSubmitting || 
-                            !isValid}
-                >
-                  {isSubmitting ? 'Submitting...' : 'Submit Delivery Report'}
-                </Button>
-              </Box>
-            </Box>
-          </Form>
+            </Form>
           );
-      }}
+        }}
       </Formik>
 
       {/* Composition Modal */}
