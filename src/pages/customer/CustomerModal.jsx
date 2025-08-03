@@ -10,14 +10,19 @@ import {
   CircularProgress,
   IconButton,
   Typography,
-  Autocomplete
+  Autocomplete,
+  Divider,
+  FormControlLabel,
+  Checkbox,
+  Box
 } from '@mui/material';
-import { CloseOutlined } from '@ant-design/icons';
+import { CloseOutlined , StarOutlined, StarFilled } from '@ant-design/icons';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useSelector } from 'react-redux';
 import { selectCustomersLoading } from '@/store/slices/customerSlice';
 import cities from '@/utils/cities';
-
+import { toast } from 'sonner';
+import api from '@/lib/axios';
 const CustomerModal = ({ open, handleClose, customer = null, handleSuccess }) => {
   const initialFormData = {
     customer_name: '',
@@ -32,6 +37,9 @@ const CustomerModal = ({ open, handleClose, customer = null, handleSuccess }) =>
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
   const isLoading = useSelector(selectCustomersLoading);
+  const [valuedCustomerDialogOpen, setValuedCustomerDialogOpen] = useState(false);
+  const [valuedCustomerNotes, setValuedCustomerNotes] = useState('');
+  const [isTogglingValuedStatus, setIsTogglingValuedStatus] = useState(false);
   const { createCustomer, updateCustomer } = useCustomers();
   
   const isEditing = !!customer;
@@ -113,7 +121,69 @@ const CustomerModal = ({ open, handleClose, customer = null, handleSuccess }) =>
     }
   };
 
+   const handleValuedCustomerToggle = async (isChecked) => {
+    if (!customer?.id) {
+      toast.error('Please save the customer first before changing valued status');
+      return;
+    }
+
+    if (isChecked) {
+      // Show confirmation dialog when marking as valued customer
+      setValuedCustomerNotes(customer?.valued_customer_notes || '');
+      setValuedCustomerDialogOpen(true);
+    } else {
+      // Directly remove valued status when unchecking
+      await confirmValuedCustomerToggle(false, '');
+    }
+  };
+
+   const confirmValuedCustomerToggle = async (isValuedCustomer, notes = '') => {
+    try {
+      setIsTogglingValuedStatus(true);
+      
+      const response = await api.put(`/customers/${customer.id}/valued-status`, {
+        is_valued_customer: isValuedCustomer,
+        notes: notes
+      });
+
+      // Update the customer data with the response
+      const updatedCustomer = response.data.data;
+      
+      // Call the success handler to update the parent component
+      if (handleSuccess) {
+        handleSuccess(updatedCustomer);
+      }
+
+      // Show success message
+      toast.success(
+        isValuedCustomer 
+          ? 'Customer marked as valued customer successfully' 
+          : 'Valued customer status removed successfully'
+      );
+
+      // Close the dialog
+      setValuedCustomerDialogOpen(false);
+      setValuedCustomerNotes('');
+
+    } catch (error) {
+      console.error('Error toggling valued customer status:', error);
+      toast.error(
+        error.response?.data?.message || 
+        'Failed to update customer status. Please try again.'
+      );
+    } finally {
+      setIsTogglingValuedStatus(false);
+    }
+  };
+
+  // NEW: Handle dialog close
+  const handleValuedCustomerDialogClose = () => {
+    setValuedCustomerDialogOpen(false);
+    setValuedCustomerNotes('');
+  };
+
   return (
+    <>
     <Dialog
       open={open}
       onClose={handleClose}
@@ -244,6 +314,28 @@ const CustomerModal = ({ open, handleClose, customer = null, handleSuccess }) =>
               )}
             />
           </Grid>
+            <Grid item xs={12} md={6} display="flex" justifyContent="start" alignItems="center">
+                 {customer?.id && (
+
+
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={customer?.is_valued_customer || false}
+                      onChange={(e) => handleValuedCustomerToggle(e.target.checked)}
+                      icon={<StarOutlined style={{ fontSize: 23 }} />} // increase icon size
+                      checkedIcon={<StarFilled style={{ color: '#ffa726', fontSize: 23 }} />}
+                    />
+                  }
+                  label={
+                    <Typography fontSize={18} fontWeight={500}>
+                      Mark as Valued Customer
+                    </Typography>
+                  }
+                />
+
+          )}
+            </Grid>
         </Grid>
       </DialogContent>
       
@@ -262,6 +354,69 @@ const CustomerModal = ({ open, handleClose, customer = null, handleSuccess }) =>
         </Button>
       </DialogActions>
     </Dialog>
+ <Dialog 
+        open={valuedCustomerDialogOpen} 
+        onClose={handleValuedCustomerDialogClose}
+        maxWidth="sm" 
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <StarFilled style={{ color: '#ffa726' }} />
+            Mark as Valued Customer
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            This will enable custom pricing options for <strong>{customer?.customer_name}</strong>.
+          </Typography>
+          
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Valued customers can have:
+          </Typography>
+          
+          <Box component="ul" sx={{ pl: 2, mb: 2 }}>
+            <Typography component="li" variant="body2" color="text.secondary">
+              Custom pricing per product and quantity range
+            </Typography>
+            <Typography component="li" variant="body2" color="text.secondary">
+              Priority over standard and bracket pricing
+            </Typography>
+            <Typography component="li" variant="body2" color="text.secondary">
+              Special pricing templates and bulk discounts
+            </Typography>
+          </Box>
+          
+          <TextField
+            label="Notes (Optional)"
+            multiline
+            rows={3}
+            fullWidth
+            value={valuedCustomerNotes}
+            onChange={(e) => setValuedCustomerNotes(e.target.value)}
+            placeholder="Reason for valued customer status, special terms, volume commitments, etc."
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={handleValuedCustomerDialogClose}
+            disabled={isTogglingValuedStatus}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={() => confirmValuedCustomerToggle(true, valuedCustomerNotes)}
+            variant="contained"
+            disabled={isTogglingValuedStatus}
+            startIcon={isTogglingValuedStatus ? <CircularProgress size={16} /> : <StarFilled />}
+          >
+            {isTogglingValuedStatus ? 'Updating...' : 'Confirm'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+    
   );
 };
 

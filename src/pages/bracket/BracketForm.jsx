@@ -452,7 +452,7 @@ const handlePriceEntryChange = useCallback((tierIndex, entryIndex, field, value)
                 key={tierIndex}
                 sx={{ 
                   minWidth: 320,
-                  maxWidth: 400,
+                  maxWidth: 300,
                   flexShrink: 0,
                   border: 1,
                   borderColor: 'divider'
