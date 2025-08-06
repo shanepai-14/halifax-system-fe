@@ -32,12 +32,16 @@ const ReceivedItemRow = React.memo(({
   const distributionCostDisplay = useMemo(() => {
     if (!item.received_quantity || !item.cost_price) return '₱0.00';
     const totalUnitCost = parseFloat(item.cost_price || 0) + distributionCostPerUnit;
-    return `₱${totalUnitCost.toFixed(2)}`;
+
+     onItemChange(index, "distribution_price", totalUnitCost.toFixed(2));
+     
+    return `₱${parseFloat(totalUnitCost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }, [item.cost_price, item.received_quantity, distributionCostPerUnit]);
 
   // Calculate total display value
   const totalDisplay = useMemo(() => {
-    return `₱${(item.cost_price * item.received_quantity).toFixed(2)}`;
+      
+    return `₱${parseFloat(item.cost_price * item.received_quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }, [item.cost_price, item.received_quantity]);
 
   // Handle product change
@@ -60,16 +64,6 @@ const ReceivedItemRow = React.memo(({
     onItemChange(index, "walk_in_price", e.target.value);
   }, [index, onItemChange]);
 
-  // Handle wholesale price change
-  const handleWholesalePriceChange = useCallback((e) => {
-    onItemChange(index, "wholesale_price", e.target.value);
-  }, [index, onItemChange]);
-
-  // Handle regular price change
-  const handleRegularPriceChange = useCallback((e) => {
-    onItemChange(index, "regular_price", e.target.value);
-  }, [index, onItemChange]);
-
   // Handle remove item
   const handleRemoveItem = useCallback(() => {
     onRemoveItem(index);
@@ -90,15 +84,14 @@ const ReceivedItemRow = React.memo(({
   }, [products, item.product_id]);
 
   // Update distribution_price whenever needed
-  useEffect(() => {
-    if (item.received_quantity && item.cost_price && distributionCostPerUnit > 0) {
-      const totalUnitCost = parseFloat(item.cost_price || 0) + distributionCostPerUnit;
-      // Only update if the value has actually changed
-      if (item.distribution_price !== totalUnitCost.toFixed(2)) {
-        onItemChange(index, "distribution_price", totalUnitCost.toFixed(2));
-      }
-    }
-  }, [item.cost_price, item.received_quantity, distributionCostPerUnit, index, onItemChange, item.distribution_price]);
+  // useEffect(() => {
+  //   if (item.received_quantity && item.cost_price && distributionCostPerUnit > 0) {
+  //     const totalUnitCost = parseFloat(item.cost_price || 0) + distributionCostPerUnit;
+
+       
+      
+  //   }
+  // }, [item.cost_price, item.received_quantity, distributionCostPerUnit, index, onItemChange, item.distribution_price]);
 
   return (
     <TableRow>
@@ -172,24 +165,14 @@ const ReceivedItemRow = React.memo(({
             size="small"
           />
         ) : (
-          `₱${item.cost_price}`
+         `₱${parseFloat(item.cost_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
         )}
       </TableCell>
-      <TableCell sx={{ verticalAlign: "top" }}>
-        <TextField
-          type="text"
-          value={distributionCostDisplay}
-          readOnly={true}
-          size="small"
-          sx={{
-            "& .MuiInputBase-input": {
-              color: "rgba(0, 0, 0, 0.87)"
-            },
-            "& .MuiOutlinedInput-notchedOutline": {
-              borderColor: "rgba(0, 0, 0, 0.23)"
-            }
-          }}
-        />
+      <TableCell sx={{ verticalAlign: "top"}}>
+        <Typography sx={{mt:isEditing == true ? 1 :0}}>
+          {distributionCostDisplay}
+          </Typography>
       </TableCell>
       <TableCell sx={{ verticalAlign: "top" }}>
         {!isCompleted && !isCancelled ? (
@@ -207,47 +190,9 @@ const ReceivedItemRow = React.memo(({
             size="small"
           />
         ) : (
-          `₱${item.walk_in_price}`
+             `₱${parseFloat(item.walk_in_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
         )}
       </TableCell>
-      {/* <TableCell sx={{ verticalAlign: "top" }}>
-        {!isCompleted && !isCancelled ? (
-          <TextField
-            type="number"
-            value={item.wholesale_price}
-            onChange={handleWholesalePriceChange}
-            error={!!errors[`received_items.${index}.wholesale_price`]}
-            helperText={
-              errors[`received_items.${index}.wholesale_price`] ||
-              "Required"
-            }
-            inputProps={{ min: 0, step: "0.01" }}
-            disabled={disabled}
-            size="small"
-          />
-        ) : (
-          `₱${item.wholesale_price}`
-        )}
-      </TableCell>
-      <TableCell sx={{ verticalAlign: "top" }}>
-        {!isCompleted && !isCancelled ? (
-          <TextField
-            type="number"
-            value={item.regular_price}
-            onChange={handleRegularPriceChange}
-            error={!!errors[`received_items.${index}.regular_price`]}
-            helperText={
-              errors[`received_items.${index}.regular_price`] ||
-              "Required"
-            }
-            inputProps={{ min: 0, step: "0.01" }}
-            disabled={disabled}
-            size="small"
-          />
-        ) : (
-          `₱${item.regular_price}`
-        )}
-      </TableCell> */}
       <TableCell sx={{ verticalAlign: "top" }}>
         {totalDisplay}
       </TableCell>
@@ -369,7 +314,7 @@ const PurchaseOrderReceivedItems = ({
             <TableCell>
               <Typography variant="h5">Total Received:</Typography>
             </TableCell>
-            <TableCell>₱{total.toFixed(2)}</TableCell>
+            <TableCell>₱{parseFloat(total).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
           </TableRow>
         </TableBody>
       </Table>

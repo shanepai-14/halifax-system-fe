@@ -299,13 +299,16 @@ if (totalsSection.length > 0) {
 
       const contentLines = content.split('\n').length;
       const targetPageLines = 66; // Standard for 11" paper at 6 lines per inch
-      const signatureLines = 10; // Space needed for signature section
+      const signatureLines = 16; // Space needed for signature section
       const footerLines = 4; // Space needed for the note
       const totalFooterLines = signatureLines + footerLines;
       const availableLines = targetPageLines - totalFooterLines;
   
   // Add blank lines to push signatures and note to bottom
   const linesToAdd = Math.max(0, availableLines - contentLines);
+  console.log('availableLines ', availableLines);
+  console.log('contentLines ',contentLines)
+  console.log(availableLines - contentLines);
   content += '\n'.repeat(linesToAdd);
     
     // Signature section

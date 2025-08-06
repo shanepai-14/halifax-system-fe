@@ -384,18 +384,31 @@ const OrderItemRow = memo(({
     if (item.use_bracket_pricing && item.price_bracket && bracketPricing) {
       if (bracketPricing.options && bracketPricing.options.length > 1) {
         // Multiple bracket prices - show dropdown
+        console.log('bracketPricing', bracketPricing);
         return (
           <Box>
-            <Select
-              size="small"
-              value={item.selected_bracket_price || bracketPricing.options[0]}
-              onChange={handleBracketPriceSelection}
-              sx={{ minWidth: 80 }}
-            >
+          <Select
+                  size="small"
+                  value={item.selected_bracket_price || bracketPricing.options[0]}
+                  onChange={handleBracketPriceSelection}
+                  sx={{ 
+                    minWidth: 60,
+                    height: 32,
+                    fontSize: '0.75rem',
+                    '& .MuiSelect-select': {
+                      padding: '4px 8px',
+                      fontSize: '0.75rem'
+                    }
+                  }}
+                >
               {bracketPricing.options.map((price, index) => (
-                <MenuItem key={index} value={price}>
-                  ₱{price.toFixed(2)}
-                </MenuItem>
+               <MenuItem 
+              key={index} 
+              value={price}
+              sx={{ fontSize: '0.75rem', minHeight: 'auto', py: 0.5 }}
+            >
+              ₱{price.toFixed(2)}
+            </MenuItem>
               ))}
             </Select>
             <Typography variant="caption" display="block" color="secondary">
@@ -480,7 +493,7 @@ const OrderItemRow = memo(({
         </TableCell>
         
         {/* Quantity Cell */}
-        <TableCell align="center" sx={{ display: 'flex', justifyContent: 'center', alignItems: "center"}} >
+        <TableCell align="center" sx={{ display: 'flex', justifyContent: 'center', alignItems: "center" }} >
           <IconButton size="small" onClick={handleQuantityDecrease} disabled={item.quantity <= 0} >
             <MinusCircleOutlined />
           </IconButton>
@@ -506,7 +519,8 @@ const OrderItemRow = memo(({
         </TableCell>
         
         {/* Subtotal Cell */}
-        <TableCell align="right">₱{subtotal.toFixed(2)}</TableCell>
+        <TableCell align="right">₱{parseFloat(subtotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+</TableCell>
         
         {/* Actions Cell */}
         <TableCell align="right">
@@ -1014,7 +1028,7 @@ const DeliveryReport = forwardRef(({
                         InputProps={{ min: 0 }}
                       />
                       <Typography variant="h6">
-                        Total Amount: ₱{calculatedTotal.toFixed(2)}
+                        Total Amount: ₱{parseFloat(calculatedTotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </Typography>
                     </Box>
                   </Box>

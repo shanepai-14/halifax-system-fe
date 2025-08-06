@@ -326,10 +326,12 @@ const UpdatePurchaseOrder = () => {
   };
 
   const calculateTotal = () => {
-    return formData.items.reduce(
+    const total = formData.items.reduce(
       (sum, item) => sum + item.price * item.requested_quantity,
       0
     );
+
+    return  parseFloat(total).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
 
@@ -895,11 +897,12 @@ const UpdatePurchaseOrder = () => {
                             size="small"
                           />
                         ) : (
-                          `₱${item.price}`
+                              
+                          `₱${parseFloat(item.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                         )}
                       </TableCell>
                       <TableCell sx={{ verticalAlign: "top" }}>
-                        ₱{(item.price * item.requested_quantity).toFixed(2)}
+                        ₱{parseFloat(item.price * item.requested_quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </TableCell>
                       {isPending && (
                         <TableCell sx={{ verticalAlign: "top" }}>
@@ -928,7 +931,7 @@ const UpdatePurchaseOrder = () => {
                     </TableCell>
                     <TableCell >
                     <Typography variant="h5" >
-                    ₱{calculateTotal().toFixed(2)}
+                    ₱{calculateTotal()}
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -945,6 +948,7 @@ const UpdatePurchaseOrder = () => {
                 ...report,
                 supplier: formData.supplier 
               }))}
+              requestedItems={formData.items}
               products={products}
               costTypes={costTypes}
               attributes={attributes} 

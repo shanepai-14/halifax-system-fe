@@ -277,7 +277,7 @@ const CustomerPricingPanel = ({ customer, products = [] }) => {
   // Format products for autocomplete display
   const getProductOptionLabel = (product) => {
     if (!product) return '';
-    return `${product.product_code} - ${product.product_name}`;
+    return product.product_name;
   };
 
   // Filter function for autocomplete search
@@ -514,9 +514,6 @@ const CustomerPricingPanel = ({ customer, products = [] }) => {
                   renderOption={(props, product) => (
                     <Box component="li" {...props}>
                       <Box>
-                        <Typography variant="body2" fontWeight="medium">
-                          {product.product_code}
-                        </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {product.product_name}
                         </Typography>

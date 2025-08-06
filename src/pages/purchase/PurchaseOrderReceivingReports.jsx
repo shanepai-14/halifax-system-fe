@@ -53,6 +53,7 @@ import { useReactToPrint } from 'react-to-print';
 const PurchaseOrderReceivingReports = ({ 
   receivingReports = [], 
   products = [],
+  requestedItems =[],
   attributes = [],
   costTypes =[],
   status,
@@ -61,6 +62,8 @@ const PurchaseOrderReceivingReports = ({
   onCreateReceivingReport,
   onUpdateReceivingReport
 }) => {
+  console.log(requestedItems);
+  console.log('receivingReports', receivingReports);
   const contentRef = useRef();
   const [expanded, setExpanded] = useState(false);
   const [reportDialog, setReportDialog] = useState(false);
@@ -106,27 +109,56 @@ const PurchaseOrderReceivingReports = ({
 };
   
   const openNewReportDialog = () => {
-    setReportData({
-      invoice: '',
-      term: 0,
-      is_paid: false,
-      received_items: [
-        {
-          product_id: '',
-          attribute_id: '',
-          received_quantity: 0,
-          cost_price: 0,
-          distribution_price:0,
-          walk_in_price: 0,
-          term_price: 0,
-          wholesale_price: 0,
-          regular_price: 0,
-          remarks: ''
-        }
-      ],
-      additional_costs: [],
-      attachments: []
-    });
+      setReportData({
+        invoice: '',
+        term: 0,
+        is_paid: false,
+        received_items: (() => {
+          const filteredItems = requestedItems
+            .map(requestedItem => {
+              const totalReceived = receivingReports.reduce((total, report) => {
+                const matchingItems = report.received_items.filter(receivedItem => 
+                  receivedItem.product_id === requestedItem.product_id && 
+                  receivedItem.attribute_id === requestedItem.attribute_id
+                );
+                return total + matchingItems.reduce((sum, item) => 
+                  sum + parseFloat(item.received_quantity), 0
+                );
+              }, 0);
+              
+              const remainingQuantity = requestedItem.requested_quantity - totalReceived;
+              
+              return remainingQuantity > 0 ? {
+                product_id: requestedItem.product_id,
+                attribute_id: requestedItem.attribute_id,
+                received_quantity: remainingQuantity,
+                cost_price: parseFloat(requestedItem.price),
+                distribution_price: 0,
+                walk_in_price: 0,
+                term_price: 0,
+                wholesale_price: 0,
+                regular_price: 0,
+                remarks: ''
+              } : null;
+            })
+            .filter(item => item !== null);
+          
+          return filteredItems.length > 0 ? filteredItems : [{
+            product_id: '',
+            attribute_id: '',
+            received_quantity: 0,
+            cost_price: 0,
+            distribution_price: 0,
+            walk_in_price: 0,
+            term_price: 0,
+            wholesale_price: 0,
+            regular_price: 0,
+            remarks: ''
+          }];
+        })(),
+        additional_costs: [],
+        attachments: []
+      });
     setErrors({});
     setIsEditing(false);
     setSelectedReportId(null);
@@ -250,9 +282,6 @@ const PurchaseOrderReceivingReports = ({
   
   const handleItemChange = (index, field, value) => {
 
-    if(field == 'distribution_price'){
-      console.log('distribution_price' , value);
-    }
     const updatedItems = [...reportData.received_items];
     updatedItems[index] = {
       ...updatedItems[index],
@@ -394,7 +423,7 @@ const PurchaseOrderReceivingReports = ({
   const calculateGrandTotal = (receivingReport) => {
     const itemsTotal = calculateReceivedTotal(receivingReport.received_items || []);
     const costsTotal = calculateAdditionalCostsTotal(receivingReport.additional_costs || []);
-    return itemsTotal + costsTotal;
+    return parseFloat(itemsTotal + costsTotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   // Format date for display
@@ -612,7 +641,7 @@ const PurchaseOrderReceivingReports = ({
                   />
                 )}
                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                  ₱{calculateGrandTotal(report).toFixed(2)}
+                  ₱{calculateGrandTotal(report)}
                 </Typography>
                 
                 {canUpdateReport && (
@@ -729,7 +758,7 @@ const PurchaseOrderReceivingReports = ({
                       )}
                     </Box>
                     <Typography variant="h6">
-                      Grand Total: ₱{calculateGrandTotal(report).toFixed(2)}
+                      Grand Total: ₱{calculateGrandTotal(report)}
                     </Typography>
                   </Box>
                 </Grid>

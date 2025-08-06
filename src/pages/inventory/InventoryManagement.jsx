@@ -24,7 +24,6 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
   Tooltip,
   Skeleton,
   Alert,
@@ -38,7 +37,6 @@ import {
   EyeOutlined,
   EditOutlined,
   ReloadOutlined,
-  FilterOutlined,
   DownloadOutlined,
   WarningOutlined
 } from '@ant-design/icons';
@@ -119,31 +117,7 @@ const InventoryManagement = () => {
     });
   }, [inventory, products]);
 
-  // Calculate summary statistics from inventory data
-  const inventorySummaryStats = React.useMemo(() => {
-    // This would normally be calculated from real data
-    // Here using sample calculations for demonstration
-    const totalItems = inventoryData.length;
-    const totalValue = inventoryData.reduce(
-      (sum, item) => sum + (item.quantity * (item.cost_price || 0)), 0
-    );
-    const lowStockItems = inventoryData.filter(item => item.status === 'low').length;
-    const reorderNeeded = inventoryData.filter(
-      item => item.quantity <= (item.reorder_level * 0.7)
-    ).length;
-    
-    return {
-      totalItems,
-      totalValue,
-      lowStockItems,
-      reorderNeeded,
-      // Other statistics would come from various sources in a real app
-      topSellingItems: 5,
-      incomingStock: 42,
-      inventoryTurnover: 4.2,
-      stockAccuracy: 98.3
-    };
-  }, [inventoryData]);
+
 
   // Filter inventory data
   const filteredData = inventoryData.filter(item => {
@@ -186,11 +160,13 @@ const InventoryManagement = () => {
   };
 
   const handleOpenAdjustmentDialog = (product) => {
+    console.log(product);
     setSelectedProduct(product);
     setAdjustmentDialogOpen(true);
   };
 
   const handleSelectProduct = (product) => {
+    console.log(product);
     setSelectedProduct(product);
   }
 
@@ -201,7 +177,7 @@ const InventoryManagement = () => {
 
   const handleAdjustmentSubmit = async (adjustmentData) => {
     try {
-      // Create payload with basic fields
+      console.log('adjustmentData ', )
       const payload = {
         id: adjustmentData.id,
         quantity: adjustmentData.quantity,
@@ -389,7 +365,7 @@ const InventoryManagement = () => {
                           <TableCell>
                             {categories.find(c => c.id === item.product_category_id)?.name || '-'}
                           </TableCell>
-                          <TableCell>{item.current_quantity}</TableCell>
+                          <TableCell>{parseInt(item?.current_quantity || "0", 10)}</TableCell>
                           <TableCell>{item.reorder_level}</TableCell>
                           <TableCell>
                             <Chip 
