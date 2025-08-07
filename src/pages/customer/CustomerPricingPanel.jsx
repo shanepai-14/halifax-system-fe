@@ -17,7 +17,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  MenuItem,
   Grid,
   Alert,
   Tooltip,
@@ -36,6 +35,8 @@ import {
 } from '@ant-design/icons';
 import api from '@/lib/axios';
 import { toast } from 'sonner';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '@/store/slices/authSlice';
 
 const CustomerPricingPanel = ({ customer, products = [] }) => {
   const [customPrices, setCustomPrices] = useState([]);
@@ -43,6 +44,8 @@ const CustomerPricingPanel = ({ customer, products = [] }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPrice, setEditingPrice] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const currentUser = useSelector(selectCurrentUser);
+  const isAdmin = currentUser?.role === 'admin';
   
   // For multiple price tiers
   const [priceTiers, setPriceTiers] = useState([{
@@ -302,6 +305,7 @@ const CustomerPricingPanel = ({ customer, products = [] }) => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h6">Custom Pricing Management</Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
+            {isAdmin && (
           <Button
             startIcon={<PlusOutlined />}
             variant="contained"
@@ -310,6 +314,7 @@ const CustomerPricingPanel = ({ customer, products = [] }) => {
           >
             Add Custom Price
           </Button>
+          )}
         </Box>
       </Box>
 
@@ -438,6 +443,7 @@ const CustomerPricingPanel = ({ customer, products = [] }) => {
                   <Tooltip title="Edit All Prices">
                     <IconButton
                       size="small"
+                      disabled={!isAdmin}
                       onClick={() => handleEditProductPrices(productGroup)}
                     >
                       <EditOutlined />
@@ -447,6 +453,7 @@ const CustomerPricingPanel = ({ customer, products = [] }) => {
                     <IconButton
                       size="small"
                       color="error"
+                      disabled={!isAdmin}
                       onClick={() => handleDeleteProductPrices(productGroup)}
                     >
                       <DeleteOutlined />

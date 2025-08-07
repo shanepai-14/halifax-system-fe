@@ -36,6 +36,7 @@ import {
   StarOutlined 
 } from '@ant-design/icons';
 import { useCustomers } from '@/hooks/useCustomers';
+import { selectCurrentUser } from '@/store/slices/authSlice';
 import { selectCustomers, selectCustomersLoading } from '@/store/slices/customerSlice';
 import CustomerModal from './CustomerModal';
 
@@ -43,6 +44,7 @@ import CustomerModal from './CustomerModal';
 // TableRow Skeleton for loading state
 const TableRowSkeleton = () => (
   <TableRow>
+    <TableCell><Skeleton animation="wave" /></TableCell>
     <TableCell><Skeleton animation="wave" /></TableCell>
     <TableCell><Skeleton animation="wave" /></TableCell>
     <TableCell><Skeleton animation="wave" /></TableCell>
@@ -74,6 +76,9 @@ const CustomerPage = () => {
   // State for customer modal
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  
+  const currentUser = useSelector(selectCurrentUser);
+  const isAdmin = currentUser?.role === 'admin';
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -244,9 +249,17 @@ const CustomerPage = () => {
                       <IconButton onClick={() => handleOpenEditModal(customer)}>
                         <EditOutlined style={{ fontSize: 20 }} />
                       </IconButton>
-                      <IconButton onClick={() => handleDeleteClick(customer)}>
-                        <DeleteOutlined style={{ fontSize: 20, color: 'red' }} />
+                      <IconButton disabled={!isAdmin} onClick={() => handleDeleteClick(customer)}>
+                        <DeleteOutlined
+                          style={{
+                            fontSize: 20,
+                            color: isAdmin ? 'red' : '#ccc', // Gray out if disabled
+                            opacity: isAdmin ? 1 : 0.5,      // Optional: add opacity to make it look disabled
+                            cursor: isAdmin ? 'pointer' : 'default',
+                          }}
+                        />
                       </IconButton>
+
                     </TableCell>
                   </TableRow>
                 ))

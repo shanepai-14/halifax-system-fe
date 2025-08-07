@@ -19,6 +19,7 @@ import {
 import { CloseOutlined , StarOutlined, StarFilled } from '@ant-design/icons';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '@/store/slices/authSlice';
 import { selectCustomersLoading } from '@/store/slices/customerSlice';
 import cities from '@/utils/cities';
 import { toast } from 'sonner';
@@ -41,6 +42,8 @@ const CustomerModal = ({ open, handleClose, customer = null, handleSuccess }) =>
   const [valuedCustomerNotes, setValuedCustomerNotes] = useState('');
   const [isTogglingValuedStatus, setIsTogglingValuedStatus] = useState(false);
   const { createCustomer, updateCustomer } = useCustomers();
+  const currentUser = useSelector(selectCurrentUser);
+  const isAdmin = currentUser?.role === 'admin';
   
   const isEditing = !!customer;
 
@@ -314,28 +317,55 @@ const CustomerModal = ({ open, handleClose, customer = null, handleSuccess }) =>
               )}
             />
           </Grid>
-            <Grid item xs={12} md={6} display="flex" justifyContent="start" alignItems="center">
-                 {customer?.id && (
+{customer?.id && (
+  <Grid item xs={12} md={6} display="flex" justifyContent="start" alignItems="center">
+{customer?.id && (
+  <Grid item xs={12} md={6} display="flex" justifyContent="start" alignItems="center">
+    {isAdmin ? (
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={customer?.is_valued_customer || false}
+            onChange={(e) => handleValuedCustomerToggle(e.target.checked)}
+            icon={<StarOutlined style={{ fontSize: 23 }} />}
+            checkedIcon={<StarFilled style={{ color: '#ffa726', fontSize: 23 }} />}
+          />
+        }
+        label={
+                customer?.is_valued_customer ? (
+          <Typography fontSize={18} fontWeight={500}>
+           Valued Customer
+          </Typography>
+           ) : (
+         <Typography fontSize={18} fontWeight={500}>
+            Mark as Valued Customer
+          </Typography>
+            )
+        }
+      />
+    ) : (
+      customer?.is_valued_customer ? (
+        <>
+          <StarFilled style={{ color: '#ffa726', fontSize: 23, marginRight: 8 }} />
+          <Typography fontSize={18} fontWeight={500}>
+          Valued Customer
+          </Typography>
+        </>
+      ) : (
+        <>
+          <StarOutlined style={{ color: '#999', fontSize: 23, marginRight: 8 }} />
+          <Typography fontSize={18} fontWeight={500}>
+           Valued Customer
+          </Typography>
+        </>
+      )
+    )}
+  </Grid>
+)}
 
+          </Grid>
+        )}
 
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={customer?.is_valued_customer || false}
-                      onChange={(e) => handleValuedCustomerToggle(e.target.checked)}
-                      icon={<StarOutlined style={{ fontSize: 23 }} />} // increase icon size
-                      checkedIcon={<StarFilled style={{ color: '#ffa726', fontSize: 23 }} />}
-                    />
-                  }
-                  label={
-                    <Typography fontSize={18} fontWeight={500}>
-                      Mark as Valued Customer
-                    </Typography>
-                  }
-                />
-
-          )}
-            </Grid>
         </Grid>
       </DialogContent>
       
