@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Container, Grid, Card, CardContent, Typography, Box, Tabs, Tab,
+  Container, Card, Typography, Box, Tabs, Tab,
   FormControl, InputLabel, Select, MenuItem, Button, IconButton,
   Chip, Alert, CircularProgress, Backdrop, Snackbar
 } from '@mui/material';
@@ -10,7 +10,6 @@ import {
   ToolOutlined,
   RiseOutlined,
   ReconciliationOutlined ,
-  LineChartOutlined,
   PieChartOutlined,
 } from '@ant-design/icons';
 
@@ -43,11 +42,7 @@ ChartJS.register(
 // Import modular components
 import DashboardOverview from './components/DashboardOverview';
 import RevenueChart from './components/RevenueChart';
-import ProfitAnalysis from './components/ProfitAnalysis';
-import TrendsAnalysis from './components/TrendsAnalysis';
-import ForecastingPanel from './components/ForecastingPanel';
 import BreakdownAnalysis from './components/BreakdownAnalysis';
-import PerformanceMetrics from './components/PerformanceMetrics';
 import TransactionsTab from './components/TransactionsTab';
 import ExportPanel from './components/ExportPanel';
 import AdminPanel from './components/AdminPanel';

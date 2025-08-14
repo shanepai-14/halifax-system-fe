@@ -95,13 +95,13 @@ const TransactionHistoryTable = ({
                       size="small"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell >
                     {transaction.transaction_type === 'purchase' || transaction.transaction_type === 'adjustment_in' || transaction.transaction_type === 'return'
-                      ? `+${transaction.quantity}` 
-                      : `-${transaction.quantity}`}
+                      ? `+${parseInt(transaction.quantity)}` 
+                      : `-${parseInt(transaction.quantity)}`}
                   </TableCell>
-                  <TableCell>{transaction.quantity_before}</TableCell>
-                  <TableCell>{transaction.quantity_after}</TableCell>
+                  <TableCell>{parseInt(transaction.quantity_before)}</TableCell>
+                  <TableCell>{parseInt(transaction.quantity_after)}</TableCell>
                   <TableCell>
                     {transaction.reference_type === 'purchase_order' 
                       ? `PO-${transaction.reference_id}` 

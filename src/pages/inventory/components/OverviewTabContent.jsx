@@ -71,8 +71,8 @@ const OverviewTabContent = ({
                         primary={
                           <span>
                             {log.transaction_type === 'purchase' || log.transaction_type === 'adjustment_in'
-                              ? `+${log.quantity}` 
-                              : `-${log.quantity}`} {log.transaction_type.replace('_', ' ')}
+                              ? `+${parseInt(log.quantity)}` 
+                              : `-${parseInt(log.quantity)}`} {log.transaction_type.replace('_', ' ')}
                           </span>
                         }
                         secondary={new Date(log.created_at).toLocaleString()}
@@ -163,8 +163,8 @@ const OverviewTabContent = ({
                     </TableCell>
                     <TableCell>
                       {transaction.transaction_type === 'purchase' || transaction.transaction_type === 'adjustment_in' || transaction.transaction_type === 'return'
-                        ? `+${transaction.quantity}` 
-                        : `-${transaction.quantity}`}
+                        ? `+${parseInt(transaction.quantity)}` 
+                        : `-${parseInt(transaction.quantity)}`}
                     </TableCell>
                     <TableCell>
                       {transaction.reference_type === 'purchase_order' 

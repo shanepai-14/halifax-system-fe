@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
   Table,
@@ -23,6 +23,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Chip
 } from '@mui/material';
 import {
   PlusOutlined,
@@ -31,15 +32,19 @@ import {
   DeleteOutlined,
   ClearOutlined,
   ShoppingCartOutlined,
+  StarFilled,
+  StarOutlined 
 } from '@ant-design/icons';
 import { useCustomers } from '@/hooks/useCustomers';
+import { selectCurrentUser } from '@/store/slices/authSlice';
 import { selectCustomers, selectCustomersLoading } from '@/store/slices/customerSlice';
 import CustomerModal from './CustomerModal';
-import Swal from 'sweetalert2';
+
 
 // TableRow Skeleton for loading state
 const TableRowSkeleton = () => (
   <TableRow>
+    <TableCell><Skeleton animation="wave" /></TableCell>
     <TableCell><Skeleton animation="wave" /></TableCell>
     <TableCell><Skeleton animation="wave" /></TableCell>
     <TableCell><Skeleton animation="wave" /></TableCell>
@@ -71,6 +76,9 @@ const CustomerPage = () => {
   // State for customer modal
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  
+  const currentUser = useSelector(selectCurrentUser);
+  const isAdmin = currentUser?.role === 'admin';
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -180,6 +188,7 @@ const CustomerPage = () => {
         <Table>
           <TableHead>
             <TableRow>
+              <TableCell> </TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Business Name</TableCell>
               <TableCell>Business Address</TableCell>
@@ -200,7 +209,15 @@ const CustomerPage = () => {
               filteredCustomers
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((customer) => (
+                  
                   <TableRow key={customer.id}>
+                    <TableCell width={"1%"} sx={{padding:1 }}>
+                    {customer.is_valued_customer ? (
+                    <StarFilled style={{ color: '#ffa726' }} />
+                  ) : (
+                    <StarOutlined style={{ color: '#bdbdbd' }} />
+                  )}
+                  </TableCell>
                     <TableCell>
                       <Typography
                         sx={{ 
@@ -232,9 +249,17 @@ const CustomerPage = () => {
                       <IconButton onClick={() => handleOpenEditModal(customer)}>
                         <EditOutlined style={{ fontSize: 20 }} />
                       </IconButton>
-                      <IconButton onClick={() => handleDeleteClick(customer)}>
-                        <DeleteOutlined style={{ fontSize: 20, color: 'red' }} />
+                      <IconButton disabled={!isAdmin} onClick={() => handleDeleteClick(customer)}>
+                        <DeleteOutlined
+                          style={{
+                            fontSize: 20,
+                            color: isAdmin ? 'red' : '#ccc', // Gray out if disabled
+                            opacity: isAdmin ? 1 : 0.5,      // Optional: add opacity to make it look disabled
+                            cursor: isAdmin ? 'pointer' : 'default',
+                          }}
+                        />
                       </IconButton>
+
                     </TableCell>
                   </TableRow>
                 ))

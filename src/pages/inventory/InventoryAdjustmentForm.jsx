@@ -176,7 +176,7 @@ const handleChange = (e) => {
                 Product: {selectedProduct.product_name}
               </Typography>
               <Typography>
-                Current Quantity: {selectedProduct.quantity || 0}
+                Current Quantity: {selectedProduct.current_quantity || 0}
               </Typography>
               <Typography>
                 Reorder Level: {selectedProduct.reorder_level || 'Not set'}

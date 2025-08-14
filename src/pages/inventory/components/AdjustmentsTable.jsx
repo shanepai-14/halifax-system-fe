@@ -76,12 +76,12 @@ const AdjustmentsTable = ({
                   </TableCell>
                   <TableCell>
                     {adjustment.adjustment_type === 'addition' || adjustment.adjustment_type === 'return' 
-                      ? `+${adjustment.quantity}` 
-                      : `-${adjustment.quantity}`}
+                      ? `+${parseInt(adjustment.quantity)}` 
+                      : `-${parseInt(adjustment.quantity)}`}
                   </TableCell>
                   <TableCell>{adjustment.reason}</TableCell>
-                  <TableCell>{adjustment.quantity_before}</TableCell>
-                  <TableCell>{adjustment.quantity_after}</TableCell>
+                  <TableCell>{parseInt(adjustment.quantity_before)}</TableCell>
+                  <TableCell>{parseInt(adjustment.quantity_after)}</TableCell>
                   <TableCell>{adjustment.user?.name || 'System'}</TableCell>
                 </TableRow>
               ))
