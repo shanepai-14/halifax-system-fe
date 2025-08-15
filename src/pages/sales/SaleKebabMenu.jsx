@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { 
   IconButton, 
   Menu, 
@@ -17,12 +19,13 @@ import {
   Divider
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { CloseCircleOutlined, EditOutlined, FontSizeOutlined } from '@ant-design/icons';
+import { CloseCircleOutlined, EditOutlined, FontSizeOutlined , TruckOutlined  } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
 import { formatDateForInput } from '@/utils/formatUtils';
+import { selectCurrentUser } from '@/store/slices/authSlice';
 
 const SaleKebabMenu = ({ sale, refresh, itemsFontSize, setItemsFontSize }) => {
-  // State for menu
+  const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   
@@ -39,6 +42,9 @@ const SaleKebabMenu = ({ sale, refresh, itemsFontSize, setItemsFontSize }) => {
   // State for font size dialog
   const [fontSizeDialogOpen, setFontSizeDialogOpen] = useState(false);
   const [tempFontSize, setTempFontSize] = useState(itemsFontSize);
+
+  const currentUser = useSelector(selectCurrentUser);
+  const isAdmin = currentUser?.role === 'admin';
   
   // Get functions from useSales hook
   const { cancelSale, updateDeliveryDate } = useSales();
@@ -191,13 +197,26 @@ const SaleKebabMenu = ({ sale, refresh, itemsFontSize, setItemsFontSize }) => {
           onClick={handleOpenDeliveryDateDialog} 
           disabled={isDeliveryDateUpdateDisabled}
           sx={{ 
-            color: isDeliveryDateUpdateDisabled ? 'text.disabled' : 'primary.main',
+            color: isDeliveryDateUpdateDisabled ? 'text.disabled' : 'warning.main',
             '&.Mui-disabled': { opacity: 0.6 }
           }}
         >
-          <EditOutlined style={{ marginRight: 8 }} />
+          <TruckOutlined style={{ marginRight: 8 }} />
           Edit Delivery Date
         </MenuItem>
+        
+        {isAdmin && (
+          <MenuItem
+            onClick={() => navigate(`/app/delivery-report/edit/${sale.id}`)}
+            sx={{ 
+              color: 'primary.main',
+            }}
+          >
+            <EditOutlined style={{ marginRight: 8 }} />
+            Edit Sale
+          </MenuItem>
+        )}
+
         
         <MenuItem 
           onClick={handleOpenCancelDialog} 
