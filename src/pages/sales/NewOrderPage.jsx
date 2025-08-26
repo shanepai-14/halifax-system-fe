@@ -72,19 +72,9 @@ const NewOrderPage = () => {
   // Sort by min_quantity descending to get the most specific range first
   matchingBrackets.sort((a, b) => b.min_quantity - a.min_quantity);
   
-  if (matchingBrackets.length === 1) {
-    return {
-      price: matchingBrackets[0].price,
-      options: [matchingBrackets[0].price],
-      hasMultipleOptions: false
-    };
-  } else {
-    return {
-      price: matchingBrackets[0].price, // Default to first/best match
-      options: matchingBrackets.map(bracket => bracket.price),
-      hasMultipleOptions: true
-    };
-  }
+
+  return  matchingBrackets[0].price;
+  
 }, []);
 
  const getPriceByPriceType = useCallback((item, customer = null) => {
