@@ -42,19 +42,50 @@ const NewOrderPage = () => {
   const navigate = useNavigate();
 
   // Memoized utility functions (moved before usage)
- const calculateBracketPrice = useCallback((item, quantity) => {
-    if (!item.price_bracket || !item.use_bracket_pricing) return null;
+//  const calculateBracketPrice = useCallback((item, quantity) => {
+//     if (!item.price_bracket || !item.use_bracket_pricing) return null;
     
-    const priceType = item.price_type || 'regular';
-    const bracketItem = item.price_bracket.items.find(bracket => 
-      bracket.price_type === priceType &&
-      bracket.is_active &&
-      bracket.min_quantity <= quantity &&
-      (bracket.max_quantity === null || bracket.max_quantity >= quantity)
-    );
+//     const priceType = item.price_type || 'regular';
+//     const bracketItem = item.price_bracket.items.find(bracket => 
+//       bracket.price_type === priceType &&
+//       bracket.is_active &&
+//       bracket.min_quantity <= quantity &&
+//       (bracket.max_quantity === null || bracket.max_quantity >= quantity)
+//     );
     
-    return bracketItem ? bracketItem.price : null;
-  }, []);
+//     return bracketItem ? bracketItem.price : null;
+//   }, []);
+
+  const calculateBracketPrice = useCallback((item, quantity) => {
+  if (!item.price_bracket || !item.use_bracket_pricing) return null;
+  
+  const priceType = item.price_type || 'regular';
+  const matchingBrackets = item.price_bracket.items.filter(bracket => 
+    bracket.price_type === priceType &&
+    bracket.is_active &&
+    bracket.min_quantity <= quantity &&
+    (bracket.max_quantity === null || bracket.max_quantity >= quantity)
+  );
+  
+  if (matchingBrackets.length === 0) return null;
+  
+  // Sort by min_quantity descending to get the most specific range first
+  matchingBrackets.sort((a, b) => b.min_quantity - a.min_quantity);
+  
+  if (matchingBrackets.length === 1) {
+    return {
+      price: matchingBrackets[0].price,
+      options: [matchingBrackets[0].price],
+      hasMultipleOptions: false
+    };
+  } else {
+    return {
+      price: matchingBrackets[0].price, // Default to first/best match
+      options: matchingBrackets.map(bracket => bracket.price),
+      hasMultipleOptions: true
+    };
+  }
+}, []);
 
  const getPriceByPriceType = useCallback((item, customer = null) => {
     // Helper function to calculate custom pricing for valued customers
