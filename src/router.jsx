@@ -33,6 +33,10 @@ const AuthLogin = Loadable(lazy(() => import('@pages/authentication/login')));
 const UserIndex = Loadable(lazy(() => import('@/pages/users/index')));
 const UserManagement = Loadable(lazy(() => import('@/pages/users/UserManagement')));
 const ReportsPage = Loadable(lazy(() => import('@/pages/report/ReportsPage')));
+const TransferPage = Loadable(lazy(() => import('@/pages/transfer/TransferManagement')));
+const TransferFormPage = Loadable(lazy(() => import('@/pages/transfer/TransferFormPage')));
+const TransferViewPage = Loadable(lazy(() => import('@/pages/transfer/TransferView')));
+
 
 
 
@@ -198,10 +202,32 @@ const router = [
               }
             ]
           },
-                    {
+                   
+        ]
+      },
+            {
+        element: <ProtectedRoute allowedRoles={['admin']} />,
+        children: [
+           {
             path: 'report',
             element: <ReportsPage/>,
-          }
+          },
+                              {
+            path: 'transfers',
+            element: <TransferPage/>,
+          },
+          {
+          path: 'transfers/create',
+          element: <TransferFormPage />
+        },
+        {
+          path: 'transfers/edit/:id',
+          element: <TransferFormPage />
+        },
+        {
+          path: 'transfers/:id',
+          element: <TransferViewPage />
+        }
         ]
       }
     ]

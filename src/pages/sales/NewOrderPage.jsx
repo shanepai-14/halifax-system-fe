@@ -21,9 +21,7 @@ const NewOrderPage = () => {
   const { 
     inventory, 
     getAllInventory, 
-    isInventoryLoading,
     createSale,
-    isSalesLoading
   } = useSales();
 
   // Core state

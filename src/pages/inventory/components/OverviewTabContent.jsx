@@ -70,7 +70,7 @@ const OverviewTabContent = ({
                       <ListItemText
                         primary={
                           <span>
-                            {log.transaction_type === 'purchase' || log.transaction_type === 'adjustment_in'
+                            {log.transaction_type === 'purchase' || log.transaction_type === 'adjustment_in' || log.transaction_type === 'transfer_in' || log.transaction_type === 'return'
                               ? `+${parseInt(log.quantity)}` 
                               : `-${parseInt(log.quantity)}`} {log.transaction_type.replace('_', ' ')}
                           </span>
@@ -162,7 +162,7 @@ const OverviewTabContent = ({
                       />
                     </TableCell>
                     <TableCell>
-                      {transaction.transaction_type === 'purchase' || transaction.transaction_type === 'adjustment_in' || transaction.transaction_type === 'return'
+                      {transaction.transaction_type === 'purchase' || transaction.transaction_type === 'adjustment_in' || transaction.transaction_type === 'transfer_in' || transaction.transaction_type === 'return'
                         ? `+${parseInt(transaction.quantity)}` 
                         : `-${parseInt(transaction.quantity)}`}
                     </TableCell>
