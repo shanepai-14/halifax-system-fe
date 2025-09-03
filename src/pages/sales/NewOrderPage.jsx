@@ -21,9 +21,7 @@ const NewOrderPage = () => {
   const { 
     inventory, 
     getAllInventory, 
-    isInventoryLoading,
     createSale,
-    isSalesLoading
   } = useSales();
 
   // Core state
@@ -42,19 +40,29 @@ const NewOrderPage = () => {
   const navigate = useNavigate();
 
   // Memoized utility functions (moved before usage)
- const calculateBracketPrice = useCallback((item, quantity) => {
-    if (!item.price_bracket || !item.use_bracket_pricing) return null;
-    
-    const priceType = item.price_type || 'regular';
-    const bracketItem = item.price_bracket.items.find(bracket => 
-      bracket.price_type === priceType &&
-      bracket.is_active &&
-      bracket.min_quantity <= quantity &&
-      (bracket.max_quantity === null || bracket.max_quantity >= quantity)
-    );
-    
-    return bracketItem ? bracketItem.price : null;
-  }, []);
+const calculateBracketPrice = useCallback((item, quantity) => {
+  if (!item.price_bracket || !item.use_bracket_pricing) return null;
+  
+  const priceType = item.price_type || 'regular';
+  
+  // Get ALL matching brackets, not just the first one
+  const matchingBrackets = item.price_bracket.items.filter(bracket => 
+    bracket.price_type === priceType &&
+    bracket.is_active &&
+    bracket.min_quantity <= quantity &&
+    (bracket.max_quantity === null || bracket.max_quantity >= quantity)
+  );
+  
+  if (matchingBrackets.length === 0) return null;
+  
+  // Sort by price ascending to get the LOWEST price first
+  matchingBrackets.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+  
+  // Return the lowest price
+  return parseFloat(matchingBrackets[0].price);
+}, []);
+
+ 
 
  const getPriceByPriceType = useCallback((item, customer = null) => {
     // Helper function to calculate custom pricing for valued customers
@@ -94,7 +102,6 @@ const NewOrderPage = () => {
     if (item.use_bracket_pricing && item.price_bracket) {
       const bracketPrice = calculateBracketPrice(item, item.quantity);
       if (bracketPrice !== null) {
-        // Use selected bracket price if available, otherwise use calculated price
         return item.selected_bracket_price || bracketPrice;
       }
     }

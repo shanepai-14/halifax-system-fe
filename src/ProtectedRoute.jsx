@@ -28,7 +28,7 @@ const ProtectedRoute = ({ allowedRoles, redirectPath = '/' }) => {
     
     if (!hasRequiredRole) {
       // User doesn't have the required role, redirect to dashboard or unauthorized page
-      return <Navigate to="/app" state={{ from: location }} replace />;
+      return <Navigate to="/app/product" state={{ from: location }} replace />;
     }
   }
 

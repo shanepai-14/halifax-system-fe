@@ -44,7 +44,8 @@ const InventoryAdjustmentForm = ({
       setFormData(prev => ({
         ...prev,
         id: product.id || '',
-        product_id: product.id || ''
+        product_id: product.id || '',
+        distribution_price:product.avg_cost_price
       }));
     }
   }, [product]);

@@ -80,7 +80,7 @@ const CategoryFilters = memo(({ categories, selectedCategory, onCategoryChange, 
 });
 
 // Separate memoized product row
-const ProductRow = memo(({ product, onAddProduct, onShowBracket }) => {
+const ProductRow = memo(({ product, onAddProduct, onShowBracket , showPrice }) => {
   const handleAdd = useCallback(() => {
     onAddProduct(product);
   }, [product, onAddProduct]);
@@ -113,7 +113,7 @@ const ProductRow = memo(({ product, onAddProduct, onShowBracket }) => {
           </Typography>
         )}
       </TableCell>
-      <TableCell align="right" sx={{padding:"0px!important"}}>₱{product.walk_in_price}</TableCell>
+     {showPrice && <TableCell align="right" sx={{padding:"0px!important"}}>₱{product.walk_in_price}</TableCell> } 
       <TableCell align="right" sx={{padding:"0px!important"}}>{parseInt(product.quantity, 10)}</TableCell>
       <TableCell align="right" sx={{padding:"0px!important"}}>
         <IconButton 
@@ -204,7 +204,8 @@ const ProductList = memo(({
   onCloseDialog, 
   onMinimize, 
   isMinimized,
-  isInModal = false
+  isInModal = false,
+  showPrice = true,
 }) => {
   // Local state - isolated from parent re-renders
   const [searchTerm, setSearchTerm] = useState('');
@@ -292,7 +293,7 @@ const ProductList = memo(({
           <TableRow>
             <TableCell>Code</TableCell>
             <TableCell>Name</TableCell>
-            <TableCell align="right">Walk In ₱</TableCell>
+            { showPrice && <TableCell align="right">Walk In ₱</TableCell>} 
             <TableCell align="right">Qty</TableCell>
             <TableCell align="right"> </TableCell>
           </TableRow>
@@ -304,6 +305,7 @@ const ProductList = memo(({
               product={product} 
               onAddProduct={onAddProduct}
               onShowBracket={handleShowBracket}
+              showPrice={showPrice}
             />
           ))}
           {filteredProducts.length === 0 && (

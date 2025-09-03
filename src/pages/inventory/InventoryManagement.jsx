@@ -559,7 +559,7 @@ const InventoryManagement = () => {
                             />
                           </TableCell>
                           <TableCell>
-                            {log.transaction_type === 'purchase' || log.transaction_type === 'adjustment_in'
+                            {log.transaction_type === 'purchase' || log.transaction_type === 'adjustment_in' || log.transaction_type === 'transfer_in' || log.transaction_type === 'return'
                               ? `+${log.quantity}` 
                               : `-${log.quantity}`}
                           </TableCell>
