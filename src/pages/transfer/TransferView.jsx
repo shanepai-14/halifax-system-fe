@@ -27,7 +27,7 @@ const TransferView = () => {
   
   const [itemsFontSize, setItemsFontSize] = useState(() => {
     const saved = localStorage.getItem('transferView_fontSize');
-    return saved ? parseInt(saved) : 12;
+    return saved ? parseInt(saved) : 14;
   });
 
     const handlePrint = useReactToPrint({
@@ -208,38 +208,135 @@ const TransferView = () => {
   };
 
   // Generate plain text version for dot matrix printing
-  const generateTextContent = () => {
-    if (!transfer) return '';
+//   const generateTextContent = () => {
+//     if (!transfer) return '';
 
-    // Build the text content
-    let content = '';
+//     // Build the text content
+//     let content = '';
     
-    // Header
-    content += '                                  TRANSFER REPORT\n';
-    content += `                                   ${transfer.transfer_number}\n\n`;
+//     // Header
+//     content += '                                  TRANSFER REPORT\n';
+//     content += `                                   ${transfer.transfer_number}\n\n`;
     
-    // Company info and transfer details
-    content += 'Halifax Glass & Aluminum Supply          ';
-    content += `            Transfer Date: ${formatDate(transfer.created_at)}\n`;
-    content += 'Malagamot Road, Panacan                 ';
-    content += `             Delivery Date: ${transfer.delivery_date ? formatDate(transfer.delivery_date) : 'Not set'}\n`;
-    content += 'glasshalifax@gmail.com                   ';
-    content += `               \n`;
-    content += '0939 924 3876                            ';
-    content += `\n\n`;
+//     // Company info and transfer details
+//     content += 'Halifax Glass & Aluminum Supply          ';
+//     content += `            Transfer Date: ${formatDate(transfer.created_at)}\n`;
+//     content += 'Malagamot Road, Panacan                 ';
+//     content += `             Delivery Date: ${transfer.delivery_date ? formatDate(transfer.delivery_date) : 'Not set'}\n`;
+//     content += 'glasshalifax@gmail.com                   ';
+//     content += `               \n`;
+//     content += '0939 924 3876                            ';
+//     content += `\n\n`;
     
-    // Transfer info
-    content += `Destination Warehouse: ${transfer.warehouse?.name}\n`;
-    content += `Location: ${transfer.warehouse?.location || 'Not specified'}\n`;
-    content += `Created By: ${transfer.creator?.name}\n`;
+//     // Transfer info
+//     content += `Destination Warehouse: ${transfer.warehouse?.name}\n`;
+//     content += `Location: ${transfer.warehouse?.location || 'Not specified'}\n`;
+//     content += `Created By: ${transfer.creator?.name}\n`;
     
-    content += '_____________________________________________________________________________________\n';
-    content += ' Qty Unit Product                                     Cost                Total Cost\n';
-    content += '_____________________________________________________________________________________\n';
+//     content += '_____________________________________________________________________________________\n';
+//     content += ' Qty Unit Product                                     Cost                Total Cost\n';
+//     content += '_____________________________________________________________________________________\n';
     
-    // Add transfer items
-    transfer.items?.forEach((item) => {
-      const qty = padLeft(item.quantity.toString(), 4);
+//     // Add transfer items
+//     transfer.items?.forEach((item) => {
+//       const qty = padLeft(item.quantity.toString(), 4);
+//       const unit = padRight(item.product?.attribute?.unit_of_measurement || '', 5);
+//       const productName = padRight(item.product?.product_name || '', 40);
+//       const unitCost = padLeft(formatCurrency(parseFloat(item.unit_cost)), 10);
+//       const totalCost = padLeft(formatCurrency(parseFloat(item.total_cost)), 10);
+      
+//       content += `${qty} ${unit} ${productName} ${unitCost}            ${totalCost}\n`;
+      
+//       // Add notes if exists
+//       if (item.notes && item.notes !== 'No notes') {
+//         content += `    Notes: ${item.notes}\n`;
+//       }
+//     });
+    
+//     content += '_____________________________________________________________________________________\n\n';
+    
+//     // Total and notes section
+//     const createdByText = `Created By: ${transfer.creator?.name}`;
+//     const createdByLength = createdByText.length;
+    
+//     const totalLine = `${padLeft('Total Value:', 57)} ${padLeft(formatCurrency(transfer.total_value), 5)}`;
+//     const spacingNeeded = 85 - createdByLength;
+//     const rightAlignedTotal = padLeft(totalLine, spacingNeeded);
+
+//     content += `${createdByText}${rightAlignedTotal}\n`;
+//     content += '\n';
+    
+//     // Notes
+//     if (transfer.notes) {
+//       content += `Notes: ${transfer.notes}\n\n`;
+//     }
+
+//     const contentLines = content.split('\n').length;
+//     const targetPageLines = 66;
+//     const signatureLines = 12;
+//     const footerLines = 2;
+//     const totalFooterLines = signatureLines + footerLines;
+//     const availableLines = targetPageLines - totalFooterLines;
+
+//     // Add blank lines to push signatures to bottom
+//     const linesToAdd = Math.max(0, availableLines - contentLines);
+//     content += '\n'.repeat(linesToAdd);
+    
+//     // Signature section
+//     content += '\n\n\n';
+//     content += '     _________________            _________________            _________________\n';
+//     content += '        Prepared By                   Checked By                  Released By\n\n\n\n';
+//     content += '                   _________________             _________________ \n';
+//     content += '                     Delivered By                  Received By\n\n';
+    
+//     return content;
+//   };
+
+const generateTextContent = () => {
+  if (!transfer) return '';
+
+  // Build the text content
+  let content = '';
+  
+  // Header
+  content += '                                  TRANSFER REPORT\n';
+  content += `                                   ${transfer.transfer_number}\n\n`;
+  
+  // Company info and transfer details
+  content += 'Halifax Glass & Aluminum Supply          ';
+  content += `            Transfer Date: ${formatDate(transfer.created_at)}\n`;
+  content += 'Malagamot Road, Panacan                 ';
+  content += `             Delivery Date: ${transfer.delivery_date ? formatDate(transfer.delivery_date) : 'Not set'}\n`;
+  content += 'glasshalifax@gmail.com\n';
+  content += '0939 924 3876\n\n';
+  
+  // Transfer info
+  content += `Destination Warehouse: ${transfer.warehouse?.name}\n`;
+  content += `Location: ${transfer.warehouse?.location || 'Not specified'}\n`;
+  content += `Created By: ${transfer.creator?.name}\n`;
+  
+  content += '_____________________________________________________________________________________\n';
+  content += ' Qty Unit Product                                     Cost                Total Cost\n';
+  content += '_____________________________________________________________________________________\n';
+  
+  // Group items by category for text version
+  const groupedItems = transfer.items?.reduce((acc, item) => {
+    const categoryName = item.product?.category?.name || 'Uncategorized';
+    if (!acc[categoryName]) {
+      acc[categoryName] = [];
+    }
+    acc[categoryName].push(item);
+    return acc;
+  }, {}) || {};
+
+  const sortedCategories = Object.keys(groupedItems).sort();
+
+  // Add transfer items by category
+  sortedCategories.forEach((categoryName) => {
+    content += `${categoryName}\n`;
+    
+    groupedItems[categoryName].forEach((item) => {
+      const qty = padLeft(parseInt(item.quantity), 4);
       const unit = padRight(item.product?.attribute?.unit_of_measurement || '', 5);
       const productName = padRight(item.product?.product_name || '', 40);
       const unitCost = padLeft(formatCurrency(parseFloat(item.unit_cost)), 10);
@@ -252,45 +349,47 @@ const TransferView = () => {
         content += `    Notes: ${item.notes}\n`;
       }
     });
-    
-    content += '_____________________________________________________________________________________\n\n';
-    
-    // Total and notes section
-    const createdByText = `Created By: ${transfer.creator?.name}`;
-    const createdByLength = createdByText.length;
-    
-    const totalLine = `${padLeft('Total Value:', 57)} ${padLeft(formatCurrency(transfer.total_value), 5)}`;
-    const spacingNeeded = 85 - createdByLength;
-    const rightAlignedTotal = padLeft(totalLine, spacingNeeded);
-
-    content += `${createdByText}${rightAlignedTotal}\n`;
     content += '\n';
-    
-    // Notes
-    if (transfer.notes) {
-      content += `Notes: ${transfer.notes}\n\n`;
-    }
+  });
+  
+  content += '_____________________________________________________________________________________\n\n';
+  
+  // Total and notes section
+  const createdByText = `Created By: ${transfer.creator?.name}`;
+  const createdByLength = createdByText.length;
+  
+  const totalLine = `${padLeft('Total:', 55)} ${padLeft(formatCurrency(transfer.total_value), 5)}`;
+  const spacingNeeded = 85 - createdByLength;
+  const rightAlignedTotal = padLeft(totalLine, spacingNeeded);
 
-    const contentLines = content.split('\n').length;
-    const targetPageLines = 66;
-    const signatureLines = 12;
-    const footerLines = 2;
-    const totalFooterLines = signatureLines + footerLines;
-    const availableLines = targetPageLines - totalFooterLines;
+  content += `${createdByText}${rightAlignedTotal}\n`;
+  content += '\n';
+  
+  // Notes
+  if (transfer.notes) {
+    content += `Notes: ${transfer.notes}\n\n`;
+  }
 
-    // Add blank lines to push signatures to bottom
-    const linesToAdd = Math.max(0, availableLines - contentLines);
-    content += '\n'.repeat(linesToAdd);
-    
-    // Signature section
-    content += '\n\n\n';
-    content += '     _________________            _________________            _________________\n';
-    content += '        Prepared By                   Checked By                  Released By\n\n\n\n';
-    content += '                   _________________             _________________ \n';
-    content += '                     Delivered By                  Received By\n\n';
-    
-    return content;
-  };
+  const contentLines = content.split('\n').length;
+  const targetPageLines = 66;
+  const signatureLines = 12;
+  const footerLines = 2;
+  const totalFooterLines = signatureLines + footerLines;
+  const availableLines = targetPageLines - totalFooterLines;
+
+  // Add blank lines to push signatures to bottom
+  const linesToAdd = Math.max(0, availableLines - contentLines);
+  content += '\n'.repeat(linesToAdd);
+  
+  // Signature section
+  content += '\n\n\n';
+  content += '     _________________            _________________            _________________\n';
+  content += '        Prepared By                   Checked By                  Released By\n\n\n\n';
+  content += '                   _________________             _________________ \n';
+  content += '                     Delivered By                  Received By\n\n';
+  
+  return content;
+};
 
   const handleEdit = (id) => {
    if(id){
@@ -522,51 +621,78 @@ const TransferView = () => {
             <Box sx={{ flex: 1 }}>
               {/* Items Table */}
               <Typography variant="subtitle1" gutterBottom sx={{fontSize: `${itemsFontSize}px!important`}}>Transfer Items</Typography>
-              <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell align="right" sx={{fontSize: `${itemsFontSize}px!important`}}>Qty</TableCell>
-                      <TableCell align="left" width={'15px'} sx={{fontSize: `${itemsFontSize}px!important`}}>Unit</TableCell>
-                      <TableCell align="left" sx={{fontSize: `${itemsFontSize}px!important`}}>Product</TableCell>
-                      <TableCell align="right" sx={{ fontSize: `${itemsFontSize}px!important`}}>Unit Cost</TableCell>
-                      <TableCell align="right" sx={{fontSize: `${itemsFontSize}px!important`}}>Total Cost</TableCell>
-                      <TableCell align="left" sx={{fontSize: `${itemsFontSize}px!important`}}>Notes</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {transfer.items?.map((item) => (
-                      <TableRow key={item.id} sx={{py:0.5 , border:'none' }}>
-                        <TableCell align="right" sx={{py:0.5 , border:'none', fontSize: `${itemsFontSize}px!important`}}>
-                          {parseInt(item.quantity)}
-                        </TableCell>
-                        <TableCell align="left" sx={{py:0.5 , border:'none', fontSize: `${itemsFontSize}px!important`}}>
-                          {item.product?.attribute?.unit_of_measurement || ''}
-                        </TableCell>
-                        <TableCell align="left" sx={{py:0.5 , border:'none', fontSize: `${itemsFontSize}px!important`}}>
-                          <Typography variant="body2" fontWeight="medium" sx={{ fontSize: `${itemsFontSize}px!important` }}>
-                            {item.product?.product_name}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary" sx={{ fontSize: `${itemsFontSize - 2}px!important` }}>
-                            {item.product?.product_code}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right" sx={{py:0.5 , border:'none', fontSize: `${itemsFontSize}px!important`}}>
-                          {formatCurrency(parseFloat(item.unit_cost))}
-                        </TableCell>
-                        <TableCell align="right" sx={{py:0.5 , border:'none', fontSize: `${itemsFontSize}px!important`}}>
-                          {formatCurrency(parseFloat(item.total_cost))}
-                        </TableCell>
-                        <TableCell align="left" sx={{py:0.5 , border:'none', fontSize: `${itemsFontSize}px!important`}}>
-                          <Typography variant="caption" color="textSecondary" sx={{ fontSize: `${itemsFontSize - 1}px!important` }}>
-                            {item.notes || 'No notes'}
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+<TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
+  <Table size="small">
+    <TableHead>
+      <TableRow>
+        <TableCell align="right" sx={{fontSize: `${itemsFontSize}px!important`}}>Qty</TableCell>
+        <TableCell align="left" width={'15px'} sx={{fontSize: `${itemsFontSize}px!important`}}>Unit</TableCell>
+        <TableCell align="left" sx={{fontSize: `${itemsFontSize}px!important`}}>Product</TableCell>
+        <TableCell align="right" sx={{ fontSize: `${itemsFontSize}px!important`}}>Unit Cost</TableCell>
+        <TableCell align="right" sx={{fontSize: `${itemsFontSize}px!important` }}>Total Cost</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      {(() => {
+        // Group items by category
+        const groupedItems = transfer.items?.reduce((acc, item) => {
+          const categoryName = item.product?.category?.name || 'Uncategorized';
+          if (!acc[categoryName]) {
+            acc[categoryName] = [];
+          }
+          acc[categoryName].push(item);
+          return acc;
+        }, {}) || {};
+
+        // Sort categories alphabetically
+        const sortedCategories = Object.keys(groupedItems).sort();
+
+        return sortedCategories.map((categoryName) => (
+          <React.Fragment key={categoryName}>
+            {/* Category Header Row */}
+            <TableRow sx={{ border: 'none' }}>
+              <TableCell 
+                colSpan={5} 
+                sx={{ 
+                  fontWeight: 'bold',
+                  fontSize: `${itemsFontSize - 1.5}px!important`,
+                  fontStyle: "italic",
+                  py: 0,
+                  border: 'none'
+                }}
+              >
+                {categoryName}
+              </TableCell>
+            </TableRow>
+            
+            {/* Items under this category */}
+            {groupedItems[categoryName].map((item) => (
+              <TableRow key={item.id} sx={{ py: 0.5, border: 'none' }}>
+                <TableCell align="right" sx={{ py: 0.5, border: 'none', fontSize: `${itemsFontSize}px!important` }}>
+                  {parseInt(item.quantity)}
+                </TableCell>
+                <TableCell align="left" sx={{ py: 0.5, border: 'none', fontSize: `${itemsFontSize}px!important` }}>
+                  {item.product?.attribute?.unit_of_measurement || ''}
+                </TableCell>
+                <TableCell align="left" sx={{ py: 0.5, border: 'none', fontSize: `${itemsFontSize}px!important` }}>
+                  <Typography fontWeight="medium" sx={{ fontSize: `${itemsFontSize}px!important` }}>
+                    {item.product?.product_name}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right" sx={{ py: 0.5, border: 'none', fontSize: `${itemsFontSize}px!important` }}>
+                  {formatCurrency(parseFloat(item.unit_cost))}
+                </TableCell>
+                <TableCell align="right" sx={{ py: 0.5, border: 'none', fontSize: `${itemsFontSize}px!important` }}>
+                  {formatCurrency(parseFloat(item.total_cost))}
+                </TableCell>
+              </TableRow>
+            ))}
+          </React.Fragment>
+        ));
+      })()}
+    </TableBody>
+  </Table>
+</TableContainer>
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Box sx={{ display: 'flex', flexDirection:'column', justifyContent: 'flex-start' }}>
