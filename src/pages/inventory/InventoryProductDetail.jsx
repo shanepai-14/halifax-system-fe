@@ -32,7 +32,7 @@ import ProductInfoCard from './components/ProductInfoCard';
 import ProductAttributesCard from './components/ProductAttributesCard';
 import InventoryValuationCard from './components/InventoryValuationCard';
 import StockMovementChart from './components/StockMovementChart';
-import ReceivingReportsAccordion from './components/ReceivingReportsAccordion';
+import ReceivingReportsTable from './components/ReceivingReportsTable';
 import TransactionHistoryTable from './components/TransactionHistoryTable';
 import AdjustmentsTable from './components/AdjustmentsTable';
 import ReportDetailDialog from './components/ReportDetailDialog';
@@ -55,8 +55,6 @@ const InventoryProductDetail = () => {
   const navigate = useNavigate();
   const [tabValue, setTabValue] = useState(0);
   const [chartPeriod, setChartPeriod] = useState('month');
-  const [selectedReport, setSelectedReport] = useState(null);
-  const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -118,15 +116,7 @@ const InventoryProductDetail = () => {
     }
   };
 
-  const handleOpenReportDialog = (report) => {
-    setSelectedReport(report);
-    setReportDialogOpen(true);
-  };
 
-  const handleCloseReportDialog = () => {
-    setReportDialogOpen(false);
-    setSelectedReport(null);
-  };
 
   const handleChartPeriodChange = (period) => {
     setChartPeriod(period);
@@ -254,16 +244,11 @@ const InventoryProductDetail = () => {
 
               {/* Receiving Reports Tab */}
               {tabValue === 2 && (
-                <Box>
-                  <Typography variant="h6" gutterBottom>
-                    Receiving Reports
-                  </Typography>
-                  
-                  <ReceivingReportsAccordion
+       
+                  <ReceivingReportsTable
                     transactions={productReport}
-                    onViewReport={handleOpenReportDialog}
                   />
-                </Box>
+
               )}
 
               {/* Adjustments Tab */}
@@ -303,13 +288,6 @@ const InventoryProductDetail = () => {
         </Dialog>
       </Dialog>
 
-      {/* Receiving Report Detail Dialog */}
-      <ReportDetailDialog
-        open={reportDialogOpen}
-        onClose={handleCloseReportDialog}
-        report={selectedReport}
-        product={product}
-      />
     </Container>
   );
 };

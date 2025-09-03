@@ -20,8 +20,8 @@ import {
   TableRow
 } from '@mui/material';
 import { CloseOutlined, PrinterOutlined } from '@ant-design/icons';
-import { formatDate } from '@/utils/dateUtils';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatDate } from '@/utils/formatUtils';
+import { formatCurrency } from '@/utils/formatUtils';
 
 // Helper function to format datetime
 const formatDateTime = (dateString) => {

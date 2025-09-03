@@ -6,7 +6,7 @@ import {
   Grid, Chip, Button, Dialog, DialogTitle, 
   DialogContent, DialogActions, Tooltip, Zoom, Fade
 } from '@mui/material';
-import { getFileUrl } from '@/utils/fileHelper';
+import { getFileUrl } from '@/utils/formatUtils';
 import { 
   SearchOutlined, 
   PlusOutlined, 
@@ -80,7 +80,7 @@ const CategoryFilters = memo(({ categories, selectedCategory, onCategoryChange, 
 });
 
 // Separate memoized product row
-const ProductRow = memo(({ product, onAddProduct, onShowBracket }) => {
+const ProductRow = memo(({ product, onAddProduct, onShowBracket , showPrice }) => {
   const handleAdd = useCallback(() => {
     onAddProduct(product);
   }, [product, onAddProduct]);
@@ -113,7 +113,7 @@ const ProductRow = memo(({ product, onAddProduct, onShowBracket }) => {
           </Typography>
         )}
       </TableCell>
-      <TableCell align="right" sx={{padding:"0px!important"}}>₱{product.walk_in_price}</TableCell>
+     {showPrice && <TableCell align="right" sx={{padding:"0px!important"}}>₱{product.walk_in_price}</TableCell> } 
       <TableCell align="right" sx={{padding:"0px!important"}}>{parseInt(product.quantity, 10)}</TableCell>
       <TableCell align="right" sx={{padding:"0px!important"}}>
         <IconButton 
@@ -204,7 +204,8 @@ const ProductList = memo(({
   onCloseDialog, 
   onMinimize, 
   isMinimized,
-  isInModal = false
+  isInModal = false,
+  showPrice = true,
 }) => {
   // Local state - isolated from parent re-renders
   const [searchTerm, setSearchTerm] = useState('');
@@ -235,9 +236,31 @@ const ProductList = memo(({
   }, [onCloseDialog]);
 
   const handleShowBracket = useCallback((product) => {
-    setSelectedBracket(product.price_bracket);
+    const groupedItems = Object.values(
+      product.price_bracket.items.reduce((acc, item) => {
+        const key = `${item.min_quantity}-${item.max_quantity ?? '∞'}`;
+        if (!acc[key]) {
+          acc[key] = {
+            min_quantity: item.min_quantity,
+            max_quantity: item.max_quantity,
+            is_active: item.is_active,
+            prices: [],
+          };
+        }
+        acc[key].prices.push(Number(item.price).toFixed(2));
+        return acc;
+      }, {})
+    );
+
+    const groupedBracket = {
+      ...product.price_bracket,
+      items: groupedItems,
+    };
+
+    setSelectedBracket(groupedBracket);
     setBracketModalOpen(true);
   }, []);
+
 
   // Memoized filtered products - only recalculates when dependencies change
   const filteredProducts = useMemo(() => {
@@ -270,7 +293,7 @@ const ProductList = memo(({
           <TableRow>
             <TableCell>Code</TableCell>
             <TableCell>Name</TableCell>
-            <TableCell align="right">Walk In ₱</TableCell>
+            { showPrice && <TableCell align="right">Walk In ₱</TableCell>} 
             <TableCell align="right">Qty</TableCell>
             <TableCell align="right"> </TableCell>
           </TableRow>
@@ -282,6 +305,7 @@ const ProductList = memo(({
               product={product} 
               onAddProduct={onAddProduct}
               onShowBracket={handleShowBracket}
+              showPrice={showPrice}
             />
           ))}
           {filteredProducts.length === 0 && (
@@ -393,7 +417,7 @@ const ProductList = memo(({
             </DialogActions>
           </Dialog>
 
-          <Dialog open={bracketModalOpen} onClose={() => setBracketModalOpen(false)} maxWidth="md" fullWidth>
+          <Dialog open={bracketModalOpen} onClose={() => setBracketModalOpen(false)} maxWidth="sm" fullWidth>
             <DialogTitle>
               Pricing Brackets - {selectedBracket && products.find(p => p.price_bracket?.id === selectedBracket.id)?.name}
             </DialogTitle>
@@ -405,22 +429,18 @@ const ProductList = memo(({
                       <TableRow>
                         <TableCell>Quantity Range</TableCell>
                         <TableCell align="right">Price</TableCell>
-                        <TableCell>Status</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {selectedBracket.items.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell>
-                            {item.min_quantity} - {item.max_quantity || '∞'}
-                          </TableCell>
-                          <TableCell align="right">₱{Number(item.price).toFixed(2)}</TableCell>
-                          <TableCell>
-                            <Chip 
-                              label={item.is_active ? 'Active' : 'Inactive'} 
-                              size="small"
-                              color={item.is_active ? 'success' : 'default'}
-                            />
+                      {selectedBracket.items.map((group) => (
+                        <TableRow key={`${group.min_quantity}-${group.max_quantity}`}>
+                          <TableCell><Typography variant="h3">{group.min_quantity} - {group.max_quantity ?? '∞'}</Typography></TableCell>
+                          <TableCell align="right">
+                            {group.prices.map((price, index) => (
+                              <>
+                              <Chip variant="outlined" sx={{mb:1}} key={index} label={`₱${price}`}/><br/>
+                              </>
+                            ))}
                           </TableCell>
                         </TableRow>
                       ))}

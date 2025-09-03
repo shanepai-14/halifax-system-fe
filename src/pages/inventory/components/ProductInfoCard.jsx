@@ -9,7 +9,7 @@ import {
   Chip
 } from '@mui/material';
 import { EditOutlined, PrinterOutlined  } from '@ant-design/icons';
-import { getFileUrl } from '@/utils/fileHelper';
+import { getFileUrl } from '@/utils/formatUtils';
 
 // Status indicators with colors
 const inventoryStatus = {
@@ -58,7 +58,7 @@ const ProductInfoCard = ({
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
             <Typography variant="h4" component="div" sx={{ mr: 2 ,mb:1 }}>
-              {productInventory?.quantity || 0}
+              {parseInt(productInventory?.quantity) || 0}
             </Typography>
             <Chip 
               label={inventoryStatus[status]?.label} 

@@ -6,7 +6,7 @@ import {
   IconButton
 } from '@mui/material';
 import { PrinterOutlined, CloseOutlined } from '@ant-design/icons';
-import { formatDate } from '@/utils/dateUtils';
+import { formatDate } from '@/utils/formatUtils';
 const CreditMemoReportModal = ({ open, onClose, returns, report }) => {
   const contentRef = useRef();
 

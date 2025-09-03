@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { CloseOutlined, DollarOutlined, FileOutlined } from '@ant-design/icons';
 import { usePettyCash } from '@/hooks/usePettyCash';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatCurrency } from '@/utils/formatUtils';
 
 const SettleTransactionModal = ({ open, onClose, onSuccess, transaction }) => {
   const [formData, setFormData] = useState({

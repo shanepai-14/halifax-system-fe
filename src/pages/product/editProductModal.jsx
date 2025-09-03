@@ -16,7 +16,7 @@ import {
 import { FileUploader } from "react-drag-drop-files";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { Formik, Form, Field, FieldArray } from "formik";
-import { getFileUrl } from '@/utils/fileHelper';
+import { getFileUrl } from '@/utils/formatUtils';
 import { toast } from 'sonner'
 import * as Yup from "yup";
 import {

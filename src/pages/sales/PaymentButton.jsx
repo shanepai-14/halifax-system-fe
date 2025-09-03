@@ -4,7 +4,7 @@ import { MoneyCollectOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@/store/slices/authSlice';
 import PaymentModal from './PaymentModal';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatCurrency } from '@/utils/formatUtils';
 
 const PaymentButton = ({ sale, onPaymentSuccess, disabled = false }) => {
   const [modalOpen, setModalOpen] = useState(false);

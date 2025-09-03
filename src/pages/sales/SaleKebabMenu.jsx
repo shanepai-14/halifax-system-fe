@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { 
   IconButton, 
   Menu, 
@@ -10,18 +12,23 @@ import {
   DialogActions,
   Button,
   TextField,
-  CircularProgress
+  CircularProgress,
+  Typography,
+  Box,
+  Slider,
+  Divider
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { CloseCircleOutlined, EditOutlined } from '@ant-design/icons';
+import { CloseCircleOutlined, EditOutlined, FontSizeOutlined , TruckOutlined  } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
-import { formatDateForInput } from '@/utils/dateUtils';
+import { formatDateForInput } from '@/utils/formatUtils';
+import { selectCurrentUser } from '@/store/slices/authSlice';
 
-const SaleKebabMenu = ({ sale , refresh }) => {
-  // State for menu
+const SaleKebabMenu = ({ sale, refresh, itemsFontSize, setItemsFontSize }) => {
+  const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
-  console.log(sale);
+  
   // State for cancel dialog
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
@@ -32,10 +39,15 @@ const SaleKebabMenu = ({ sale , refresh }) => {
   const [newDeliveryDate, setNewDeliveryDate] = useState('');
   const [isUpdatingDeliveryDate, setIsUpdatingDeliveryDate] = useState(false);
   
+  // State for font size dialog
+  const [fontSizeDialogOpen, setFontSizeDialogOpen] = useState(false);
+  const [tempFontSize, setTempFontSize] = useState(itemsFontSize);
+
+  const currentUser = useSelector(selectCurrentUser);
+  const isAdmin = currentUser?.role === 'admin';
+  
   // Get functions from useSales hook
   const { cancelSale, updateDeliveryDate } = useSales();
-
- 
 
   // Open menu
   const handleClick = (event) => {
@@ -62,9 +74,7 @@ const SaleKebabMenu = ({ sale , refresh }) => {
   // Open delivery date dialog
   const handleOpenDeliveryDateDialog = () => {
     handleClose();
-    console.log(sale.delivery_date);
     setNewDeliveryDate(formatDateForInput(sale.delivery_date));
-    console.log(formatDateForInput(sale.delivery_date));
     setDeliveryDateDialogOpen(true);
   };
 
@@ -72,6 +82,32 @@ const SaleKebabMenu = ({ sale , refresh }) => {
   const handleCloseDeliveryDateDialog = () => {
     setDeliveryDateDialogOpen(false);
     setNewDeliveryDate('');
+  };
+
+  // Open font size dialog
+  const handleOpenFontSizeDialog = () => {
+    handleClose();
+    setTempFontSize(itemsFontSize);
+    setFontSizeDialogOpen(true);
+  };
+
+  // Close font size dialog
+  const handleCloseFontSizeDialog = () => {
+    setFontSizeDialogOpen(false);
+    setTempFontSize(itemsFontSize);
+  };
+
+  // Apply font size changes
+  const handleApplyFontSize = () => {
+  setItemsFontSize(tempFontSize);
+  localStorage.setItem('deliveryReport_fontSize', tempFontSize.toString()); // Add this line
+  setFontSizeDialogOpen(false);
+  };
+
+  // Reset font size to default
+  const handleResetFontSize = () => {
+  setTempFontSize(12);
+  localStorage.setItem('deliveryReport_fontSize', '12'); // Add this line
   };
 
   // Handle cancel sale
@@ -143,21 +179,44 @@ const SaleKebabMenu = ({ sale , refresh }) => {
         PaperProps={{
           style: {
             maxHeight: 48 * 4.5,
-            width: '20ch',
+            width: '22ch',
           },
         }}
       >
         <MenuItem 
+          onClick={handleOpenFontSizeDialog}
+          sx={{ color: 'info.main' }}
+        >
+          <FontSizeOutlined style={{ marginRight: 8 }} />
+          Adjust Font Size
+        </MenuItem>
+        
+        <Divider />
+        
+        <MenuItem 
           onClick={handleOpenDeliveryDateDialog} 
           disabled={isDeliveryDateUpdateDisabled}
           sx={{ 
-            color: isDeliveryDateUpdateDisabled ? 'text.disabled' : 'primary.main',
+            color: isDeliveryDateUpdateDisabled ? 'text.disabled' : 'warning.main',
             '&.Mui-disabled': { opacity: 0.6 }
           }}
         >
-          <EditOutlined style={{ marginRight: 8 }} />
+          <TruckOutlined style={{ marginRight: 8 }} />
           Edit Delivery Date
         </MenuItem>
+        
+        {isAdmin && (
+          <MenuItem
+            onClick={() => navigate(`/app/delivery-report/edit/${sale.id}`)}
+            sx={{ 
+              color: 'primary.main',
+            }}
+          >
+            <EditOutlined style={{ marginRight: 8 }} />
+            Edit Sale
+          </MenuItem>
+        )}
+
         
         <MenuItem 
           onClick={handleOpenCancelDialog} 
@@ -171,6 +230,79 @@ const SaleKebabMenu = ({ sale , refresh }) => {
           Cancel Sale
         </MenuItem>
       </Menu>
+
+      {/* Font Size Adjustment Dialog */}
+      <Dialog
+        open={fontSizeDialogOpen}
+        onClose={handleCloseFontSizeDialog}
+        aria-labelledby="font-size-dialog-title"
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle id="font-size-dialog-title">
+          Adjust Items Font Size
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 3 }}>
+            Adjust the font size for product items in the delivery report. This is useful for optimizing the layout for different printers.
+          </DialogContentText>
+          
+          <Box sx={{ mb: 3 }}>
+            <Typography gutterBottom>
+              Font Size: {tempFontSize}px
+            </Typography>
+            <Slider
+              value={tempFontSize}
+              onChange={(event, newValue) => setTempFontSize(newValue)}
+              aria-labelledby="font-size-slider"
+              min={8}
+              max={20}
+              step={1}
+              marks={[
+                { value: 8, label: '8px' },
+                { value: 12, label: '12px' },
+                { value: 16, label: '16px' },
+                { value: 20, label: '20px' }
+              ]}
+              valueLabelDisplay="auto"
+            />
+          </Box>
+          
+          <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 1, mb: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Preview:
+            </Typography>
+            <Typography sx={{ fontSize: tempFontSize, fontFamily: '"Courier New", monospace' }}>
+              Sample Product Item Name - ₱1,234.56
+            </Typography>
+            <Typography sx={{ fontSize: tempFontSize - 1, fontFamily: '"Courier New", monospace', color: 'text.secondary' }}>
+              Composition: Sample composition text
+            </Typography>
+          </Box>
+          
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handleResetFontSize}
+            >
+              Reset to Default (12px)
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseFontSizeDialog} color="primary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleApplyFontSize} 
+            color="primary" 
+            variant="contained"
+          >
+            Apply Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Update Delivery Date Dialog */}
       <Dialog

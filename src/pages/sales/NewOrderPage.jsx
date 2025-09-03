@@ -21,9 +21,7 @@ const NewOrderPage = () => {
   const { 
     inventory, 
     getAllInventory, 
-    isInventoryLoading,
     createSale,
-    isSalesLoading
   } = useSales();
 
   // Core state
@@ -42,30 +40,73 @@ const NewOrderPage = () => {
   const navigate = useNavigate();
 
   // Memoized utility functions (moved before usage)
-  const calculateBracketPrice = useCallback((item, quantity) => {
-    if (!item.price_bracket || !item.use_bracket_pricing) return null;
-    
-    const priceType = item.price_type || 'regular';
-    const bracketItem = item.price_bracket.items.find(bracket => 
-      bracket.price_type === priceType &&
-      bracket.is_active &&
-      bracket.min_quantity <= quantity &&
-      (bracket.max_quantity === null || bracket.max_quantity >= quantity)
-    );
-    
-    return bracketItem ? bracketItem.price : null;
-  }, []);
+const calculateBracketPrice = useCallback((item, quantity) => {
+  if (!item.price_bracket || !item.use_bracket_pricing) return null;
+  
+  const priceType = item.price_type || 'regular';
+  
+  // Get ALL matching brackets, not just the first one
+  const matchingBrackets = item.price_bracket.items.filter(bracket => 
+    bracket.price_type === priceType &&
+    bracket.is_active &&
+    bracket.min_quantity <= quantity &&
+    (bracket.max_quantity === null || bracket.max_quantity >= quantity)
+  );
+  
+  if (matchingBrackets.length === 0) return null;
+  
+  // Sort by price ascending to get the LOWEST price first
+  matchingBrackets.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+  
+  // Return the lowest price
+  return parseFloat(matchingBrackets[0].price);
+}, []);
 
-  const getPriceByPriceType = useCallback((item) => {
-    // Check for bracket pricing first if enabled for this specific item
+ 
+
+ const getPriceByPriceType = useCallback((item, customer = null) => {
+    // Helper function to calculate custom pricing for valued customers
+    const calculateCustomPrice = (item, quantity, customer) => {
+      if (!customer?.is_valued_customer || !customer.custom_pricing_groups) {
+        return null;
+      }
+
+      const productPricing = customer.custom_pricing_groups.find(
+        group => group.product_id === item.id
+      );
+
+      if (!productPricing) {
+        return null;
+      }
+
+      const matchingRange = productPricing.price_ranges
+        .filter(range => 
+          range.is_active &&
+          quantity >= range.min_quantity &&
+          (range.max_quantity === null || quantity <= range.max_quantity)
+        )
+        .sort((a, b) => b.min_quantity - a.min_quantity)[0];
+
+      return matchingRange ? parseFloat(matchingRange.price) : null;
+    };
+
+    // 1. First priority: Custom pricing for valued customers
+    if (customer?.is_valued_customer) {
+      const customPrice = calculateCustomPrice(item, item.quantity, customer);
+      if (customPrice !== null) {
+        return customPrice;
+      }
+    }
+
+    // 2. Second priority: Check for bracket pricing if enabled
     if (item.use_bracket_pricing && item.price_bracket) {
       const bracketPrice = calculateBracketPrice(item, item.quantity);
       if (bracketPrice !== null) {
-        return bracketPrice;
+        return item.selected_bracket_price || bracketPrice;
       }
     }
     
-    // Fall back to regular pricing
+    // 3. Fall back to regular pricing
     switch(item.price_type || 'regular') {
       case 'walkin':
         return item.walk_in_price || item.regular_price;
@@ -86,7 +127,8 @@ const NewOrderPage = () => {
       if (item.use_bracket_pricing && item.price_bracket) {
         const bracketPrice = calculateBracketPrice(item, item.quantity);
         if (bracketPrice !== null) {
-          price = bracketPrice;
+          // Use selected bracket price if available, otherwise use calculated price
+          price = item.selected_bracket_price || bracketPrice;
         }
       }
       
@@ -129,7 +171,8 @@ const NewOrderPage = () => {
             distribution_price: product.distribution_price || product.cost_price || 0,
             price_type: 'regular',
             price_bracket: product.price_bracket,
-            use_bracket_pricing: false
+            use_bracket_pricing: false,
+            selected_bracket_price: null // NEW: Initialize bracket price selection
           }];
         }
       });
@@ -153,46 +196,44 @@ const NewOrderPage = () => {
     }
   }, [orderItems]);
 
-const handleQuantityChange = useCallback((productId, change, newQuantity = null) => {
-  setOrderItems(prev => prev.map(item => {
-    if (item.id === productId) {
-      const oldQuantity = item.quantity;
-      let updatedQuantity;
-      
-      if (newQuantity !== null) {
-        updatedQuantity = Math.max(0, newQuantity);
-      } else {
-        updatedQuantity = Math.max(0, item.quantity + change);
+  const handleQuantityChange = useCallback((productId, change, newQuantity = null) => {
+    setOrderItems(prev => prev.map(item => {
+      if (item.id === productId) {
+        const oldQuantity = item.quantity;
+        let updatedQuantity;
+        
+        if (newQuantity !== null) {
+          updatedQuantity = Math.max(0, newQuantity);
+        } else {
+          updatedQuantity = Math.max(0, item.quantity + change);
+        }
+        
+        // Find the corresponding product to check available inventory
+        const product = products.find(p => p.id === productId);
+        const availableInventory = product ? product.quantity : 0;
+        const maxAllowedQuantity = availableInventory + oldQuantity; // Current inventory + what was already taken
+        
+        // Prevent exceeding available inventory
+        if (updatedQuantity > maxAllowedQuantity) {
+          // Show alert if user tries to exceed inventory
+          setAlertInfo({
+            open: true,
+            message: `Cannot exceed available inventory. Maximum available: ${maxAllowedQuantity}`,
+            type: 'warning'
+          });
+          updatedQuantity = maxAllowedQuantity;
+        }
+        
+        // Update the product quantity in the product list
+        setProducts(prevProducts => prevProducts.map(p =>
+          p.id === productId ? { ...p, quantity: p.quantity + (oldQuantity - updatedQuantity) } : p
+        ));
+        
+        return { ...item, quantity: updatedQuantity };
       }
-      
-      // Find the corresponding product to check available inventory
-      const product = products.find(p => p.id === productId);
-      const availableInventory = product ? product.quantity : 0;
-      const maxAllowedQuantity = availableInventory + oldQuantity; // Current inventory + what was already taken
-      
-      // Prevent exceeding available inventory
-      if (updatedQuantity > maxAllowedQuantity) {
-        // Show alert if user tries to exceed inventory
-        setAlertInfo({
-          open: true,
-          message: `Cannot exceed available inventory. Maximum available: ${maxAllowedQuantity}`,
-          type: 'warning'
-        });
-        updatedQuantity = maxAllowedQuantity;
-      }
-      
-      // Update the product quantity in the product list
-      setProducts(prevProducts => prevProducts.map(p =>
-        p.id === productId ? { ...p, quantity: p.quantity + (oldQuantity - updatedQuantity) } : p
-      ));
-      
-      return { ...item, quantity: updatedQuantity };
-    }
-    return item;
-  }));
-}, [products, setAlertInfo]);
-
-
+      return item;
+    }));
+  }, [products, setAlertInfo]);
 
   const handleDiscountChange = useCallback((productId, discountValue) => {
     const discount = discountValue === '' ? 0 : Math.min(Math.max(0, parseFloat(discountValue) || 0), 100);
@@ -209,7 +250,20 @@ const handleQuantityChange = useCallback((productId, change, newQuantity = null)
 
   const handleBracketPricingChange = useCallback((productId, useBracket) => {
     setOrderItems(prev => prev.map(item =>
-      item.id === productId ? { ...item, use_bracket_pricing: useBracket } : item
+      item.id === productId ? { 
+        ...item, 
+        use_bracket_pricing: useBracket,
+        selected_bracket_price: useBracket ? null : null // Reset selected price when toggling
+      } : item
+    ));
+  }, []);
+
+  // NEW: Handler for custom/bracket price selection
+  const handleCustomPriceChange = useCallback((itemId, selectedPrice) => {
+    setOrderItems(prev => prev.map(item => 
+      item.id === itemId 
+        ? { ...item, selected_bracket_price: selectedPrice }
+        : item
     ));
   }, []);
 
@@ -272,13 +326,13 @@ const handleQuantityChange = useCallback((productId, change, newQuantity = null)
         phone: formData.phone,
         amount_received: 0, 
         term_days: formData.term_days,
-        delivery_fee: parseFloat(formData.delivery_fee) || 0,      // ADD THIS
+        delivery_fee: parseFloat(formData.delivery_fee) || 0,
         cutting_charges: parseFloat(formData.cutting_charges) || 0,
         items: orderItems.map(item => ({
           product_id: item.id,
           quantity: item.quantity,
           distribution_price: item.distribution_price || item.cost_price || 0,
-          sold_price: getPriceByPriceType(item),
+          sold_price: getPriceByPriceType(item, formData.customer),
           discount: item.discount || 0,
           price_type: item.price_type || 'regular',
           composition: item.composition
@@ -369,6 +423,7 @@ const handleQuantityChange = useCallback((productId, change, newQuantity = null)
               onDiscountChange={handleDiscountChange}
               onPriceTypeChange={handlePriceTypeChange}
               onBracketPricingChange={handleBracketPricingChange}
+              onCustomPriceChange={handleCustomPriceChange} // NEW: Add this prop
               onUpdateItemComposition={handleUpdateItemComposition} 
               isSubmitting={isSubmitting}
               onOpenProductModal={handleOpenProductModal}

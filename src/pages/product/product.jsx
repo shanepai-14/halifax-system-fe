@@ -10,7 +10,7 @@ import {
   InputLabel, 
   TableSortLabel
 } from '@mui/material';
-import { SearchOutlined, PlusOutlined ,DeleteOutlined, EditOutlined, } from '@ant-design/icons';
+import { SearchOutlined, PlusOutlined ,DeleteOutlined, EditOutlined, HistoryOutlined  } from '@ant-design/icons';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ImageIcon from '@mui/icons-material/Image';
@@ -19,11 +19,12 @@ import AddProductModal from './addProductModal';
 import AddAttributeModal from './AddAttributeModal';
 import EditProductModal from './editProductModal';
 import { useProducts, useCategories ,useDeleteProduct } from '@/hooks/useProducts';
-import { getFileUrl } from '@/utils/fileHelper';
+import { getFileUrl } from '@/utils/formatUtils';
 import CardSkeleton from '@/components/CardSkeleton';
 import TableRowSkeleton from '@/components/loader/TableRowSkeleton';
 import CategoryChip from '@/components/CategoryChip';
 import BracketPricingButton from '../bracket/BracketPricingButton';
+import ProductHistoryModal from './ProductHistoryModal';
 import Swal from 'sweetalert2';
 
 
@@ -38,10 +39,23 @@ const ProductPage = () => {
   const [openEditProductModal, setOpenEditProductModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
-const [sortConfig, setSortConfig] = useState({
-  field: 'product_name',
-  direction: 'asc'
-});
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+
+
+  const handleViewHistory = (product) => {
+    setSelectedProduct(product);
+    setHistoryModalOpen(true);
+  };
+
+  const handleCloseHistory = () => {
+    setHistoryModalOpen(false);
+    setSelectedProduct(null);
+  }
+
+  const [sortConfig, setSortConfig] = useState({
+    field: 'product_name',
+    direction: 'asc'
+  });
 
   const handleOpenEditProductModal = (product) => {
     setSelectedProduct(product);
@@ -272,6 +286,9 @@ const [sortConfig, setSortConfig] = useState({
                     />
                   </TableCell>
                   <TableCell align="right">
+                     <IconButton onClick={() => handleViewHistory(row)}>
+                      <HistoryOutlined />
+                    </IconButton>
                     <IconButton onClick={ () => handleOpenEditProductModal(row)}>
                       <EditOutlined style={{ fontSize: 20 }} />
                     </IconButton>
@@ -454,6 +471,12 @@ const [sortConfig, setSortConfig] = useState({
         open={openEditProductModal}
         handleClose={() => handleCloseEditProductModal()}
         categories={categories || []}
+        product={selectedProduct}
+      />
+
+        <ProductHistoryModal
+        open={historyModalOpen}
+        onClose={handleCloseHistory}
         product={selectedProduct}
       />
     </Container>

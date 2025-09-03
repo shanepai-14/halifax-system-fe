@@ -48,8 +48,8 @@ import AddTransactionModal from './modals/AddTransactionModal';
 import SettleTransactionModal from './modals/SettleTransactionModal';
 import TransactionReceiptModal from './modals/TransactionReceiptModal';
 import FundReceiptModal from './modals/FundReceiptModal';
-import { formatDate } from '@/utils/dateUtils';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatDate } from '@/utils/formatUtils';
+import { formatCurrency } from '@/utils/formatUtils';
 import { selectPettyCashFilters ,setStartDate ,setEndDate , setEmployeeId ,setSearchFilter , setStatusFilter } from '@/store/slices/pettyCashSlice';
 
 

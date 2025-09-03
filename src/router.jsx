@@ -24,6 +24,7 @@ const SalesPage = Loadable(lazy(() => import('@/pages/sales/NewOrderPage')));
 const SalesTablePage = Loadable(lazy(() => import('@/pages/sales/SalesTablePage')));
 const InventoryProductDetail = Loadable(lazy(() => import('@pages/inventory/InventoryProductDetail')));
 const DeliveryReportPage = Loadable(lazy(() => import('@pages/sales/DeliveryReportPage')));
+const EditSalePage = Loadable(lazy(() => import('@pages/sales/EditSale')));
 const PaymentsIndex = Loadable(lazy(() => import('@/pages/payments/index')));
 const PaymentsPage = Loadable(lazy(() => import('@/pages/payments/PaymentsPage')));
 const PettyCashManagement = Loadable(lazy(() => import('@/pages/pettyCash/PettyCashManagement')));
@@ -32,6 +33,10 @@ const AuthLogin = Loadable(lazy(() => import('@pages/authentication/login')));
 const UserIndex = Loadable(lazy(() => import('@/pages/users/index')));
 const UserManagement = Loadable(lazy(() => import('@/pages/users/UserManagement')));
 const ReportsPage = Loadable(lazy(() => import('@/pages/report/ReportsPage')));
+const TransferPage = Loadable(lazy(() => import('@/pages/transfer/TransferManagement')));
+const TransferFormPage = Loadable(lazy(() => import('@/pages/transfer/TransferFormPage')));
+const TransferViewPage = Loadable(lazy(() => import('@/pages/transfer/TransferView')));
+
 
 
 
@@ -161,7 +166,16 @@ const router = [
             path: 'delivery-report/:id',
             element: <DeliveryReportPage />,
           },
-          // Other shared routes
+          {
+            path: 'delivery-report/edit/:saleId',
+            element: <ProtectedRoute allowedRoles={['admin']} />,
+            children: [
+              {
+                 index: true,
+                 element: <EditSalePage/>,
+              }
+            ]
+          },
         ]
       },
       // Routes accessible by admin and cashier only
@@ -188,10 +202,32 @@ const router = [
               }
             ]
           },
-                    {
+                   
+        ]
+      },
+            {
+        element: <ProtectedRoute allowedRoles={['admin']} />,
+        children: [
+           {
             path: 'report',
             element: <ReportsPage/>,
-          }
+          },
+                              {
+            path: 'transfers',
+            element: <TransferPage/>,
+          },
+          {
+          path: 'transfers/create',
+          element: <TransferFormPage />
+        },
+        {
+          path: 'transfers/edit/:id',
+          element: <TransferFormPage />
+        },
+        {
+          path: 'transfers/:id',
+          element: <TransferViewPage />
+        }
         ]
       }
     ]

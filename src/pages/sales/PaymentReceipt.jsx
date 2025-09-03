@@ -16,8 +16,8 @@ import {
 } from '@mui/material';
 import { PrinterOutlined, CloseOutlined } from '@ant-design/icons';
 import CompletePaymentButton from '../payments/CompletePaymentButton';
-import { formatDate } from '@/utils/dateUtils';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatDate } from '@/utils/formatUtils';
+import { formatCurrency } from '@/utils/formatUtils';
 const PaymentReceipt = ({ paymentRecord, onClose }) => {
   const contentRef = useRef();
 

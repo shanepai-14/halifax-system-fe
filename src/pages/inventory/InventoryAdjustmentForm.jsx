@@ -44,7 +44,8 @@ const InventoryAdjustmentForm = ({
       setFormData(prev => ({
         ...prev,
         id: product.id || '',
-        product_id: product.id || ''
+        product_id: product.id || '',
+        distribution_price:product.avg_cost_price
       }));
     }
   }, [product]);
@@ -176,7 +177,7 @@ const handleChange = (e) => {
                 Product: {selectedProduct.product_name}
               </Typography>
               <Typography>
-                Current Quantity: {selectedProduct.quantity || 0}
+                Current Quantity: {selectedProduct.current_quantity || 0}
               </Typography>
               <Typography>
                 Reorder Level: {selectedProduct.reorder_level || 'Not set'}

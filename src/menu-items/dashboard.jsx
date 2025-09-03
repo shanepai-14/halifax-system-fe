@@ -1,6 +1,5 @@
 // assets
-import { DashboardOutlined ,SmileOutlined , ShoppingCartOutlined ,DropboxOutlined ,AreaChartOutlined ,UserOutlined ,ProductOutlined ,ShoppingOutlined , AuditOutlined ,RedEnvelopeOutlined , AccountBookOutlined , FundOutlined  } from '@ant-design/icons';
-
+import { DashboardOutlined ,SwapOutlined ,SmileOutlined , ShoppingCartOutlined ,DropboxOutlined ,AreaChartOutlined ,UserOutlined ,ProductOutlined ,ShoppingOutlined , AuditOutlined ,RedEnvelopeOutlined , AccountBookOutlined , FundOutlined  } from '@ant-design/icons';
 
 
 
@@ -98,6 +97,15 @@ const dashboard = {
       type: 'item',
       url: '/app/inventory',
       icon: DropboxOutlined ,
+      breadcrumbs: false,
+      roles: ['admin']
+    },
+        {
+      id: 'transfer',
+      title: 'Transfer',
+      type: 'item',
+      url: '/app/transfers',
+      icon: SwapOutlined   ,
       breadcrumbs: false,
       roles: ['admin']
     },

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {  useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Typography, Box, Paper, Button, Grid, Divider,
@@ -17,8 +18,9 @@ import {
 } from '@ant-design/icons';
 import MainCard from '@components/MainCard';
 import api from '@/lib/axios';
-import { formatDate } from '@/utils/dateUtils';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatDate } from '@/utils/formatUtils';
+import { formatCurrency } from '@/utils/formatUtils';
+import CustomerPricingPanel from './CustomerPricingPanel';
 import * as XLSX from 'xlsx';
 
 // TabPanel component for the tabs
@@ -53,7 +55,7 @@ const CustomerPurchaseHistory = () => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const observer = useRef();
   const loadingRef = useRef();
-
+  const products = useSelector(state => state.products.products);
   // Handle tab change
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -411,6 +413,7 @@ const CustomerPurchaseHistory = () => {
           <Tabs value={tabValue} onChange={handleTabChange} aria-label="purchase history tabs">
             <Tab label="All Items" id="tab-0" />
             <Tab label="By Orders" id="tab-1" />
+             <Tab label="Pricing" id="tab-2" />
           </Tabs>
         </Box>
         
@@ -635,6 +638,14 @@ const CustomerPurchaseHistory = () => {
             </Box>
           )}
         </TabPanel>
+
+          <TabPanel value={tabValue} index={2}>
+
+            <CustomerPricingPanel 
+              customer={customer} 
+              products={products} 
+            />
+          </TabPanel>
       </Paper>
      </>
   );

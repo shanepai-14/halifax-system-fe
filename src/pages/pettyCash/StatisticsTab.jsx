@@ -26,7 +26,7 @@ import {
   CloseCircleOutlined,
   WarningOutlined
 } from '@ant-design/icons';
-import { formatCurrency } from '@/utils/currencyFormat';
+import { formatCurrency } from '@/utils/formatUtils';
 
 
 
