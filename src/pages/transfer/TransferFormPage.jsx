@@ -558,10 +558,10 @@ const TransferFormSkeleton = () => {
           underline="hover"
           color="inherit"
           sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
-          onClick={() => navigate("/app/dashboard")}
+          onClick={() => navigate("/app/product")}
         >
           <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
-          Dashboard
+          Product
         </Link>
         <Link
           underline="hover"

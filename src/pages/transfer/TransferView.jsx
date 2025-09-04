@@ -313,10 +313,10 @@ const generateTextContent = () => {
   // Transfer info
   content += `Destination Warehouse: ${transfer.warehouse?.name}\n`;
   content += `Location: ${transfer.warehouse?.location || 'Not specified'}\n`;
-  content += `Created By: ${transfer.creator?.name}\n`;
+ 
   
   content += '_____________________________________________________________________________________\n';
-  content += ' Qty Unit Product                                     Cost                Total Cost\n';
+  content += ' Qty Unit Product                                                                   \n';
   content += '_____________________________________________________________________________________\n';
   
   // Group items by category for text version
@@ -339,10 +339,10 @@ const generateTextContent = () => {
       const qty = padLeft(parseInt(item.quantity), 4);
       const unit = padRight(item.product?.attribute?.unit_of_measurement || '', 5);
       const productName = padRight(item.product?.product_name || '', 40);
-      const unitCost = padLeft(formatCurrency(parseFloat(item.unit_cost)), 10);
-      const totalCost = padLeft(formatCurrency(parseFloat(item.total_cost)), 10);
+      // const unitCost = padLeft(formatCurrency(parseFloat(item.unit_cost)), 10);
+      // const totalCost = padLeft(formatCurrency(parseFloat(item.total_cost)), 10);
       
-      content += `${qty} ${unit} ${productName} ${unitCost}            ${totalCost}\n`;
+      content += `${qty} ${unit} ${productName}                                   \n`;
       
       // Add notes if exists
       if (item.notes && item.notes !== 'No notes') {
@@ -362,7 +362,7 @@ const generateTextContent = () => {
   const spacingNeeded = 85 - createdByLength;
   const rightAlignedTotal = padLeft(totalLine, spacingNeeded);
 
-  content += `${createdByText}${rightAlignedTotal}\n`;
+  content += `${createdByText}\n`;
   content += '\n';
   
   // Notes
@@ -447,10 +447,10 @@ const generateTextContent = () => {
         <Button 
           variant="contained" 
           startIcon={<HomeOutlined />} 
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate('/app/product')}
           sx={{ mt: 2 }}
         >
-          Go to Dashboard
+          Go to Product
         </Button>
       </Box>
     );
@@ -463,10 +463,10 @@ const generateTextContent = () => {
               underline="hover"
               color="inherit"
               sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
-              onClick={() => navigate("/app/dashboard")}
+              onClick={() => navigate("/app/product")}
             >
               <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
-              Dashboard
+              Product
             </Link>
             <Link
               underline="hover"
@@ -628,8 +628,8 @@ const generateTextContent = () => {
         <TableCell align="right" sx={{fontSize: `${itemsFontSize}px!important`}}>Qty</TableCell>
         <TableCell align="left" width={'15px'} sx={{fontSize: `${itemsFontSize}px!important`}}>Unit</TableCell>
         <TableCell align="left" sx={{fontSize: `${itemsFontSize}px!important`}}>Product</TableCell>
-        <TableCell align="right" sx={{ fontSize: `${itemsFontSize}px!important`}}>Unit Cost</TableCell>
-        <TableCell align="right" sx={{fontSize: `${itemsFontSize}px!important` }}>Total Cost</TableCell>
+        {/* <TableCell align="right" sx={{ fontSize: `${itemsFontSize}px!important`}}>Unit Cost</TableCell>
+        <TableCell align="right" sx={{fontSize: `${itemsFontSize}px!important` }}>Total Cost</TableCell> */}
       </TableRow>
     </TableHead>
     <TableBody>
@@ -679,12 +679,12 @@ const generateTextContent = () => {
                     {item.product?.product_name}
                   </Typography>
                 </TableCell>
-                <TableCell align="right" sx={{ py: 0.5, border: 'none', fontSize: `${itemsFontSize}px!important` }}>
+                {/* <TableCell align="right" sx={{ py: 0.5, border: 'none', fontSize: `${itemsFontSize}px!important` }}>
                   {formatCurrency(parseFloat(item.unit_cost))}
                 </TableCell>
                 <TableCell align="right" sx={{ py: 0.5, border: 'none', fontSize: `${itemsFontSize}px!important` }}>
                   {formatCurrency(parseFloat(item.total_cost))}
-                </TableCell>
+                </TableCell> */}
               </TableRow>
             ))}
           </React.Fragment>
@@ -715,7 +715,7 @@ const generateTextContent = () => {
                     {transfer.creator?.name}
                   </Typography>
                 </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <Grid container spacing={0} sx={{ maxWidth: '400px' }}>
                     <Grid item xs={6}>
                       <Typography fontWeight="bold" align="right" sx={{ fontSize: `${itemsFontSize + 4}px!important` }}>
@@ -728,7 +728,7 @@ const generateTextContent = () => {
                       </Typography>
                     </Grid>
                   </Grid>
-                </Box>
+                </Box> */}
               </Box>
 
               {/* Additional Information */}

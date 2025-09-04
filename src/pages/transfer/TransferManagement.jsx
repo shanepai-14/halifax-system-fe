@@ -78,7 +78,6 @@ const TransferManagement = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [transfers, setTransfers] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
-  const [products, setProducts] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -94,7 +93,6 @@ const TransferManagement = () => {
   const [endDate, setEndDate] = useState('');
 
 
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState(null);
 
@@ -746,125 +744,7 @@ function TransferActionButtons({ transfer }) {
 
 
 
-      {/* Transfer Details Dialog */}
-      <Dialog
-        open={detailsDialogOpen}
-        onClose={() => setDetailsDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
-          <Typography variant="h6" fontWeight="bold">
-            Transfer Details: {selectedTransfer?.transfer_number}
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          {selectedTransfer && (
-            <Box sx={{ mt: 2 }}>
-              <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="textSecondary">Destination Warehouse</Typography>
-                  <Typography variant="body1">{selectedTransfer.warehouse?.name}</Typography>
-                  <Typography variant="caption" color="textSecondary">
-                    {selectedTransfer.warehouse?.location}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="textSecondary">Status</Typography>
-                  {renderStatusChip(selectedTransfer.status)}
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="textSecondary">Total Items</Typography>
-                  <Typography variant="body1">{selectedTransfer.total_items} items</Typography>
-                  <Typography variant="caption" color="textSecondary">
-                    Total Quantity: {selectedTransfer.total_quantity}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="textSecondary">Total Value</Typography>
-                  <Typography variant="body1" fontWeight="medium">
-                    {formatCurrency(selectedTransfer.total_value)}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="textSecondary">Delivery Date</Typography>
-                  <Typography variant="body1">
-                    {selectedTransfer.delivery_date ? formatDate(selectedTransfer.delivery_date) : 'Not set'}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="textSecondary">Created By</Typography>
-                  <Typography variant="body1">{selectedTransfer.creator?.name}</Typography>
-                  <Typography variant="caption" color="textSecondary">
-                    {formatDate(selectedTransfer.created_at)}
-                  </Typography>
-                </Grid>
-                {selectedTransfer.notes && (
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle2" color="textSecondary">Notes</Typography>
-                    <Typography variant="body1">{selectedTransfer.notes}</Typography>
-                  </Grid>
-                )}
-              </Grid>
 
-              {/* Transfer Items List */}
-              <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
-                Transfer Items
-              </Typography>
-              <TableContainer component={Paper} variant="outlined">
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Product</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Quantity</TableCell>
-                      {/* <TableCell sx={{ fontWeight: 'bold' }}>Unit Cost</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Total Cost</TableCell> */}
-                      <TableCell sx={{ fontWeight: 'bold' }}>Notes</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {selectedTransfer.items?.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight="medium">
-                            {item.product?.product_name}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            {item.product?.product_code}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {parseInt(item.quantity)}
-                          </Typography>
-                        </TableCell>
-                        {/* <TableCell>
-                          <Typography variant="body2">
-                            {formatCurrency(item.unit_cost)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight="medium">
-                            {formatCurrency(item.total_cost)}
-                          </Typography>
-                        </TableCell> */}
-                        <TableCell>
-                          <Typography variant="caption" color="textSecondary">
-                            {item.notes || 'No notes'}
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDetailsDialogOpen(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Status Update Dialog */}
       <Dialog
