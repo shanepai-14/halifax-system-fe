@@ -62,8 +62,7 @@ const PurchaseOrderReceivingReports = ({
   onCreateReceivingReport,
   onUpdateReceivingReport
 }) => {
-  console.log(requestedItems);
-  console.log('receivingReports', receivingReports);
+
   const contentRef = useRef();
   const [expanded, setExpanded] = useState(false);
   const [reportDialog, setReportDialog] = useState(false);
@@ -133,7 +132,7 @@ const PurchaseOrderReceivingReports = ({
                 attribute_id: requestedItem.attribute_id,
                 received_quantity: remainingQuantity,
                 cost_price: parseFloat(requestedItem.price),
-                distribution_price: 0,
+                distribution_price: parseFloat(requestedItem.price),
                 walk_in_price: 0,
                 term_price: 0,
                 wholesale_price: 0,
@@ -281,17 +280,24 @@ const PurchaseOrderReceivingReports = ({
   };
   
   const handleItemChange = (index, field, value) => {
+    
 
     const updatedItems = [...reportData.received_items];
-    updatedItems[index] = {
+
+     const processedValue = ['distribution_price'].includes(field) 
+    ? parseFloat(value) || 0 
+    : value;
+
+      updatedItems[index] = {
       ...updatedItems[index],
-      [field]: value
+      [field]: processedValue
     };
     
     setReportData(prev => ({
       ...prev,
       received_items: updatedItems
     }));
+
     
     // Clear error for this field if it exists
     if (errors[`received_items.${index}.${field}`]) {
@@ -386,7 +392,7 @@ const PurchaseOrderReceivingReports = ({
       })),
       additional_costs: reportData.additional_costs,
     };
-      
+
       if (isEditing) {
         await onUpdateReceivingReport(selectedReportId, dataToSave);
       } else {

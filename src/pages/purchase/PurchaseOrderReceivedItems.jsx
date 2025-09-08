@@ -28,15 +28,25 @@ const ReceivedItemRow = React.memo(({
   distributionCostPerUnit,
   isEditing
 }) => {
-  // Calculate the distribution cost display value
-  const distributionCostDisplay = useMemo(() => {
+    const distributionCostDisplay = useMemo(() => {
     if (!item.received_quantity || !item.cost_price) return '₱0.00';
     const totalUnitCost = parseFloat(item.cost_price || 0) + distributionCostPerUnit;
-
-     onItemChange(index, "distribution_price", totalUnitCost.toFixed(2));
-     
+    
     return `₱${parseFloat(totalUnitCost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }, [item.cost_price, item.received_quantity, distributionCostPerUnit]);
+
+  
+useEffect(() => {
+    if (item.received_quantity && item.cost_price && distributionCostPerUnit >= 0) {
+      const totalUnitCost = parseFloat(item.cost_price || 0) + distributionCostPerUnit;
+      const newDistributionPrice = totalUnitCost.toFixed(2);
+      
+      // Only update if the value actually changed to prevent infinite loops
+      if (parseFloat(item.distribution_price) !== parseFloat(newDistributionPrice)) {
+        onItemChange(index, "distribution_price", newDistributionPrice);
+      }
+    }
+  }, [item.cost_price, item.received_quantity, distributionCostPerUnit, index, onItemChange, item.distribution_price]);
 
   // Calculate total display value
   const totalDisplay = useMemo(() => {
@@ -272,7 +282,7 @@ const PurchaseOrderReceivedItems = ({
             <TableCell>Product</TableCell>
             <TableCell>Received Qty</TableCell>
             <TableCell>Cost Price</TableCell>
-            <TableCell>Distribution Cost</TableCell>
+            <TableCell>Cost</TableCell>
             <TableCell>Walk-in Price</TableCell>
             {/* <TableCell>Wholesale Price</TableCell> */}
             {/* <TableCell>Regular Price</TableCell> */}
