@@ -148,14 +148,24 @@ const SaleKebabMenu = ({ sale, refresh, itemsFontSize, setItemsFontSize }) => {
     }
   };
 
+    const isSaleOlderThanTwoWeeks = (createdDate) => {
+    const saleDate = new Date(createdDate);
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+    return saleDate < twoWeeksAgo;
+  };
+
   // Disable options for certain sale statuses
   const isCancelDisabled = sale.status === 'cancelled' || 
                            sale.status === 'completed' || 
-                           sale.status === 'returned';
+                           sale.status === 'returned'  ||
+                            (!isAdmin && isSaleOlderThanTwoWeeks(sale.created_at));
 
   const isDeliveryDateUpdateDisabled = sale.status === 'cancelled' || 
                                        sale.status === 'completed' || 
                                        sale.status === 'returned';
+
+
 
   return (
     <>
