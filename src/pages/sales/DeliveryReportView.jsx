@@ -6,7 +6,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { PrinterOutlined, RollbackOutlined, HomeOutlined , DownOutlined , UpOutlined , CheckCircleOutlined, DownloadOutlined  } from '@ant-design/icons';
+import { PlusOutlined ,PrinterOutlined, RollbackOutlined, HomeOutlined , DownOutlined , UpOutlined , CheckCircleOutlined, DownloadOutlined  } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
 import { formatDate } from '@/utils/formatUtils';
 import CreditMemoModal from './CreditMemoModal';
@@ -838,6 +838,10 @@ your dot matrix printer setup is working correctly.
   const togglePaymentHistory = () => {
     setShowPaymentHistory(!showPaymentHistory);
   };
+
+    const handleCreateSale = () => {
+    navigate('/app/sales');
+  };
   
   if (!report) {
     return (
@@ -928,15 +932,27 @@ your dot matrix printer setup is working correctly.
             >
               Test Print
             </Button> */}
-            <Button
-              variant="outlined"
-              color="secondary"
-              startIcon={<RollbackOutlined />}
-              onClick={handleOpenCreateMemo}
-              disabled={false}
-            >
-              Create Credit Memo
-            </Button>
+
+      {report.status === 'cancelled' ? (
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<PlusOutlined />}
+          onClick={handleCreateSale}
+        >
+          Create New Sale
+        </Button>
+      ) : (
+        <Button
+          variant="outlined"
+          color="secondary"
+          startIcon={<RollbackOutlined />}
+          onClick={handleOpenCreateMemo}
+        >
+          Create Credit Memo
+        </Button>
+      )}
+
 
             <SaleKebabMenu 
               refresh={refresh}

@@ -44,7 +44,7 @@ export const useSales = () => {
     } catch (err) {
       console.error('Error fetching inventory:', err);
       dispatch(fetchInventoryFailed(err.message));
-      toast.error(err.response?.data?.message || 'Failed to fetch inventory');
+      toast.error(err.response?.data?.error || 'Failed to fetch inventory');
       return [];
     }
   };
@@ -65,7 +65,7 @@ export const useSales = () => {
     } catch (err) {
       console.error('Error fetching sales:', err);
       dispatch(fetchSalesFailed(err.message));
-      toast.error(err.response?.data?.message || 'Failed to fetch sales');
+      toast.error(err.response?.data?.error || 'Failed to fetch sales');
       return [];
     }
   };
@@ -80,7 +80,7 @@ export const useSales = () => {
     } catch (err) {
       console.error('Error fetching sale:', err);
       dispatch(fetchSalesFailed(err.message));
-      toast.error(err.response?.data?.message || 'Failed to fetch sale');
+      toast.error(err.response?.data?.error || 'Failed to fetch sale');
       return null;
     }
   };
@@ -111,7 +111,7 @@ export const useSales = () => {
     } catch (err) {
       console.error('Error creating sale:', err);
       dispatch(createSaleFailed(err.message));
-      toast.error(err.response?.data?.message || 'Failed to create sale');
+      toast.error(err.response?.data?.error || 'Failed to create sale');
       return null;
     }
   };
@@ -143,7 +143,7 @@ export const useSales = () => {
     } catch (err) {
       console.error('Error updating sale payment:', err);
       dispatch(updateSaleFailed(err.message));
-      toast.error(err.response?.data?.message || 'Failed to update payment');
+      toast.error(err.response?.data?.error || 'Failed to update payment');
       return null;
     }
   };
@@ -159,7 +159,7 @@ export const useSales = () => {
     } catch (err) {
       console.error('Error cancelling sale:', err);
       dispatch(updateSaleFailed(err.message));
-      toast.error(err.response?.data?.message || 'Failed to cancel sale');
+      toast.error(err.response?.data?.error || 'Failed to cancel sale');
       return null;
     }
   };
@@ -219,7 +219,7 @@ export const useSales = () => {
     } catch (err) {
       console.error('Error creating sale:', err);
 
-      toast.error(err.response?.data?.message || 'Failed to create sale');
+      toast.error(err.response?.data?.error || 'Failed to create credit memo');
       return null;
     }
   };
