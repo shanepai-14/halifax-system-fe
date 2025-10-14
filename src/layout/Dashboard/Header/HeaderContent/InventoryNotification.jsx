@@ -263,20 +263,26 @@ export default function Notification() {
                       </Typography>
                     </Box>
                   ) : (
-                    <List
-                      component="nav"
-                      sx={{
-                        p: 0,
-                        maxHeight: '70vh', // Set maximum height
-                        overflowY: 'auto', // Enable vertical scrolling
-                        '& .MuiListItemButton-root': {
-                          py: 0.5,
-                          '&.Mui-selected': { bgcolor: 'grey.50', color: 'text.primary' },
-                          '& .MuiAvatar-root': avatarSX,
-                          '& .MuiListItemSecondaryAction-root': { ...actionSX, position: 'relative' }
+                  <List
+                  component="nav"
+                  sx={{
+                    p: 0,
+                    maxHeight: '70vh',
+                    overflowY: 'auto',
+                    '& .MuiListItemButton-root': {
+                      py: 0.5,
+                      '&.Mui-selected': { 
+                        bgcolor: 'primary.lighter',  // Changed from 'grey.50'
+                        color: 'text.primary',
+                        '&:hover': {
+                          bgcolor: 'primary.lighter'  // Added hover state
                         }
-                      }}
-                    >
+                      },
+                      '& .MuiAvatar-root': avatarSX,
+                      '& .MuiListItemSecondaryAction-root': { ...actionSX, position: 'relative' }
+                    }
+                  }}
+                >
                       {notifications.map((notification) => (
                         <React.Fragment key={notification.id}>
                           <ListItemButton 
@@ -312,7 +318,7 @@ export default function Notification() {
                         </React.Fragment>
                       ))}
 
-                      {notifications.length > 0 && (
+                      {/* {notifications.length > 0 && (
                         <ListItemButton 
                           sx={{ textAlign: 'center', py: `${12}px !important` }}
                           component={RouterLink}
@@ -327,7 +333,7 @@ export default function Notification() {
                             }
                           />
                         </ListItemButton>
-                      )}
+                      )} */}
                     </List>
                   )}
                 </MainCard>
