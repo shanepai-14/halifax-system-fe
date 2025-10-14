@@ -873,7 +873,7 @@ your dot matrix printer setup is working correctly.
     return sum + discountAmount;
   }, 0);
 
-  const totalAmount = (subtotal + deliveryFee + cuttingCharges) - totalDiscount;
+  const totalAmount = ((subtotal + deliveryFee + cuttingCharges) - totalDiscount) - totalCreditMemoAmount;
 
   return (
     <>
