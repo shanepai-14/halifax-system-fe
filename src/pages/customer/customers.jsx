@@ -23,7 +23,10 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Chip
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText
 } from '@mui/material';
 import {
   PlusOutlined,
@@ -33,13 +36,13 @@ import {
   ClearOutlined,
   ShoppingCartOutlined,
   StarFilled,
-  StarOutlined 
+  StarOutlined,
+  MoreOutlined
 } from '@ant-design/icons';
 import { useCustomers } from '@/hooks/useCustomers';
 import { selectCurrentUser } from '@/store/slices/authSlice';
 import { selectCustomers, selectCustomersLoading } from '@/store/slices/customerSlice';
 import CustomerModal from './CustomerModal';
-
 
 // TableRow Skeleton for loading state
 const TableRowSkeleton = () => (
@@ -53,10 +56,7 @@ const TableRowSkeleton = () => (
     <TableCell><Skeleton animation="wave" /></TableCell>
     <TableCell><Skeleton animation="wave" /></TableCell>
     <TableCell align="right">
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-        <Skeleton animation="wave" variant="circular" width={32} height={32} />
-        <Skeleton animation="wave" variant="circular" width={32} height={32} />
-      </Box>
+      <Skeleton animation="wave" variant="circular" width={32} height={32} />
     </TableCell>
   </TableRow>
 );
@@ -72,6 +72,8 @@ const CustomerPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [menuCustomerId, setMenuCustomerId] = useState(null);
   
   // State for customer modal
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
@@ -89,7 +91,19 @@ const CustomerPage = () => {
     setPage(0);
   };
 
+  // Kebab menu handlers
+  const handleMenuOpen = (event, customerId) => {
+    setAnchorEl(event.currentTarget);
+    setMenuCustomerId(customerId);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuCustomerId(null);
+  };
+
   const handleDeleteClick = (customer) => {
+    handleMenuClose();
     setCustomerToDelete(customer);
     setDeleteDialogOpen(true);
   };
@@ -115,6 +129,7 @@ const CustomerPage = () => {
   };
   
   const handleOpenEditModal = (customer) => {
+    handleMenuClose();
     setSelectedCustomer(customer);
     setCustomerModalOpen(true);
   };
@@ -124,12 +139,12 @@ const CustomerPage = () => {
   };
   
   const handleModalSuccess = () => {
-    // Refresh the customer list
     getAllCustomers();
   };
 
-  // New handler for viewing purchase history
+  // Handler for viewing purchase history
   const handleViewPurchaseHistory = (customerId) => {
+    handleMenuClose();
     navigate(`/app/customer/${customerId}/purchase-history`);
   };
 
@@ -143,6 +158,9 @@ const CustomerPage = () => {
       (customer.city && customer.city.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   });
+
+  // Get customer for menu actions
+  const getCustomerById = (id) => customers.find(c => c.id === id);
 
   return (
     <Container maxWidth="xxl" sx={{ mt: 0, px: '0!important' }}>
@@ -201,7 +219,6 @@ const CustomerPage = () => {
           </TableHead>
           <TableBody>
             {isLoading ? (
-              // Show skeleton loader while loading
               [...Array(rowsPerPage)].map((_, index) => (
                 <TableRowSkeleton key={index} />
               ))
@@ -209,15 +226,14 @@ const CustomerPage = () => {
               filteredCustomers
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((customer) => (
-                  
                   <TableRow key={customer.id}>
                     <TableCell width={"1%"} sx={{padding:1 }}>
-                    {customer.is_valued_customer ? (
-                    <StarFilled style={{ color: '#ffa726' }} />
-                  ) : (
-                    <StarOutlined style={{ color: '#bdbdbd' }} />
-                  )}
-                  </TableCell>
+                      {customer.is_valued_customer ? (
+                        <StarFilled style={{ color: '#ffa726' }} />
+                      ) : (
+                        <StarOutlined style={{ color: '#bdbdbd' }} />
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Typography
                         sx={{ 
@@ -240,33 +256,18 @@ const CustomerPage = () => {
                     <TableCell>{customer.city || 'N/A'}</TableCell>
                     <TableCell align="right">
                       <IconButton 
-                        onClick={() => handleViewPurchaseHistory(customer.id)}
-                        color="primary"
-                        title="View Purchase History"
+                        onClick={(e) => handleMenuOpen(e, customer.id)}
+                        size="small"
                       >
-                        <ShoppingCartOutlined style={{ fontSize: 20 }} />
+                        <MoreOutlined style={{ fontSize: 20 }} />
                       </IconButton>
-                      <IconButton onClick={() => handleOpenEditModal(customer)}>
-                        <EditOutlined style={{ fontSize: 20 }} />
-                      </IconButton>
-                      <IconButton disabled={!isAdmin} onClick={() => handleDeleteClick(customer)}>
-                        <DeleteOutlined
-                          style={{
-                            fontSize: 20,
-                            color: isAdmin ? 'red' : '#ccc', // Gray out if disabled
-                            opacity: isAdmin ? 1 : 0.5,      // Optional: add opacity to make it look disabled
-                            cursor: isAdmin ? 'pointer' : 'default',
-                          }}
-                        />
-                      </IconButton>
-
                     </TableCell>
                   </TableRow>
                 ))
             )}
             {!isLoading && filteredCustomers.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} align="center">
+                <TableCell colSpan={9} align="center">
                   <Typography variant="body1" sx={{ py: 2 }}>
                     No customers found
                   </Typography>
@@ -276,6 +277,54 @@ const CustomerPage = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Kebab Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem onClick={() => handleViewPurchaseHistory(menuCustomerId)}>
+          <ListItemIcon>
+            <ShoppingCartOutlined style={{ fontSize: 18 }} />
+          </ListItemIcon>
+          <ListItemText>Purchase History</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => handleOpenEditModal(getCustomerById(menuCustomerId))}>
+          <ListItemIcon>
+            <EditOutlined style={{ fontSize: 18 }} />
+          </ListItemIcon>
+          <ListItemText>Edit</ListItemText>
+        </MenuItem>
+        <MenuItem 
+          onClick={() => handleDeleteClick(getCustomerById(menuCustomerId))}
+          disabled={!isAdmin}
+        >
+          <ListItemIcon>
+            <DeleteOutlined 
+              style={{ 
+                fontSize: 18, 
+                color: isAdmin ? '#d32f2f' : '#bdbdbd' 
+              }} 
+            />
+          </ListItemIcon>
+          <ListItemText 
+            sx={{ 
+              color: isAdmin ? '#d32f2f' : 'text.disabled' 
+            }}
+          >
+            Delete
+          </ListItemText>
+        </MenuItem>
+      </Menu>
 
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}

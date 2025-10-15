@@ -1,7 +1,20 @@
 // assets
-import { DashboardOutlined ,SwapOutlined ,SmileOutlined , ShoppingCartOutlined ,DropboxOutlined ,AreaChartOutlined ,UserOutlined ,ProductOutlined ,ShoppingOutlined , AuditOutlined ,RedEnvelopeOutlined , AccountBookOutlined , FundOutlined  } from '@ant-design/icons';
-
-
+import { 
+  DashboardOutlined,
+  SwapOutlined,
+  SmileOutlined, 
+  ShoppingCartOutlined,
+  DropboxOutlined,
+  AreaChartOutlined,
+  UserOutlined,
+  ProductOutlined,
+  ShoppingOutlined, 
+  AuditOutlined,
+  RedEnvelopeOutlined, 
+  AccountBookOutlined, 
+  FundOutlined ,
+  ShopOutlined
+} from '@ant-design/icons';
 
 // ==============================|| MENU ITEMS - DASHBOARD ||============================== //
 
@@ -15,25 +28,16 @@ const dashboard = {
       title: 'Account',
       type: 'item',
       url: '/app/account',
-      icon: UserOutlined  ,
+      icon: UserOutlined,
       breadcrumbs: false,
       roles: ['admin']
     },
-    // {
-    //   id: 'dashboard',
-    //   title: 'Dashboard',
-    //   type: 'item',
-    //   url: '/app/dashboard',
-    //   icon: DashboardOutlined,
-    //   breadcrumbs: false,
-    //   roles: ['admin', 'cashier', 'sales', 'staff']
-    // },
     {
       id: 'customer',
       title: 'Customer',
       type: 'item',
       url: '/app/customer',
-      icon: SmileOutlined  ,
+      icon: SmileOutlined,
       breadcrumbs: false,
       roles: ['admin', 'cashier', 'sales', 'staff']
     },
@@ -42,7 +46,7 @@ const dashboard = {
       title: 'Product',
       type: 'item',
       url: '/app/product',
-      icon: ProductOutlined  ,
+      icon: ProductOutlined,
       breadcrumbs: false,
       roles: ['admin', 'cashier', 'sales', 'staff']
     },
@@ -51,7 +55,7 @@ const dashboard = {
       title: 'Sales',
       type: 'item',
       url: '/app/sales-list',
-      icon: ShoppingCartOutlined ,
+      icon: ShoppingCartOutlined,
       breadcrumbs: false,
       roles: ['admin', 'cashier', 'sales', 'staff']
     },
@@ -60,7 +64,7 @@ const dashboard = {
       title: 'Payments',
       type: 'item',
       url: '/app/payments',
-      icon: AccountBookOutlined  ,
+      icon: AccountBookOutlined,
       breadcrumbs: false,
       roles: ['admin', 'cashier']
     },
@@ -69,43 +73,52 @@ const dashboard = {
       title: 'Supplier',
       type: 'item',
       url: '/app/supplier',
-      icon: AreaChartOutlined ,
+      icon: AreaChartOutlined,
       breadcrumbs: false,
       roles: ['admin', 'cashier', 'sales', 'staff']
     },
     {
       id: 'purchase',
-      title: 'Purchase Order',
-      type: 'item',
-      url: '/app/purchase',
-      icon: ShoppingOutlined ,
-      breadcrumbs: false,
-      roles: ['admin']
-    },
-    {
-      id: 'receiving',
-      title: 'Receiving Report',
-      type: 'item',
-      url: '/app/receiving-report',
-      icon: AuditOutlined ,
-      breadcrumbs: false,
-      roles: ['admin']
+      title: 'Purchase',
+      type: 'collapse',
+      icon: ShopOutlined ,
+      roles: ['admin'],
+      children: [
+        {
+          id: 'purchase-order',
+          title: 'Purchase Order',
+          type: 'item',
+          icon: ShoppingOutlined,
+          url: '/app/purchase',
+          breadcrumbs: false,
+          roles: ['admin']
+        },
+        {
+          id: 'receiving-report',
+          title: 'Receiving Report',
+          type: 'item',
+          url: '/app/receiving-report',
+          icon: AuditOutlined,
+          breadcrumbs: false,
+          roles: ['admin']
+        }
+      ]
     },
     {
       id: 'inventory',
       title: 'Inventory',
       type: 'item',
       url: '/app/inventory',
-      icon: DropboxOutlined ,
+      icon: DropboxOutlined,
       breadcrumbs: false,
       roles: ['admin']
     },
-        {
+    {
       id: 'transfer',
       title: 'Transfer',
       type: 'item',
       url: '/app/transfers',
-      icon: SwapOutlined   ,
+      icon: SwapOutlined,
       breadcrumbs: false,
       roles: ['admin']
     },
@@ -114,21 +127,19 @@ const dashboard = {
       title: 'Petty Cash',
       type: 'item',
       url: '/app/petty-cash',
-      icon: RedEnvelopeOutlined  ,
+      icon: RedEnvelopeOutlined,
       breadcrumbs: false,
       roles: ['admin', 'cashier']
     },
-     {
+    {
       id: 'report',
       title: 'Report',
       type: 'item',
       url: '/app/report',
-      icon: FundOutlined  ,
+      icon: FundOutlined,
       breadcrumbs: false,
       roles: ['admin', 'cashier']
-    },
-   
-
+    }
   ]
 };
 

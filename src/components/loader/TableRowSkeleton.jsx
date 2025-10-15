@@ -20,9 +20,11 @@ const TableRowSkeleton = () => (
       <TableCell align="right">
         <Skeleton variant="text" width={80} />
       </TableCell>
+        <TableCell align="right">
+        <Skeleton variant="text" width={80} />
+      </TableCell>
       <TableCell align="right">
         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-          <Skeleton variant="circular" width={32} height={32} />
           <Skeleton variant="circular" width={32} height={32} />
         </Box>
       </TableCell>

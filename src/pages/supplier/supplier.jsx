@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
   Typography, Container, TablePagination, IconButton, Button, TextField,
-  InputAdornment, Box, Skeleton
+  InputAdornment, Box, Skeleton, Menu, MenuItem, ListItemIcon, ListItemText
 } from '@mui/material';
 import { 
   DeleteOutlined, 
@@ -12,7 +12,8 @@ import {
   EyeOutlined, 
   SearchOutlined, 
   ClearOutlined,
-  ShoppingOutlined
+  ShoppingOutlined,
+  MoreOutlined
 } from '@ant-design/icons';
 import SupplierModal from './SupplierModal';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '@/hooks/useSuppliers';
@@ -27,11 +28,7 @@ const TableRowSkeleton = () => (
     <TableCell><Skeleton animation="wave" /></TableCell>
     <TableCell><Skeleton animation="wave" /></TableCell>
     <TableCell align="right">
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-        <Skeleton animation="wave" variant="circular" width={32} height={32} />
-        <Skeleton animation="wave" variant="circular" width={32} height={32} />
-        <Skeleton animation="wave" variant="circular" width={32} height={32} />
-      </Box>
+      <Skeleton animation="wave" variant="circular" width={32} height={32} />
     </TableCell>
   </TableRow>
 );
@@ -44,6 +41,8 @@ const HalifaxSupplierPage = () => {
   const [openAddSupplierModal, setOpenAddSupplierModal] = useState(false);
   const [modalMode, setModalMode] = useState('create');
   const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [menuSupplierId, setMenuSupplierId] = useState(null);
 
   // Query hooks
   const { data: suppliers, isLoading, error, refetch: refetchSuppliers } = useSuppliers();
@@ -68,7 +67,19 @@ const HalifaxSupplierPage = () => {
     setPage(0);
   };
 
+  // Kebab menu handlers
+  const handleMenuOpen = (event, supplierId) => {
+    setAnchorEl(event.currentTarget);
+    setMenuSupplierId(supplierId);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuSupplierId(null);
+  };
+
   const handleDelete = async (id) => {
+    handleMenuClose();
     Swal.fire({
       title: 'Are you sure?',
       text: "You won't be able to revert this!",
@@ -101,17 +112,20 @@ const HalifaxSupplierPage = () => {
   };
 
   const handleView = (id) => {
+    handleMenuClose();
     const supplier = suppliers.find(s => s.supplier_id === id);
     handleOpenModal('view', supplier);
   };
   
   const handleEdit = (id) => {
+    handleMenuClose();
     const supplier = suppliers.find(s => s.supplier_id === id);
     handleOpenModal('edit', supplier);
   };
 
   // New function to navigate to purchase history page
   const handleViewPurchaseHistory = (supplierId) => {
+    handleMenuClose();
     navigate(`/app/supplier/${supplierId}/purchase-history`);
   };
 
@@ -124,8 +138,8 @@ const HalifaxSupplierPage = () => {
   const handleUpdateSupplier = async (updatedSupplier) => {
     try {
       await updateSupplierMutation.mutateAsync({
-        id: updatedSupplier.supplier_id,  // Pass id separately
-        data: {  // Pass data object with the updated fields
+        id: updatedSupplier.supplier_id,
+        data: {
           supplier_name: updatedSupplier.supplier_name,
           contact_person: updatedSupplier.contact_person,
           email: updatedSupplier.email,
@@ -147,7 +161,6 @@ const HalifaxSupplierPage = () => {
       handleCloseAddSupplierModal();
     } catch (error) {
       console.error('Error creating supplier:', error);
-      // Handle error (show notification, etc.)
     }
   };
 
@@ -213,7 +226,6 @@ const HalifaxSupplierPage = () => {
           </TableHead>
           <TableBody>
             {isLoading ? (
-              // Show skeleton loader when loading
               [...Array(rowsPerPage)].map((_, index) => (
                 <TableRowSkeleton key={index} />
               ))
@@ -242,20 +254,10 @@ const HalifaxSupplierPage = () => {
                     <TableCell>{supplier.address}</TableCell>
                     <TableCell align="right">
                       <IconButton 
-                        onClick={() => handleViewPurchaseHistory(supplier.supplier_id)}
-                        color="primary"
-                        title="View Purchase History"
+                        onClick={(e) => handleMenuOpen(e, supplier.supplier_id)}
+                        size="small"
                       >
-                        <ShoppingOutlined style={{ fontSize: 20 }} />
-                      </IconButton>
-                      <IconButton onClick={() => handleView(supplier.supplier_id)}>
-                        <EyeOutlined style={{ fontSize: 20 }} />
-                      </IconButton>
-                      <IconButton onClick={() => handleEdit(supplier.supplier_id)}>
-                        <EditOutlined style={{ fontSize: 20 }} />
-                      </IconButton>
-                      <IconButton onClick={() => handleDelete(supplier.supplier_id)}>
-                        <DeleteOutlined style={{ fontSize: 20 }} />
+                        <MoreOutlined style={{ fontSize: 20 }} />
                       </IconButton>
                     </TableCell>
                   </TableRow>
@@ -272,6 +274,47 @@ const HalifaxSupplierPage = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Kebab Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem onClick={() => handleViewPurchaseHistory(menuSupplierId)}>
+          <ListItemIcon>
+            <ShoppingOutlined style={{ fontSize: 18 }} />
+          </ListItemIcon>
+          <ListItemText>Purchase History</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => handleView(menuSupplierId)}>
+          <ListItemIcon>
+            <EyeOutlined style={{ fontSize: 18 }} />
+          </ListItemIcon>
+          <ListItemText>View</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => handleEdit(menuSupplierId)}>
+          <ListItemIcon>
+            <EditOutlined style={{ fontSize: 18 }} />
+          </ListItemIcon>
+          <ListItemText>Edit</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => handleDelete(menuSupplierId)}>
+          <ListItemIcon>
+            <DeleteOutlined style={{ fontSize: 18, color: '#d32f2f' }} />
+          </ListItemIcon>
+          <ListItemText sx={{ color: '#d32f2f' }}>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
+
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
