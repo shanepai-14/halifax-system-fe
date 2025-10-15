@@ -114,8 +114,8 @@ const DeliveryReportView = ({ refresh , report }) => {
   }, [report]);
 
   // Currency formatting for consistent alignment
-  const formatCurrency = (amount) => {
-    return `₱${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatCurrency = (amount , dotMatrix = false) => {
+    return `${ dotMatrix ? '' : '₱'}${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   // Function to strip HTML tags and format composition text
@@ -227,8 +227,8 @@ const DeliveryReportView = ({ refresh , report }) => {
         const qty = padLeft(item.quantity.toString(), 4);
         const unit = padRight(item.product.attribute?.unit_of_measurement || '', 5);
         const itemName = padRight(item.product?.product_name || '', 40);
-        const price = padLeft(formatCurrency(parseFloat(item.sold_price)), 10);
-        const netPrice = padLeft(formatCurrency(finalAmount), 10);
+        const price = padLeft(formatCurrency(parseFloat(item.sold_price) ,true), 10);
+        const netPrice = padLeft(formatCurrency(finalAmount,true), 10);
         
         content += `${qty} ${unit} ${itemName} ${price}            ${netPrice}\n`;
         
@@ -251,24 +251,24 @@ const DeliveryReportView = ({ refresh , report }) => {
   
   // Totals (right aligned)
   const totalsSection = [
-    ['Subtotal:', formatCurrency(subtotal)],
-    ['Delivery Fee:', formatCurrency(deliveryFee)],
-    ['Cutting Charges:', formatCurrency(cuttingCharges)],
-    ['Discount:', formatCurrency(totalDiscount)]
+    ['Subtotal:', formatCurrency(subtotal, true)],
+    ['Delivery Fee:', formatCurrency(deliveryFee,true)],
+    ['Cutting Charges:', formatCurrency(cuttingCharges,true)],
+    ['Discount:', formatCurrency(totalDiscount,true)]
   ];
   
   if (report.returns && report.returns.length > 0) {
-    totalsSection.push(['Credit Memo Total:', formatCurrency(totalCreditMemoAmount)]);
+    totalsSection.push(['Credit Memo Total:', formatCurrency(totalCreditMemoAmount,true)]);
   }
   
-  totalsSection.push(['Total Amount:', formatCurrency(totalAmount)]);
+  totalsSection.push(['Total Amount:', formatCurrency(totalAmount,true)]);
   
   if (report.amount_received !== '0.00' && report.amount_received) {
-    totalsSection.push(['Amount Received:', formatCurrency(parseFloat(report.amount_received))]);
+    totalsSection.push(['Amount Received:', formatCurrency(parseFloat(report.amount_received),true)]);
   }
   
   if (report.change !== '0.00' && report.change) {
-    totalsSection.push(['Change:', formatCurrency(parseFloat(report.change))]);
+    totalsSection.push(['Change:', formatCurrency(parseFloat(report.change),true)]);
   }
   
   // Add the first total on the same line as Encoded By
