@@ -6,7 +6,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { PlusOutlined ,PrinterOutlined, RollbackOutlined, HomeOutlined , DownOutlined , UpOutlined , CheckCircleOutlined, DownloadOutlined  } from '@ant-design/icons';
+import { PlusOutlined ,PrinterOutlined, RollbackOutlined, HomeOutlined , DownOutlined , UpOutlined , CheckCircleOutlined, DownloadOutlined , SendOutlined ,LoadingOutlined , TruckOutlined  } from '@ant-design/icons';
 import { useSales } from '@/hooks/useSales';
 import { formatDate } from '@/utils/formatUtils';
 import CreditMemoModal from './CreditMemoModal';
@@ -25,11 +25,12 @@ const DeliveryReportView = ({ refresh , report }) => {
   const contentRef = useRef();
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [loadingPrint , setLoadingPrint] = useState(false);
   const [itemsFontSize, setItemsFontSize] = useState(() => {
   const saved = localStorage.getItem('deliveryReport_fontSize');
   return saved ? parseInt(saved) : 12;
 });
-  const { createCreditMemo , markAsDelivered } = useSales();
+  const { createCreditMemo , markAsDelivered , sendToPrinter } = useSales();
 
   
   useEffect(() => {
@@ -394,343 +395,30 @@ if (totalsSection.length > 0) {
   }
   });
 
-  // Alternative print method for better dot matrix compatibility
-  const handleAlternativePrint = () => {
-    const printWindow = window.open('', '_blank');
-    const printContent = contentRef.current;
+
+  const handleSendToBackend = async () => {
+  try {
+    setLoadingPrint(true);
+    const textContent = generateTextContent();
     
-    // Create a clean HTML structure
-    const cleanHTML = `
-      <html>
-        <head>
-          <title>Delivery Report - ${report.invoice_number}</title>
-          <style>
-            @media print {
-              @page {
-                size: A4;
-                margin: 0.5in;
-              }
-              
-              * {
-                font-family: "Courier New", "Courier", monospace !important;
-                font-size: 12px !important;
-                font-weight: normal !important;
-                -webkit-font-smoothing: none !important;
-                -moz-osx-font-smoothing: unset !important;
-                font-smooth: never !important;
-                text-rendering: optimizeSpeed !important;
-                -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
-                letter-spacing: 0 !important;
-                word-spacing: 0 !important;
-                line-height: 1.2 !important;
-              }
-              
-              body {
-                margin: 0;
-                padding: 20px;
-                background: white;
-              }
-              
-              table {
-                border-collapse: collapse;
-                width: 100%;
-              }
-              
-              td, th {
-                padding: 2px 4px;
-                border: none;
-                white-space: nowrap;
-              }
-              
-              .no-print {
-                display: none !important;
-              }
-            }
-            
-            body {
-              font-family: "Courier New", "Courier", monospace;
-              font-size: 12px;
-              line-height: 1.2;
-              margin: 0;
-              padding: 20px;
-            }
-            
-            .center { text-align: center; }
-            .right { text-align: right; }
-            .bold { font-weight: bold; }
-            .underline { text-decoration: underline; }
-            .signature-line {
-              border-top: 1px solid #000;
-              padding-top: 10px;
-              text-align: center;
-              min-height: 60px;
-              display: inline-block;
-              width: 200px;
-              margin-right: 50px;
-            }
-            .totals-table {
-              float: right;
-              width: 400px;
-            }
-            .totals-table td {
-              padding: 2px 8px;
-            }
-            .content-area {
-              min-height: calc(100vh - 200px);
-              display: flex;
-              flex-direction: column;
-            }
-            .footer-section {
-              margin-top: auto;
-              padding-top: 40px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="content-area">
-            <div class="center">
-              <h2>DELIVERY REPORT</h2>
-              <h3>${report.invoice_number}</h3>
-            </div>
-            
-            <table width="100%" style="margin-bottom: 20px;">
-              <tr>
-                <td width="50%">
-                  <strong>Halifax Glass & Aluminum Supply</strong><br>
-                  Malagamot Road, Panacan<br>
-                  glasshalifax@gmail.com<br>
-                  0939 924 3876
-                </td>
-                <td width="50%" class="right">
-                  <strong>Order Date:</strong> ${formatDate(report.order_date)}<br>
-                  <strong>Delivery Date:</strong> ${formatDate(report.delivery_date)}<br>
-                  <strong>Payment Method:</strong> ${report.payment_method.toUpperCase()}<br>
-                  <strong>Status:</strong> ${report.status.toUpperCase()}
-                </td>
-              </tr>
-            </table>
-            
-            <table width="100%" style="margin-bottom: 20px;">
-              <tr>
-                <td><strong>Delivered to:</strong></td>
-                <td class="underline">${report.customer?.business_name || report.customer?.customer_name}</td>
-              </tr>
-              <tr>
-                <td><strong>Address:</strong></td>
-                <td class="underline">${report.customer?.business_address || report.address}</td>
-                <td><strong>Phone:</strong></td>
-                <td class="underline">${report.phone}</td>
-              </tr>
-            </table>
-            
-            <hr>
-            
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-              <span><strong>Order Items</strong></span>
-              ${report.term_days !== 0 && report.term_days ? `<span><strong>Term: ${report.term_days}</strong></span>` : ''}
-            </div>
-            
-            <table width="100%" border="1" style="border-collapse: collapse; margin-bottom: 20px;">
-              <thead>
-                <tr>
-                  <th style="text-align: right; width: 50px;">Qty</th>
-                  <th style="text-align: left; width: 50px;">Unit</th>
-                  <th style="text-align: left;">Item</th>
-                  <th style="text-align: right; width: 100px;">Price</th>
-                  <th style="text-align: right; width: 100px;">Net Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${(() => {
-                  // Group items by category
-                  const groupedItems = report.items.reduce((acc, item) => {
-                    const categoryName = item.product?.category?.name || 'Uncategorized';
-                    if (!acc[categoryName]) {
-                      acc[categoryName] = [];
-                    }
-                    acc[categoryName].push(item);
-                    return acc;
-                  }, {});
-
-                  const sortedCategories = Object.keys(groupedItems).sort();
-                  
-                  return sortedCategories.map((categoryName) => {
-                    let categoryHTML = `<tr><td colspan="5" style="font-weight: bold; font-style: italic;">${categoryName}</td></tr>`;
-                    
-                    groupedItems[categoryName].forEach((item) => {
-                      const itemSubtotal = parseFloat(item.sold_price) * item.quantity;
-                      const discountAmount = itemSubtotal * (parseFloat(item.discount) / 100);
-                      const finalAmount = itemSubtotal - discountAmount;
-                      
-                      categoryHTML += `
-                        <tr>
-                          <td style="text-align: right;">${item.quantity}</td>
-                          <td style="text-align: left;">${item.product.attribute?.unit_of_measurement || ''}</td>
-                          <td style="text-align: left;">${item.product?.product_name}</td>
-                          <td style="text-align: right;">${formatCurrency(parseFloat(item.sold_price))}</td>
-                          <td style="text-align: right;">${formatCurrency(finalAmount)}</td>
-                        </tr>
-                      `;
-                      
-                      if (item.composition) {
-                        categoryHTML += `
-                          <tr>
-                            <td colspan="5" style="padding-left: 40px;">
-                              <strong>Composition:</strong><br>
-                              <div style="padding-left: 16px;">${item.composition}</div>
-                            </td>
-                          </tr>
-                        `;
-                      }
-                    });
-                    
-                    return categoryHTML;
-                  }).join('');
-                })()}
-              </tbody>
-            </table>
-            
-            <table width="100%" style="margin-bottom: 20px;">
-              <tr>
-                <td width="50%" style="vertical-align: top;">
-                  <strong>Delivery Status:</strong> ${report.is_delivered ? 'Delivered' : 'Pending Delivery'}<br>
-                  <strong>Encoded By:</strong> ${report.user?.name}
-                </td>
-                <td width="50%">
-                  <table class="totals-table">
-                    <tr>
-                      <td style="text-align: right;">Subtotal:</td>
-                      <td style="text-align: right;">${formatCurrency(subtotal)}</td>
-                    </tr>
-                    <tr>
-                      <td style="text-align: right;">Delivery Fee:</td>
-                      <td style="text-align: right;">${formatCurrency(deliveryFee)}</td>
-                    </tr>
-                    <tr>
-                      <td style="text-align: right;">Cutting Charges:</td>
-                      <td style="text-align: right;">${formatCurrency(cuttingCharges)}</td>
-                    </tr>
-                    <tr>
-                      <td style="text-align: right;">Discount:</td>
-                      <td style="text-align: right;">${formatCurrency(totalDiscount)}</td>
-                    </tr>
-                    ${report.returns && report.returns.length > 0 ? `
-                    <tr>
-                      <td style="text-align: right;">Credit Memo Total:</td>
-                      <td style="text-align: right;">${formatCurrency(totalCreditMemoAmount)}</td>
-                    </tr>
-                    ` : ''}
-                    <tr style="font-weight: bold; font-size: 14px;">
-                      <td style="text-align: right;">Total Amount:</td>
-                      <td style="text-align: right;">${formatCurrency(totalAmount)}</td>
-                    </tr>
-                    ${report.amount_received !== '0.00' && report.amount_received ? `
-                    <tr>
-                      <td style="text-align: right;">Amount Received:</td>
-                      <td style="text-align: right;">${formatCurrency(parseFloat(report.amount_received))}</td>
-                    </tr>
-                    ` : ''}
-                    ${report.change !== '0.00' && report.change ? `
-                    <tr>
-                      <td style="text-align: right;">Change:</td>
-                      <td style="text-align: right;">${formatCurrency(parseFloat(report.change))}</td>
-                    </tr>
-                    ` : ''}
-                  </table>
-                </td>
-              </tr>
-            </table>
-            
-            ${report.remarks ? `
-            <div style="margin-bottom: 20px;">
-              <strong>Remarks:</strong><br>
-              ${report.remarks}
-            </div>
-            ` : ''}
-            
-            <!-- Footer Section - Always at bottom -->
-            <div class="footer-section">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 40px;">
-                <div class="signature-line">Prepared By</div>
-                <div class="signature-line">Checked By</div>
-                <div class="signature-line">Released By</div>
-              </div>
-              
-              <div style="display: flex; justify-content: center; gap: 100px; margin-bottom: 40px;">
-                <div class="signature-line">Delivered By</div>
-                <div class="signature-line">Received By</div>
-              </div>
-              
-              <div style="text-align: center; border-top: 1px solid #ccc; padding-top: 20px;">
-                <strong>Note: This Office will not entertain any claim of shortage after receipt has been duly acknowledged</strong>
-              </div>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
+    await sendToPrinter({
+      content: textContent,
+      invoice_number: report.invoice_number,
+      sale_id: report.id,
+      filename: `delivery_report_${report.invoice_number}.txt`
+    });
     
-    printWindow.document.write(cleanHTML);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
-  };
 
-  // Test print quality function
-  const testPrintQuality = () => {
-    const testWindow = window.open('', '_blank');
-    testWindow.document.write(`
-      <html>
-        <head>
-          <title>Print Quality Test</title>
-          <style>
-            @media print {
-              * { 
-                -webkit-font-smoothing: none !important;
-                font-smooth: never !important;
-                text-rendering: optimizeSpeed !important;
-                -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-            }
-            body { 
-              font-family: "Courier New", "Courier", monospace; 
-              font-size: 12px;
-              line-height: 1.2;
-              margin: 20px;
-            }
-          </style>
-        </head>
-        <body>
-          <pre>
-DOT MATRIX PRINT QUALITY TEST
-==============================
+    
+  } catch (error) {
+    console.error('Error sending to backend:', error);
+   
+  } finally {
 
-Font: Courier New, 12px
-Characters: ABCDEFGHIJKLMNOPQRSTUVWXYZ
-Numbers:    0123456789
-Symbols:    !@#$%^&*()_+-=[]{}|;:,.<>?
+    setLoadingPrint(false);
+  }
+};
 
-Alignment Test:
-Item                     Price      Total
-------------------------+----------+----------
-Sample Item 1            ₱1,234.56  ₱1,234.56
-Another Sample Item      ₱2,345.67  ₱4,691.34
-Long Item Name Here      ₱3,456.78  ₱6,913.56
-------------------------+----------+----------
-TOTAL                              ₱12,839.46
-
-If this prints clearly without blur, 
-your dot matrix printer setup is working correctly.
-          </pre>
-        </body>
-      </html>
-    `);
-    testWindow.document.close();
-    testWindow.print();
-  };
 
   const handleOpenCreateMemo = () => {
     setCreateMemoOpen(true);
@@ -891,7 +579,7 @@ your dot matrix printer setup is working correctly.
               <Button
                 variant="outlined"
                 color="success"
-                startIcon={<CheckCircleOutlined />}
+                startIcon={<TruckOutlined />}
                 onClick={handleMarkAsDelivered}
                 sx={{ mr: 1 }}
               >
@@ -901,21 +589,29 @@ your dot matrix printer setup is working correctly.
             <Button
               variant="outlined"
               color="primary"
-              startIcon={<PrinterOutlined />}
               onClick={handlePrint}
-              sx={{ mr: 1 }}
+              sx={{ mr: 1, py: 1 }}
             >
-              Print
+             <PrinterOutlined />
             </Button>
             <Button
-              variant="outlined"
-              color="info"
-              startIcon={<DownloadOutlined />}
-              onClick={handleDownloadText}
-              sx={{ mr: 1 }}
-            >
-              Download Text
-            </Button>
+            variant="outlined"
+            color="success"
+            onClick={handleSendToBackend}
+            size="medium"
+            sx={{ mr: 1 ,py: 1  }}
+          >
+           {loadingPrint ? <LoadingOutlined/> : <SendOutlined /> }  
+          </Button>
+            <Button
+            variant="outlined"
+            color="info"
+            size="medium"
+            onClick={handleDownloadText}
+            sx={{ mr: 1, py: 1 }}
+          >
+            <DownloadOutlined />
+          </Button>
             {/* <Button
               variant="outlined"
               color="info"
@@ -949,7 +645,7 @@ your dot matrix printer setup is working correctly.
           startIcon={<RollbackOutlined />}
           onClick={handleOpenCreateMemo}
         >
-          Create Credit Memo
+          Credit Memo
         </Button>
       )}
 

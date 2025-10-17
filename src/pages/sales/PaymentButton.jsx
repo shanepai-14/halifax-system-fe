@@ -55,7 +55,7 @@ const PaymentButton = ({ sale, onPaymentSuccess, disabled = false }) => {
         disabled={disabled || loading}
         sx={{ mr: 1 }}
       >
-        {loading ? 'Processing...' : 'Pay Now'}
+        {loading ? 'Processing...' : 'Pay'}
       </Button>
       
       {sale && sale.amount_due > 0 && (

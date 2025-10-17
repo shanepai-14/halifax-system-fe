@@ -234,6 +234,16 @@ export const useSales = () => {
     }
   };
 
+  const sendToPrinter = async (data) => {
+   try {
+    const response =  await api.post('/sales/print', data);
+    return response.data.data;
+    } catch (error) {
+      console.error('Error Printing DR:', error);
+      throw error;
+    }
+  };
+
   // Clear current sale
   const resetCurrentSale = () => {
     dispatch(clearCurrentSale());
@@ -260,9 +270,10 @@ export const useSales = () => {
     cancelSale,
     markAsDelivered,
     getSalesStats,
+    sendToPrinter,
     resetCurrentSale,
     createCreditMemo,
     getCustomerPurchaseHistory,
-     updateDeliveryDate 
+    updateDeliveryDate 
   };
 };
