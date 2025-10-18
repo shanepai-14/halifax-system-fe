@@ -455,7 +455,47 @@ if (totalsSection.length > 0) {
 //   }
 // };
 
-  const handleSendToBackend = async () => {
+//   const handleSendToBackend = async () => {
+//   try {
+//     setLoadingPrint(true);
+    
+//     if (!qz.websocket.isActive()) {
+//       await connectQZ();
+//     }
+
+//     if (!printerName) {
+//       setSnackbar({ open: true, message: 'No printer selected. Please select a printer first.', severity: 'warning' });
+//       return;
+//     }
+
+//     const textContent = generateTextContent();
+    
+//     const config = qz.configs.create(printerName, {
+//       encoding: 'UTF-8',
+//       margins: { top: 0, right: 0, bottom: 0, left: 0 },
+//       size: { width: 8.5, height: 11 },
+//       units: 'in'
+//     });
+
+//     const data = [{
+//       type: 'raw',
+//       format: 'plain',
+//       data: textContent
+//     }];
+
+//     await qz.print(config, data);
+    
+//     setSnackbar({ open: true, message: `Delivery report sent to printer: ${printerName}`, severity: 'success' });
+    
+//   } catch (error) {
+//     console.error('Error printing with QZ Tray:', error);
+//     setSnackbar({ open: true, message: `Print error: ${error.message}`, severity: 'error' });
+//   } finally {
+//     setLoadingPrint(false);
+//   }
+// };
+
+const handleSendToBackend = async () => {
   try {
     setLoadingPrint(true);
     
@@ -463,9 +503,22 @@ if (totalsSection.length > 0) {
       await connectQZ();
     }
 
+    // Show printer selection first if no printer selected
     if (!printerName) {
-      setSnackbar({ open: true, message: 'No printer selected. Please select a printer first.', severity: 'warning' });
-      return;
+      const printers = await qz.printers.find();
+      
+      const selectedPrinter = window.prompt(
+        `Available printers:\n${printers.join('\n')}\n\nEnter printer name:`,
+        printers[0]
+      );
+
+      if (!selectedPrinter) {
+        setSnackbar({ open: true, message: 'Print cancelled - no printer selected', severity: 'info' });
+        return;
+      }
+
+      setPrinterName(selectedPrinter);
+      localStorage.setItem('selectedPrinter', selectedPrinter);
     }
 
     const textContent = generateTextContent();
@@ -486,7 +539,7 @@ if (totalsSection.length > 0) {
     await qz.print(config, data);
     
     setSnackbar({ open: true, message: `Delivery report sent to printer: ${printerName}`, severity: 'success' });
-    
+
   } catch (error) {
     console.error('Error printing with QZ Tray:', error);
     setSnackbar({ open: true, message: `Print error: ${error.message}`, severity: 'error' });
@@ -705,16 +758,7 @@ const handleSelectPrinter = async () => {
            {loadingPrint ? <LoadingOutlined/> : <SendOutlined /> }  
           </Button>
 
-          <Button
-      variant="outlined"
-      color="secondary"
-      onClick={handleSelectPrinter}
-      size="medium"
-      sx={{ mr: 1, py: 1 }}
-      title="Select Printer"
-    >
-      Select Printer
-          </Button>
+
             <Button
             variant="outlined"
             color="info"
