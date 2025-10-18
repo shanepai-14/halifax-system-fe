@@ -15,6 +15,8 @@ import PaymentButton from './PaymentButton';
 import PaymentHistory from './PaymentHistory';
 import PaymentReceipt from './PaymentReceipt';
 import SaleKebabMenu from './SaleKebabMenu';
+import qz from 'qz-tray';
+import { Alert, Snackbar } from '@mui/material';
 
 const DeliveryReportView = ({ refresh , report }) => {
   const [createMemoOpen, setCreateMemoOpen] = useState(false);
@@ -30,8 +32,42 @@ const DeliveryReportView = ({ refresh , report }) => {
   const saved = localStorage.getItem('deliveryReport_fontSize');
   return saved ? parseInt(saved) : 12;
 });
+
+const [qzConnected, setQzConnected] = useState(false);
+const [printerName, setPrinterName] = useState(() => {
+  return localStorage.getItem('selectedPrinter') || '';
+});
+const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const { createCreditMemo , markAsDelivered , sendToPrinter } = useSales();
 
+  useEffect(() => {
+  connectQZ();
+  return () => {
+    if (qz.websocket.isActive()) {
+      qz.websocket.disconnect();
+    }
+  };
+}, []);
+
+const connectQZ = async () => {
+  try {
+    if (!qz.websocket.isActive()) {
+      await qz.websocket.connect();
+      setQzConnected(true);
+      setSnackbar({ open: true, message: 'QZ Tray connected successfully', severity: 'success' });
+      
+      if (!printerName) {
+        const defaultPrinter = await qz.printers.getDefault();
+        setPrinterName(defaultPrinter);
+        localStorage.setItem('selectedPrinter', defaultPrinter);
+      }
+    }
+  } catch (error) {
+    console.error('Failed to connect to QZ Tray:', error);
+    setQzConnected(false);
+    setSnackbar({ open: true, message: 'Failed to connect to QZ Tray. Please ensure QZ Tray is running.', severity: 'error' });
+  }
+};
   
   useEffect(() => {
   localStorage.setItem('deliveryReport_fontSize', itemsFontSize.toString());
@@ -396,28 +432,93 @@ if (totalsSection.length > 0) {
   });
 
 
+//   const handleSendToBackend = async () => {
+//   try {
+//     setLoadingPrint(true);
+//     const textContent = generateTextContent();
+    
+//     await sendToPrinter({
+//       content: textContent,
+//       invoice_number: report.invoice_number,
+//       sale_id: report.id,
+//       filename: `delivery_report_${report.invoice_number}.txt`
+//     });
+    
+
+    
+//   } catch (error) {
+//     console.error('Error sending to backend:', error);
+   
+//   } finally {
+
+//     setLoadingPrint(false);
+//   }
+// };
+
   const handleSendToBackend = async () => {
   try {
     setLoadingPrint(true);
+    
+    if (!qz.websocket.isActive()) {
+      await connectQZ();
+    }
+
+    if (!printerName) {
+      setSnackbar({ open: true, message: 'No printer selected. Please select a printer first.', severity: 'warning' });
+      return;
+    }
+
     const textContent = generateTextContent();
     
-    await sendToPrinter({
-      content: textContent,
-      invoice_number: report.invoice_number,
-      sale_id: report.id,
-      filename: `delivery_report_${report.invoice_number}.txt`
+    const config = qz.configs.create(printerName, {
+      encoding: 'UTF-8',
+      margins: { top: 0, right: 0, bottom: 0, left: 0 },
+      size: { width: 8.5, height: 11 },
+      units: 'in'
     });
-    
 
+    const data = [{
+      type: 'raw',
+      format: 'plain',
+      data: textContent
+    }];
+
+    await qz.print(config, data);
+    
+    setSnackbar({ open: true, message: `Delivery report sent to printer: ${printerName}`, severity: 'success' });
     
   } catch (error) {
-    console.error('Error sending to backend:', error);
-   
+    console.error('Error printing with QZ Tray:', error);
+    setSnackbar({ open: true, message: `Print error: ${error.message}`, severity: 'error' });
   } finally {
-
     setLoadingPrint(false);
   }
 };
+
+const handleSelectPrinter = async () => {
+  try {
+    if (!qz.websocket.isActive()) {
+      await connectQZ();
+    }
+
+    const printers = await qz.printers.find();
+    
+    const selectedPrinter = window.prompt(
+      `Available printers:\n${printers.join('\n')}\n\nEnter printer name:`,
+      printerName || printers[0]
+    );
+
+    if (selectedPrinter) {
+      setPrinterName(selectedPrinter);
+      localStorage.setItem('selectedPrinter', selectedPrinter);
+      setSnackbar({ open: true, message: `Printer set to: ${selectedPrinter}`, severity: 'success' });
+    }
+  } catch (error) {
+    console.error('Error getting printers:', error);
+    setSnackbar({ open: true, message: 'Failed to get printer list', severity: 'error' });
+  }
+};
+
 
 
   const handleOpenCreateMemo = () => {
@@ -596,12 +697,23 @@ if (totalsSection.length > 0) {
             </Button>
             <Button
             variant="outlined"
-            color="success"
+            color={qzConnected ? "success" : "error"}
             onClick={handleSendToBackend}
             size="medium"
             sx={{ mr: 1 ,py: 1  }}
           >
            {loadingPrint ? <LoadingOutlined/> : <SendOutlined /> }  
+          </Button>
+
+          <Button
+      variant="outlined"
+      color="secondary"
+      onClick={handleSelectPrinter}
+      size="medium"
+      sx={{ mr: 1, py: 1 }}
+      title="Select Printer"
+    >
+      Select Printer
           </Button>
             <Button
             variant="outlined"
@@ -1111,6 +1223,7 @@ if (totalsSection.length > 0) {
         returns={report.returns}
       />
 
+
       {/* Credit Memo Report Modal - Only rendered when returns exist */}
       {report.returns && report.returns.length > 0 && (
         <CreditMemoReportModal
@@ -1120,6 +1233,21 @@ if (totalsSection.length > 0) {
           report={report}
         />
       )}
+
+          <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </>
   );
   }
