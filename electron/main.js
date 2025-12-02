@@ -1,7 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import { exec } from 'node:child_process';
-import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 import fs from 'node:fs';
@@ -12,7 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const isDev = !app.isPackaged;
-const execPromise = promisify(exec);
+
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -26,12 +25,16 @@ const createWindow = () => {
     }
   });
 
+
   if (isDev) {
     const devServerURL = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
     win.loadURL(devServerURL);
     win.webContents.openDevTools({ mode: 'detach' });
   } else {
-    win.loadFile(path.join(__dirname, '../dist/index.html'));
+    // In packaged apps, files live inside app.asar; use app.getAppPath() to resolve dist.
+    const basePath = app.getAppPath();
+    const indexPath = path.join(basePath, 'dist', 'index.html');
+    win.loadFile(indexPath);
   }
 };
 

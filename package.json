@@ -1,5 +1,5 @@
 {
-  "name": "halifax-fe",
+  "name": "Halifax",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -71,7 +71,7 @@
   },
   "build": {
     "appId": "com.halifax.fe",
-    "productName": "HalifaxSystem",
+    "productName": "Halifax",
     "files": [
       "dist/**/*",
       "electron/**/*",
