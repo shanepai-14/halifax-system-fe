@@ -15,10 +15,13 @@ import PaymentButton from './PaymentButton';
 import PaymentHistory from './PaymentHistory';
 import PaymentReceipt from './PaymentReceipt';
 import SaleKebabMenu from './SaleKebabMenu';
-import qz from 'qz-tray';
+import PrinterMenuButton from './PrinterMenuButton';
 import { Alert, Snackbar } from '@mui/material';
 
+
+
 const DeliveryReportView = ({ refresh , report }) => {
+  const hasElectronBridge = typeof window !== 'undefined' && !!window.electronBridge;
   const [createMemoOpen, setCreateMemoOpen] = useState(false);
   const [creditMemoReportOpen, setCreditMemoReportOpen] = useState(false);
   const [returnItems, setReturnItems] = useState([]);
@@ -28,46 +31,27 @@ const DeliveryReportView = ({ refresh , report }) => {
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [loadingPrint , setLoadingPrint] = useState(false);
-  const [itemsFontSize, setItemsFontSize] = useState(() => {
+const [itemsFontSize, setItemsFontSize] = useState(() => {
   const saved = localStorage.getItem('deliveryReport_fontSize');
   return saved ? parseInt(saved) : 12;
 });
 
-const [qzConnected, setQzConnected] = useState(false);
+const [bridgeReady, setBridgeReady] = useState(hasElectronBridge);
 const [printerName, setPrinterName] = useState(() => {
   return localStorage.getItem('selectedPrinter') || '';
 });
+const [printerOptions, setPrinterOptions] = useState([]);
+const [printerMenuAnchor, setPrinterMenuAnchor] = useState(null);
 const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const { createCreditMemo , markAsDelivered , sendToPrinter } = useSales();
 
   useEffect(() => {
-  connectQZ();
-  return () => {
-    if (qz.websocket.isActive()) {
-      qz.websocket.disconnect();
-    }
-  };
-}, []);
+    setBridgeReady(hasElectronBridge);
 
-const connectQZ = async () => {
-  try {
-    if (!qz.websocket.isActive()) {
-      await qz.websocket.connect();
-      setQzConnected(true);
-      setSnackbar({ open: true, message: 'QZ Tray connected successfully', severity: 'success' });
-      
-      if (!printerName) {
-        const defaultPrinter = await qz.printers.getDefault();
-        setPrinterName(defaultPrinter);
-        localStorage.setItem('selectedPrinter', defaultPrinter);
-      }
+    if (!hasElectronBridge) {
+      setSnackbar({ open: true, message: 'Direct Windows printing is only available in the Electron app.', severity: 'warning' });
     }
-  } catch (error) {
-    console.error('Failed to connect to QZ Tray:', error);
-    setQzConnected(false);
-    setSnackbar({ open: true, message: 'Failed to connect to QZ Tray. Please ensure QZ Tray is running.', severity: 'error' });
-  }
-};
+  }, [hasElectronBridge]);
   
   useEffect(() => {
   localStorage.setItem('deliveryReport_fontSize', itemsFontSize.toString());
@@ -362,6 +346,308 @@ if (totalsSection.length > 0) {
       return content;
   };
 
+  const generateHtmlContent = () => {
+    if (!report) return '';
+
+    const subtotal = report.items.reduce((sum, item) => {
+      return sum + (parseFloat(item.sold_price) * item.quantity);
+    }, 0);
+    const deliveryFee = parseFloat(report.delivery_fee) || 0;
+    const cuttingCharges = parseFloat(report.cutting_charges) || 0;
+    const totalDiscount = report.items.reduce((sum, item) => {
+      const itemSubtotal = parseFloat(item.sold_price) * item.quantity;
+      const discountAmount = itemSubtotal * (parseFloat(item.discount) / 100);
+      return sum + discountAmount;
+    }, 0);
+    const totalAmount = (subtotal + deliveryFee + cuttingCharges) - totalDiscount;
+
+    const groupedItems = report.items.reduce((acc, item) => {
+      const categoryName = item.product?.category?.name || 'Uncategorized';
+      if (!acc[categoryName]) acc[categoryName] = [];
+      acc[categoryName].push(item);
+      return acc;
+    }, {});
+
+    const rows = Object.keys(groupedItems).sort().map((category) => {
+      const itemRows = groupedItems[category].map((item) => {
+        const itemSubtotal = parseFloat(item.sold_price) * item.quantity;
+        const discountAmount = itemSubtotal * (parseFloat(item.discount) / 100);
+        const finalAmount = itemSubtotal - discountAmount;
+
+        return `
+          <tr>
+            <td>${item.quantity}</td>
+            <td>${item.product.attribute?.unit_of_measurement || ''}</td>
+            <td>${item.product?.product_name || ''}</td>
+            <td style="text-align:right">${formatCurrency(parseFloat(item.sold_price))}</td>
+            <td style="text-align:right">${formatCurrency(finalAmount)}</td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <tr><td colspan="5" style="font-weight:bold;padding-top:8px;">${category}</td></tr>
+        ${itemRows}
+      `;
+    }).join('');
+
+    return `
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            body { font-family: "Courier New", Courier, monospace; font-size: 12px; margin: 24px; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { padding: 4px; border-bottom: 1px solid #ddd; }
+            th { text-align: left; }
+            .header { text-align: center; margin-bottom: 12px; }
+            .totals td { font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>DELIVERY REPORT</div>
+            <div>${report.invoice_number}</div>
+          </div>
+          <div>Halifax Glass & Aluminum Supply</div>
+          <div>Malagamot Road, Panacan</div>
+          <div>glasshalifax@gmail.com</div>
+          <div>0939 924 3876</div>
+          <br/>
+          <div><strong>Order Date:</strong> ${formatDate(report.order_date)}</div>
+          <div><strong>Delivery Date:</strong> ${formatDate(report.delivery_date)}</div>
+          <div><strong>Payment Method:</strong> ${report.payment_method?.toUpperCase()}</div>
+          <div><strong>Status:</strong> ${report.status?.toUpperCase()}</div>
+          <br/>
+          <div><strong>Delivered to:</strong> ${report.customer?.business_name || report.customer?.customer_name || ''}</div>
+          <div><strong>Address:</strong> ${report.customer?.business_address || report.address || ''}</div>
+          <div><strong>Phone:</strong> ${report.phone || ''}</div>
+          ${report.term_days ? `<div><strong>Term:</strong> ${report.term_days}</div>` : ''}
+
+          <br/>
+          <table>
+            <thead>
+              <tr>
+                <th style="width:10%">Qty</th>
+                <th style="width:10%">Unit</th>
+                <th style="width:50%">Item</th>
+                <th style="width:15%;text-align:right">Price</th>
+                <th style="width:15%;text-align:right">Net Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+
+          <br/>
+          <table class="totals">
+            <tbody>
+              <tr><td style="width:70%"></td><td style="text-align:right">Subtotal:</td><td style="text-align:right">${formatCurrency(subtotal)}</td></tr>
+              <tr><td></td><td style="text-align:right">Delivery Fee:</td><td style="text-align:right">${formatCurrency(deliveryFee)}</td></tr>
+              <tr><td></td><td style="text-align:right">Cutting Charges:</td><td style="text-align:right">${formatCurrency(cuttingCharges)}</td></tr>
+              <tr><td></td><td style="text-align:right">Discounts:</td><td style="text-align:right">-${formatCurrency(totalDiscount)}</td></tr>
+              <tr><td></td><td style="text-align:right">Total Amount:</td><td style="text-align:right">${formatCurrency(totalAmount)}</td></tr>
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+  };
+
+
+  const generateTextContentMatrix = () => {
+    if (!report) return '';
+
+    // Calculate totals
+    const subtotal = report.items.reduce((sum, item) => {
+      return sum + (parseFloat(item.sold_price) * item.quantity);
+    }, 0);
+
+    const deliveryFee = parseFloat(report.delivery_fee) || 0;
+    const cuttingCharges = parseFloat(report.cutting_charges) || 0;
+
+    const totalDiscount = report.items.reduce((sum, item) => {
+      const itemSubtotal = parseFloat(item.sold_price) * item.quantity;
+      const discountAmount = itemSubtotal * (parseFloat(item.discount) / 100);
+      return sum + discountAmount;
+    }, 0);
+
+    const totalAmount = (subtotal + deliveryFee + cuttingCharges) - totalDiscount;
+
+    const totalCreditMemoAmount = report?.returns?.reduce((total, returnItem) => {
+      const returnTotal = returnItem.items?.reduce((sum, item) => {
+        return sum + parseFloat(item.quantity || 0) * parseFloat(item.price || 0);
+      }, 0) || 0;
+    
+      return total + returnTotal;
+    }, 0) || 0;
+
+    // ESC/P Control Characters
+    const ESC = '\x1B';
+    
+    // Build the text content with printer commands
+    let content = '';
+    
+    // Initialize printer
+    content += ESC + '@';              // ESC @ - Initialize printer
+    content += ESC + 'P';              // ESC P - 10 cpi (characters per inch)
+    content += ESC + '2';              // ESC 2 - 1/6" line spacing
+    content += ESC + 'x' + '\x00';     // ESC x 0 - NLQ mode (better quality)
+    
+    // Header
+    content += '                                  DELIVERY  REPORT\n';
+    content += `                                   ${report.invoice_number}\n\n`;
+    
+    
+    // Company info and order details
+    content += 'Halifax Glass & Aluminum Supply          ';
+    content += `               Order Date: ${formatDate(report.order_date)}\n`;
+    content += 'Malagamot Road, Panacan                 ';
+    content += `                Delivery Date: ${formatDate(report.delivery_date)}\n`;
+    content += 'glasshalifax@gmail.com                   ';
+    content += `               Payment Method: ${report.payment_method.toUpperCase()}\n`;
+    content += '0939 924 3876                            ';
+    content += `               Status: ${report.status.toUpperCase()}\n\n`;
+    
+    // Customer info
+    content += `Delivered to: ${report.customer?.business_name || report.customer?.customer_name}\n`;
+    content += `Address: ${report.customer?.business_address || report.address}\n`;
+    content += `Phone: ${report.phone}`;
+
+  
+    
+    if (report.term_days !== 0 && report.term_days) {
+      content += `${padLeft(`Term: ${report.term_days}`, 65)}\n`;
+    } else {
+      content += '\n';
+    }
+    content += '_____________________________________________________________________________________\n';
+    content += ' Qty Unit Item                                        Price               Net Price\n';
+    content += '_____________________________________________________________________________________\n';
+    
+    // Group items by category
+    const groupedItems = report.items.reduce((acc, item) => {
+      const categoryName = item.product?.category?.name || 'Uncategorized';
+      if (!acc[categoryName]) {
+        acc[categoryName] = [];
+      }
+      acc[categoryName].push(item);
+      return acc;
+    }, {});
+
+    const sortedCategories = Object.keys(groupedItems).sort();
+    
+    // Add items by category
+    sortedCategories.forEach((categoryName) => {
+      content += `${categoryName}\n`;
+      
+      groupedItems[categoryName].forEach((item) => {
+        const itemSubtotal = parseFloat(item.sold_price) * item.quantity;
+        const discountAmount = itemSubtotal * (parseFloat(item.discount) / 100);
+        const finalAmount = itemSubtotal - discountAmount;
+        
+        const qty = padLeft(item.quantity.toString(), 4);
+        const unit = padRight(item.product.attribute?.unit_of_measurement || '', 5);
+        const itemName = padRight(item.product?.product_name || '', 40);
+        const price = padLeft(formatCurrency(parseFloat(item.sold_price) ,true), 10);
+        const netPrice = padLeft(formatCurrency(finalAmount,true), 10);
+        
+        content += `${qty} ${unit} ${itemName} ${price}            ${netPrice}\n`;
+        
+        // Add composition if exists
+        if (item.composition) {
+          content += '    Composition:\n';
+          const compositionText = formatComposition(item.composition);
+          content += `${compositionText}\n`;
+        }
+      });
+      content += '\n';
+    });
+    
+    content += '_____________________________________________________________________________________\n\n';
+    
+    // Status and totals section
+  const encodedByText = `Encoded By: ${report.user?.name}`;
+  const encodedByLength = encodedByText.length;
+  
+  // Totals (right aligned)
+  const totalsSection = [
+    ['Subtotal:', formatCurrency(subtotal, true)],
+    ['Delivery Fee:', formatCurrency(deliveryFee,true)],
+    ['Cutting Charges:', formatCurrency(cuttingCharges,true)],
+    ['Discount:', formatCurrency(totalDiscount,true)]
+  ];
+  
+  if (report.returns && report.returns.length > 0) {
+    totalsSection.push(['Credit Memo Total:', formatCurrency(totalCreditMemoAmount,true)]);
+  }
+  
+  totalsSection.push(['Total Amount:', formatCurrency(totalAmount,true)]);
+  
+  if (report.amount_received !== '0.00' && report.amount_received) {
+    totalsSection.push(['Amount Received:', formatCurrency(parseFloat(report.amount_received),true)]);
+  }
+  
+  if (report.change !== '0.00' && report.change) {
+    totalsSection.push(['Change:', formatCurrency(parseFloat(report.change),true)]);
+  }
+  
+  // Add the first total on the same line as Encoded By
+  if (totalsSection.length > 0) {
+    const [firstLabel, firstAmount] = totalsSection[0];
+    const firstTotalLine = `${padLeft(firstLabel, encodedByLength >= 20 ? 37 : 47)} ${padLeft(firstAmount, 15)}`;
+    
+    // Calculate spacing: total line width (85) minus encoded by length
+    const spacingNeeded = 85 - encodedByLength;
+    const rightAlignedTotal = padLeft(firstTotalLine, spacingNeeded);
+
+    content += `${encodedByText}${rightAlignedTotal}\n`;
+    
+    // Add remaining totals
+    totalsSection.slice(1).forEach(([label, amount]) => {
+      const line = `${padLeft(label, 57)} ${padLeft(amount, 15)}`;
+      content += `${padLeft(line, 85)}\n`;
+    });
+  }
+
+    
+    content += '\n';
+    
+    // Remarks
+    if (report.remarks) {
+      content += `Remarks: ${report.remarks}\n\n`;
+    }
+
+    const contentLines = content.split('\n').length;
+    const targetPageLines = 66; // Standard for 11" paper at 6 lines per inch
+    const signatureLines = 16; // Space needed for signature section
+    const footerLines = 4; // Space needed for the note
+    const totalFooterLines = signatureLines + footerLines;
+    const availableLines = targetPageLines - totalFooterLines;
+  
+    // Add blank lines to push signatures and note to bottom
+    const linesToAdd = Math.max(0, availableLines - contentLines);
+    content += '\n'.repeat(linesToAdd);
+    
+    // Signature section
+    content += '\n\n\n';
+    content += '     _________________            _________________            _________________\n';
+    content += '        Prepared By                   Checked By                  Released By\n\n\n\n';
+    content += '                   _________________             _________________ \n';
+    content += '                     Delivered By                  Received By\n\n\n';
+
+    content += '\n';
+    content += 'Note: This Office will not entertain any claim of shortage after receipt has been\n';
+    content += '                                 duly acknowledged\n';
+    
+    // Form feed to eject page
+    content += '\x0C';
+      
+    return content;
+};
+
   // Download text file function
   const handleDownloadText = () => {
     const textContent = generateTextContent();
@@ -432,140 +718,82 @@ if (totalsSection.length > 0) {
   });
 
 
-//   const handleSendToBackend = async () => {
-//   try {
-//     setLoadingPrint(true);
-//     const textContent = generateTextContent();
-    
-//     await sendToPrinter({
-//       content: textContent,
-//       invoice_number: report.invoice_number,
-//       sale_id: report.id,
-//       filename: `delivery_report_${report.invoice_number}.txt`
-//     });
-    
-
-    
-//   } catch (error) {
-//     console.error('Error sending to backend:', error);
-   
-//   } finally {
-
-//     setLoadingPrint(false);
-//   }
-// };
-
-//   const handleSendToBackend = async () => {
-//   try {
-//     setLoadingPrint(true);
-    
-//     if (!qz.websocket.isActive()) {
-//       await connectQZ();
-//     }
-
-//     if (!printerName) {
-//       setSnackbar({ open: true, message: 'No printer selected. Please select a printer first.', severity: 'warning' });
-//       return;
-//     }
-
-//     const textContent = generateTextContent();
-    
-//     const config = qz.configs.create(printerName, {
-//       encoding: 'UTF-8',
-//       margins: { top: 0, right: 0, bottom: 0, left: 0 },
-//       size: { width: 8.5, height: 11 },
-//       units: 'in'
-//     });
-
-//     const data = [{
-//       type: 'raw',
-//       format: 'plain',
-//       data: textContent
-//     }];
-
-//     await qz.print(config, data);
-    
-//     setSnackbar({ open: true, message: `Delivery report sent to printer: ${printerName}`, severity: 'success' });
-    
-//   } catch (error) {
-//     console.error('Error printing with QZ Tray:', error);
-//     setSnackbar({ open: true, message: `Print error: ${error.message}`, severity: 'error' });
-//   } finally {
-//     setLoadingPrint(false);
-//   }
-// };
-
-const handleSendToBackend = async () => {
+const handleSendToBackend = async (targetPrinter = printerName) => {
+  const electronBridge = typeof window !== 'undefined' ? window.electronBridge : null;
   try {
     setLoadingPrint(true);
-    
-    if (!qz.websocket.isActive()) {
-      await connectQZ();
+
+    if (!electronBridge?.printHTML) {
+      setSnackbar({ open: true, message: 'Direct printing requires the Electron app.', severity: 'error' });
+      return;
     }
 
-    // Show printer selection first if no printer selected
-    if (!printerName) {
-      const printers = await qz.printers.find();
-      
-      const selectedPrinter = window.prompt(
-        `Available printers:\n${printers.join('\n')}\n\nEnter printer name:`,
-        printers[0]
-      );
+    const printers = (await electronBridge.getPrinters?.()) || [];
+    const printerNames = printers.map((p) => p.name).filter(Boolean);
 
-      if (!selectedPrinter) {
-        setSnackbar({ open: true, message: 'Print cancelled - no printer selected', severity: 'info' });
-        return;
-      }
-
-      setPrinterName(selectedPrinter);
-      localStorage.setItem('selectedPrinter', selectedPrinter);
+    if (!printerNames.length) {
+      setSnackbar({ open: true, message: 'No printers found. Please install or enable a printer.', severity: 'error' });
+      return;
+    }
+    if (!targetPrinter) {
+      setSnackbar({ open: true, message: 'Select a printer first.', severity: 'warning' });
+      return;
     }
 
-    const textContent = generateTextContent();
-    
-    const config = qz.configs.create(printerName, {
-      encoding: 'UTF-8',
-      margins: { top: 0, right: 0, bottom: 0, left: 0 },
-      size: { width: 8.5, height: 11 },
-      units: 'in'
-    });
+    const html = generateTextContent();
+    await electronBridge.printTempFile({ content: html });
 
-    const data = [{
-      type: 'raw',
-      format: 'plain',
-      data: textContent
-    }];
-
-    await qz.print(config, data);
-    
-    setSnackbar({ open: true, message: `Delivery report sent to printer: ${printerName}`, severity: 'success' });
-
+    setSnackbar({ open: true, message: `Delivery report sent to printer: ${targetPrinter}`, severity: 'success' });
   } catch (error) {
-    console.error('Error printing with QZ Tray:', error);
+    console.error('Error printing HTML:', error);
     setSnackbar({ open: true, message: `Print error: ${error.message}`, severity: 'error' });
   } finally {
     setLoadingPrint(false);
   }
 };
 
-const handleSelectPrinter = async () => {
+const handlePrintCurrent = async () => {
+  const electronBridge = typeof window !== 'undefined' ? window.electronBridge : null;
   try {
-    if (!qz.websocket.isActive()) {
-      await connectQZ();
+    setLoadingPrint(true);
+    await electronBridge.printCurrent({
+      printerName: printerName, // or leave undefined for default printer
+      silent: true
+    });
+  } catch (e) {
+    console.error('Print failed', e);
+  } finally {
+    setLoadingPrint(false);
+  }
+};
+
+
+
+
+const handleSelectPrinter = async (event) => {
+  const electronBridge = typeof window !== 'undefined' ? window.electronBridge : null;
+  const anchor = event?.currentTarget || null;
+
+  try {
+    if (electronBridge?.getPrinters) {
+      const printers = (await electronBridge.getPrinters()) || [];
+      const printerNames = printers.map((p) => p.name).filter(Boolean);
+
+      if (!printerNames.length) {
+        setSnackbar({ open: true, message: 'No printers found on this device.', severity: 'warning' });
+        return;
+      }
+
+      const ordered = printerName
+        ? [printerName, ...printerNames.filter((p) => p !== printerName)]
+        : printerNames;
+
+      setPrinterOptions(ordered);
+      setPrinterMenuAnchor(anchor);
+      return;
     }
 
-    const printers = await qz.printers.find();
-    
-    const selectedPrinter = window.prompt(
-      `Available printers:\n${printers.join('\n')}\n\nEnter printer name:`,
-      printerName || printers[0]
-    );
-
-    if (selectedPrinter) {
-      setPrinterName(selectedPrinter);
-      localStorage.setItem('selectedPrinter', selectedPrinter);
-      setSnackbar({ open: true, message: `Printer set to: ${selectedPrinter}`, severity: 'success' });
-    }
+    setSnackbar({ open: true, message: 'Direct Windows printing requires the Electron app.', severity: 'warning' });
   } catch (error) {
     console.error('Error getting printers:', error);
     setSnackbar({ open: true, message: 'Failed to get printer list', severity: 'error' });
@@ -748,16 +976,23 @@ const handleSelectPrinter = async () => {
             >
              <PrinterOutlined />
             </Button>
-            <Button
-            variant="outlined"
-            color={qzConnected ? "success" : "error"}
-            onClick={handleSendToBackend}
-            size="medium"
-            sx={{ mr: 1 ,py: 1  }}
-          >
-           {loadingPrint ? <LoadingOutlined/> : <SendOutlined /> }  
-          </Button>
-
+            <PrinterMenuButton
+              bridgeReady={bridgeReady}
+              loadingPrint={loadingPrint}
+              anchorEl={printerMenuAnchor}
+              options={printerOptions}
+              selectedPrinter={printerName}
+              onOpen={handleSelectPrinter}
+              onClose={() => setPrinterMenuAnchor(null)}
+              onSelectPrinter={(name) => {
+                setPrinterName(name);
+                localStorage.setItem('selectedPrinter', name);
+                setPrinterOptions([name, ...printerOptions.filter((p) => p !== name)]);
+                setSnackbar({ open: true, message: `Printer set to: ${name}`, severity: 'success' });
+                setPrinterMenuAnchor(null);
+                handleSendToBackend(name);
+              }}
+            />
 
             <Button
             variant="outlined"
@@ -1252,8 +1487,7 @@ const handleSelectPrinter = async () => {
           onClose={() => setSelectedReceipt(null)}
         />
       </Dialog>
-       )}
-    
+      )}
 
       {/* Credit Memo Modal Component */}
       <CreditMemoModal 

@@ -5,6 +5,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Use relative base so built assets load correctly when served via file:// in Electron.
+  base: './',
   plugins: [react(), 
      VitePWA({
       registerType: 'autoUpdate',
