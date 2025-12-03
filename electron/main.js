@@ -12,11 +12,16 @@ const __dirname = path.dirname(__filename);
 
 const isDev = !app.isPackaged;
 
+const iconPath = app.isPackaged
+  ? path.join(process.resourcesPath, 'assets', process.platform === 'win32' ? 'icon.ico' : 'icon.png')
+  : path.join(__dirname, '../public/favicon.png')
+
 
 const createWindow = () => {
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
+    icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -146,6 +151,8 @@ ipcMain.handle('print-pdf', async (_event, { filePath, printerName }) => {
   if (!exists) {
     throw new Error(`PDF file not found: ${resolvedPath}`);
   }
+
+
 
   const printWindow = new BrowserWindow({
     show: false,

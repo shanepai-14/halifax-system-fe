@@ -72,6 +72,9 @@
   "build": {
     "appId": "com.halifax.fe",
     "productName": "Halifax",
+  "win": { "icon": "assets/icon.ico" },
+  "mac": { "icon": "assets/icon.icns" },
+  "linux": { "icon": "assets/icon.png" },
     "files": [
       "dist/**/*",
       "electron/**/*",
