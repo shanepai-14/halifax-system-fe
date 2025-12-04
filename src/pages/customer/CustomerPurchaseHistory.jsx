@@ -177,6 +177,10 @@ const CustomerPurchaseHistory = () => {
     setDisplayItems(sortedItems);
   }, [sortConfig]);
 
+  const handleViewSale = (saleId) => {
+    navigate(`/app/delivery-report/${saleId}`);
+  };
+
   // Export to Excel function
   const exportToExcel = () => {
     if (!displayItems.length) return;
@@ -504,13 +508,14 @@ const CustomerPurchaseHistory = () => {
                         ref={isLastItem ? lastItemRef : null}
                       >
                         <TableCell>
-                          <Link
-                            href="#"
-                            onClick={() => navigate(`/app/delivery-report/${item.sale_id}`)}
-                            sx={{ textDecoration: 'none' }}
+                          <Typography
+                            onClick={() => handleViewSale (item.sale_id)}
+                            variant="body1"
+                            fontWeight="bold"
+                            sx={{ cursor: "pointer", color: "blue", textDecoration: "underline" }}
                           >
                             {item.invoice_number}
-                          </Link>
+                          </Typography>
                         </TableCell>
                         <TableCell>{item.product_name}</TableCell>
                         <TableCell>{item.product_code || 'N/A'}</TableCell>

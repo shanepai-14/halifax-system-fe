@@ -19,14 +19,15 @@ const iconPath = app.isPackaged
 
 const createWindow = () => {
   const win = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    fullscreen: true,
     icon: iconPath,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false
+      sandbox: false,
+      zoomFactor: 0.9
     }
   });
 
