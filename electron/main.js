@@ -19,7 +19,8 @@ const iconPath = app.isPackaged
 
 const createWindow = () => {
   const win = new BrowserWindow({
-    fullscreen: true,
+    width: 1280,
+    height: 800,
     icon: iconPath,
     autoHideMenuBar: true,
     webPreferences: {
