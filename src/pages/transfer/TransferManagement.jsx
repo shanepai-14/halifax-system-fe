@@ -122,6 +122,11 @@ const TransferManagement = () => {
     cancelled: { color: 'error', label: 'Cancelled', bgColor: '#f8d7da', textColor: '#721c24' }
   };
 
+  const directionConfig = {
+    out: { label: 'Outbound', bgColor: '#e3f2fd', textColor: '#1565c0' },
+    in: { label: 'Inbound', bgColor: '#e8f5e9', textColor: '#2e7d32' }
+  };
+
   // Format currency helper
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-PH', {
@@ -342,13 +347,13 @@ const handleTabChange = (event, newValue) => {
         </Tooltip>
 
         {/* Edit - Navigate to form page */}
-        {transfer.status === 'in_transit' && (
+        {/* {transfer.status === 'in_transit' && (
             <Tooltip title="Edit Transfer">
             <IconButton onClick={() => handleEditTransfer(transfer)}>
                 <EditIcon />
             </IconButton>
             </Tooltip>
-        )}
+        )} */}
 
         {/* Status updates - Keep as dialogs */}
         {transfer.status === 'in_transit' && (
@@ -380,13 +385,13 @@ function TransferActionButtons({ transfer }) {
       </Tooltip>
 
       {/* Edit - Navigate to form page */}
-      {transfer.status === 'in_transit' && (
+      {/* {transfer.status === 'in_transit' && (
         <Tooltip title="Edit Transfer">
           <IconButton onClick={() => handleEditTransfer(transfer)}>
             <EditIcon />
           </IconButton>
         </Tooltip>
-      )}
+      )} */}
 
       {/* Status updates - Keep as dialogs */}
       {transfer.status === 'in_transit' && (
@@ -432,7 +437,7 @@ function TransferActionButtons({ transfer }) {
 
   return (
      <MainCard >
-    <Container maxWidth="xl" >
+    <Container maxWidth="xxl" >
       {/* Loading Backdrop */}
       <Backdrop open={submitLoading} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <CircularProgress color="inherit" />
@@ -644,7 +649,8 @@ function TransferActionButtons({ transfer }) {
             <TableHead>
               <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
                 <TableCell sx={{ fontWeight: 'bold' }}>Transfer #</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Destination</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Direction</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Warehouse</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Items</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Total Value</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
@@ -656,14 +662,14 @@ function TransferActionButtons({ transfer }) {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                     <CircularProgress size={30} />
                     <Typography sx={{ mt: 1 }}>Loading transfers...</Typography>
                   </TableCell>
                 </TableRow>
               ) : transfers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                     <Typography color="textSecondary">No transfers found</Typography>
                   </TableCell>
                 </TableRow>
@@ -674,6 +680,28 @@ function TransferActionButtons({ transfer }) {
                       <Typography variant="body2" fontWeight="medium">
                         {transfer.transfer_number}
                       </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const config = directionConfig[transfer.direction] || directionConfig.out;
+                        return (
+                          <Box
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              px: 1.5,
+                              py: 0.5,
+                              borderRadius: 1,
+                              backgroundColor: config.bgColor,
+                              color: config.textColor,
+                              fontSize: '0.75rem',
+                              fontWeight: 600
+                            }}
+                          >
+                            {config.label}
+                          </Box>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell>
                       <Box>
@@ -766,7 +794,7 @@ function TransferActionButtons({ transfer }) {
                 Transfer: <strong>{selectedTransfer.transfer_number}</strong>
               </Typography>
               <Typography variant="body2" sx={{ mb: 3 }}>
-                Destination: <strong>{selectedTransfer.warehouse?.name}</strong>
+                {selectedTransfer?.direction === 'in' ? 'Source' : 'Destination'}: <strong>{selectedTransfer.warehouse?.name}</strong>
               </Typography>
               
               {selectedTransfer.action === 'cancel' && (
@@ -798,8 +826,8 @@ function TransferActionButtons({ transfer }) {
 
               {selectedTransfer.action === 'cancel' && (
                 <Alert severity="warning" sx={{ mt: 2 }}>
-                  <strong>Warning:</strong> Cancelling this transfer will restore the inventory quantities 
-                  that were reduced when the transfer was created.
+                  <strong>Warning:</strong> Cancelling this transfer will reverse the inventory changes
+                  made when the transfer was created.
                 </Alert>
               )}
             </Box>

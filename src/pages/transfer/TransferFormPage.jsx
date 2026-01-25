@@ -68,10 +68,13 @@ const TransferFormPage = () => {
 
   // Transfer form state
   const [transferForm, setTransferForm] = useState({
+    direction: "out",
     to_warehouse_id: "",
     delivery_date: "",
     notes: "",
   });
+
+  const isInbound = transferForm.direction === "in";
 
   // Selected products for transfer
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -153,6 +156,7 @@ const loadTransferForEdit = async () => {
       const transfer = response.data.data;
 
       setTransferForm({
+        direction: transfer.direction || "out",
         to_warehouse_id: transfer.warehouse?.id || "",
         delivery_date: transfer.delivery_date 
               ? transfer.delivery_date.split("T")[0] 
@@ -205,18 +209,20 @@ const handleAddProduct = (product) => {
     const inventoryProduct = inventory.find(p => p.id === product.id);
     const currentInventoryQty = inventoryProduct ? inventoryProduct.quantity : product.quantity;
     
-    // Update products list to reduce available quantity
-    setProducts((prevProducts) =>
-      prevProducts.map((prod) => {
-        if (prod.id === product.id) {
-          return {
-            ...prod,
-            quantity: Math.max(0, prod.quantity - 1)
-          };
-        }
-        return prod;
-      })
-    );
+    // Update products list to reduce available quantity (outbound only)
+    if (!isInbound) {
+      setProducts((prevProducts) =>
+        prevProducts.map((prod) => {
+          if (prod.id === product.id) {
+            return {
+              ...prod,
+              quantity: Math.max(0, prod.quantity - 1)
+            };
+          }
+          return prod;
+        })
+      );
+    }
 
     const newProduct = {
       ...product,
@@ -240,24 +246,26 @@ const handleUpdateProductQuantity = (productId, quantity) => {
         // Get the current inventory quantity for this product
         const inventoryProduct = inventory.find(p => p.id === productId);
         const maxQuantity = inventoryProduct ? inventoryProduct.quantity : (product.original_quantity || product.quantity);
-        const finalQuantity = Math.min(numericQuantity, maxQuantity);
+        const finalQuantity = isInbound ? numericQuantity : Math.min(numericQuantity, maxQuantity);
 
         // Calculate the difference to update products list
         const previousQuantity = product.transfer_quantity;
         const quantityDifference = finalQuantity - previousQuantity;
 
-        // Update the products list to reflect available quantities
-        setProducts((prevProducts) =>
-          prevProducts.map((prod) => {
-            if (prod.id === productId) {
-              return {
-                ...prod,
-                quantity: Math.max(0, prod.quantity - quantityDifference)
-              };
-            }
-            return prod;
-          })
-        );
+        // Update the products list to reflect available quantities (outbound only)
+        if (!isInbound) {
+          setProducts((prevProducts) =>
+            prevProducts.map((prod) => {
+              if (prod.id === productId) {
+                return {
+                  ...prod,
+                  quantity: Math.max(0, prod.quantity - quantityDifference)
+                };
+              }
+              return prod;
+            })
+          );
+        }
 
         return {
           ...product,
@@ -276,18 +284,20 @@ const handleUpdateProductQuantity = (productId, quantity) => {
   const product = selectedProducts.find((p) => p.id === productId);
   
   if (product) {
-    // Restore the quantity back to products list
-    setProducts((prevProducts) =>
-      prevProducts.map((prod) => {
-        if (prod.id === productId) {
-          return {
-            ...prod,
-            quantity: prod.quantity + product.transfer_quantity
-          };
-        }
-        return prod;
-      })
-    );
+    // Restore the quantity back to products list (outbound only)
+    if (!isInbound) {
+      setProducts((prevProducts) =>
+        prevProducts.map((prod) => {
+          if (prod.id === productId) {
+            return {
+              ...prod,
+              quantity: prod.quantity + product.transfer_quantity
+            };
+          }
+          return prod;
+        })
+      );
+    }
 
     setSelectedProducts((prev) => prev.filter((p) => p.id !== productId));
     showNotification(`Removed ${product.name || product.product_name} from transfer`, "warning");
@@ -331,7 +341,7 @@ const handleUpdateProductQuantity = (productId, quantity) => {
     const errors = {};
 
     if (!transferForm.to_warehouse_id) {
-        errors.to_warehouse_id = "Destination warehouse is required";
+        errors.to_warehouse_id = isInbound ? "Source warehouse is required" : "Destination warehouse is required";
     }
 
     if (selectedProducts.length === 0) {
@@ -347,17 +357,19 @@ const handleUpdateProductQuantity = (productId, quantity) => {
         errors.quantities = "All products must have valid quantities";
     }
 
-    // Validate inventory availability using current inventory data
-    const overQuantityProducts = selectedProducts.filter((product) => {
-        const inventoryProduct = inventory.find(p => p.id === product.id);
-        const availableQty = inventoryProduct ? inventoryProduct.quantity : product.original_quantity;
-        return product.transfer_quantity > availableQty;
-    });
+    // Validate inventory availability using current inventory data (outbound only)
+    if (!isInbound) {
+      const overQuantityProducts = selectedProducts.filter((product) => {
+          const inventoryProduct = inventory.find(p => p.id === product.id);
+          const availableQty = inventoryProduct ? inventoryProduct.quantity : product.original_quantity;
+          return product.transfer_quantity > availableQty;
+      });
 
-    if (overQuantityProducts.length > 0) {
-        errors.inventory = `Insufficient inventory for: ${overQuantityProducts
-        .map((p) => p.name || p.product_name)
-        .join(", ")}`;
+      if (overQuantityProducts.length > 0) {
+          errors.inventory = `Insufficient inventory for: ${overQuantityProducts
+          .map((p) => p.name || p.product_name)
+          .join(", ")}`;
+      }
     }
 
     setFormErrors(errors);
@@ -430,7 +442,7 @@ const handleUpdateProductQuantity = (productId, quantity) => {
 
 const TransferFormSkeleton = () => {
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="xxl" sx={{ mt: 4, mb: 4 }}>
       {/* Breadcrumbs Skeleton */}
       <Box sx={{ mb: 2 }}>
         <Skeleton variant="text" width="300px" height={24} />
@@ -543,7 +555,7 @@ const TransferFormSkeleton = () => {
 }
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="xxl" sx={{ mt: 4, mb: 4 }}>
       {/* Loading Backdrop */}
       <Backdrop
         open={submitLoading}
@@ -625,8 +637,27 @@ const TransferFormSkeleton = () => {
 
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Transfer Direction *</InputLabel>
+                  <Select
+                    value={transferForm.direction}
+                    onChange={(e) =>
+                      setTransferForm({
+                        ...transferForm,
+                        direction: e.target.value,
+                      })
+                    }
+                    label="Transfer Direction *"
+                    disabled={submitLoading}
+                  >
+                    <MenuItem value="out">Outbound (Main → Warehouse)</MenuItem>
+                    <MenuItem value="in">Inbound (Warehouse → Main)</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={6}>
                 <FormControl fullWidth error={!!formErrors.to_warehouse_id}>
-                  <InputLabel>Destination Warehouse *</InputLabel>
+                  <InputLabel>{isInbound ? "Source Warehouse *" : "Destination Warehouse *"}</InputLabel>
                   <Select
                     value={transferForm.to_warehouse_id}
                     onChange={(e) =>
@@ -635,7 +666,7 @@ const TransferFormSkeleton = () => {
                         to_warehouse_id: e.target.value,
                       })
                     }
-                    label="Destination Warehouse *"
+                    label={isInbound ? "Source Warehouse *" : "Destination Warehouse *"}
                     disabled={submitLoading}
                   >
                     {warehouses.map((warehouse) => (
@@ -882,8 +913,7 @@ const TransferFormSkeleton = () => {
                                     
                                 },
                                 min: 1,
-                                max:
-                                  product.original_quantity || product.quantity,
+                                max: isInbound ? undefined : (product.original_quantity || product.quantity),
                                 step: 0.01,
                               }}
                               size="small"
@@ -896,7 +926,7 @@ const TransferFormSkeleton = () => {
                                   product.transfer_quantity + 1
                                 )
                               }
-                              disabled={
+                              disabled={!isInbound &&
                                 product.transfer_quantity >=
                                 (product.original_quantity || product.quantity)
                               }
@@ -978,6 +1008,7 @@ const TransferFormSkeleton = () => {
             isMinimized={false}
             isInModal={false}
             showPrice={false}
+            allowZeroStock={isInbound}
           />
         </DialogContent>
       </Dialog>

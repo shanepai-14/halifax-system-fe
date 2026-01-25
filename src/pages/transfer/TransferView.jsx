@@ -24,6 +24,7 @@ const TransferView = () => {
   const [transfer, setTransfer] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const isInbound = transfer?.direction === 'in';
   
   const [itemsFontSize, setItemsFontSize] = useState(() => {
     const saved = localStorage.getItem('transferView_fontSize');
@@ -195,7 +196,7 @@ const TransferView = () => {
 
   // Currency formatting for consistent alignment
   const formatCurrency = (amount) => {
-    return `₱${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `â‚±${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   // Function to pad text for alignment
@@ -311,7 +312,8 @@ const generateTextContent = () => {
   content += '0939 924 3876\n\n';
   
   // Transfer info
-  content += `Destination Warehouse: ${transfer.warehouse?.name}\n`;
+  const warehouseLabel = transfer.direction === 'in' ? 'Source Warehouse' : 'Destination Warehouse';
+  content += `${warehouseLabel}: ${transfer.warehouse?.name}\n`;
   content += `Location: ${transfer.warehouse?.location || 'Not specified'}\n`;
  
   
@@ -501,7 +503,7 @@ const generateTextContent = () => {
             >
               Download Text
             </Button>
-            <Button
+            {/* <Button
               variant="outlined"
               color="warning"
               startIcon={<EditIcon />}
@@ -509,7 +511,7 @@ const generateTextContent = () => {
               sx={{ mr: 1 }}
             >
               Edit
-            </Button>
+            </Button> */}
             <Button
               variant="outlined"
               color="secondary"
@@ -580,7 +582,7 @@ const generateTextContent = () => {
                       <TableRow>
                         <TableCell sx={{ border: 'none', padding: '8px 8px 8px 0', verticalAlign: 'bottom', width: '25%'}}>
                           <Typography lineHeight={1} sx={{ fontSize: `${itemsFontSize + 6}px!important` , fontWeight: '600!important' , marginBottom:'0!important'}}>
-                            Destination Warehouse:
+                            {isInbound ? 'Source Warehouse:' : 'Destination Warehouse:'}
                           </Typography>
                         </TableCell>
                         <TableCell colSpan={3} sx={{ border: 'none', padding: '8px 16px 8px 0', verticalAlign: 'bottom' }}>

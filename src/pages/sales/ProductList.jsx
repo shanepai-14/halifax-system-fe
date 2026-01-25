@@ -80,7 +80,7 @@ const CategoryFilters = memo(({ categories, selectedCategory, onCategoryChange, 
 });
 
 // Separate memoized product row
-const ProductRow = memo(({ product, onAddProduct, onShowBracket , showPrice }) => {
+const ProductRow = memo(({ product, onAddProduct, onShowBracket, showPrice, allowZeroStock }) => {
   const handleAdd = useCallback(() => {
     onAddProduct(product);
   }, [product, onAddProduct]);
@@ -119,7 +119,7 @@ const ProductRow = memo(({ product, onAddProduct, onShowBracket , showPrice }) =
         <IconButton 
           color="success" 
           onClick={handleAdd}
-          disabled={product.quantity === 0}
+          disabled={!allowZeroStock && product.quantity === 0}
         >
           <PlusOutlined />
         </IconButton>
@@ -129,7 +129,7 @@ const ProductRow = memo(({ product, onAddProduct, onShowBracket , showPrice }) =
 });
 
 // Separate memoized product card
-const ProductCard = memo(({ product, onAddProduct }) => {
+const ProductCard = memo(({ product, onAddProduct, allowZeroStock }) => {
   const handleAdd = useCallback(() => {
     onAddProduct(product);
   }, [product, onAddProduct]);
@@ -183,7 +183,7 @@ const ProductCard = memo(({ product, onAddProduct }) => {
               fullWidth
               startIcon={<PlusOutlined />}
               onClick={handleAdd}
-              disabled={product.quantity === 0}
+              disabled={!allowZeroStock && product.quantity === 0}
             >
               Add to Order
             </Button>
@@ -206,6 +206,7 @@ const ProductList = memo(({
   isMinimized,
   isInModal = false,
   showPrice = true,
+  allowZeroStock = false,
 }) => {
   // Local state - isolated from parent re-renders
   const [searchTerm, setSearchTerm] = useState('');
@@ -320,7 +321,7 @@ const ProductList = memo(({
         </TableBody>
       </Table>
     </TableContainer>
-  ), [filteredProducts, onAddProduct]);
+  ), [filteredProducts, onAddProduct, handleShowBracket, showPrice, allowZeroStock]);
 
   // Memoized card view
   const CardView = useMemo(() => (
@@ -331,6 +332,7 @@ const ProductList = memo(({
             key={product.id} 
             product={product} 
             onAddProduct={onAddProduct}
+            allowZeroStock={allowZeroStock}
           />
         ))}
         {filteredProducts.length === 0 && (
@@ -342,7 +344,7 @@ const ProductList = memo(({
         )}
       </Grid>
     </Box>
-  ), [filteredProducts, onAddProduct]);
+  ), [filteredProducts, onAddProduct, allowZeroStock]);
 
   // Minimized view
   if (isMinimized) {
