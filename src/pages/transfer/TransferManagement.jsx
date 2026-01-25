@@ -52,6 +52,7 @@ import api from '@/lib/axios';
 import WarehouseManagement from './WarehouseManagement';
 import MainCard from '@components/MainCard';
 import { useNavigate } from 'react-router-dom';
+import { useSales } from '@/hooks/useSales';
 
 
 function TabPanel(props) {
@@ -72,6 +73,7 @@ function TabPanel(props) {
 
 const TransferManagement = () => {
     const navigate = useNavigate();
+    const { getAllInventory } = useSales();
 
 
 
@@ -301,6 +303,9 @@ const TransferManagement = () => {
         showNotification(response.data.message, 'success');
         setStatusDialogOpen(false);
         setSelectedTransfer(null);
+        if (selectedTransfer?.action === 'cancel') {
+          await getAllInventory();
+        }
         loadTransfers();
         loadStats();
       }

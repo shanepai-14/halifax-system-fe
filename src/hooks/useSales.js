@@ -215,6 +215,7 @@ export const useSales = () => {
     try {
       const response = await api.post('/sale-returns', data);
       toast.success('Credit memo created successfully');
+      await getAllInventory();
       return response.data.data;
     } catch (err) {
       console.error('Error creating sale:', err);
