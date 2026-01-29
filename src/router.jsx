@@ -205,29 +205,34 @@ const router = [
                    
         ]
       },
-            {
+      {
         element: <ProtectedRoute allowedRoles={['admin']} />,
         children: [
-           {
+          {
             path: 'report',
             element: <ReportsPage/>,
-          },
-                              {
+          }
+        ]
+      },
+      {
+        element: <ProtectedRoute allowedRoles={['admin', 'cashier', 'sales']} />,
+        children: [
+          {
             path: 'transfers',
             element: <TransferPage/>,
           },
           {
-          path: 'transfers/create',
-          element: <TransferFormPage />
-        },
-        {
-          path: 'transfers/edit/:id',
-          element: <TransferFormPage />
-        },
-        {
-          path: 'transfers/:id',
-          element: <TransferViewPage />
-        }
+            path: 'transfers/create',
+            element: <TransferFormPage />
+          },
+          {
+            path: 'transfers/edit/:id',
+            element: <TransferFormPage />
+          },
+          {
+            path: 'transfers/:id',
+            element: <TransferViewPage />
+          }
         ]
       }
     ]
