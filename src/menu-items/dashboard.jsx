@@ -120,7 +120,7 @@ const dashboard = {
       url: '/app/transfers',
       icon: SwapOutlined,
       breadcrumbs: false,
-      roles: ['admin']
+      roles: ['admin','cashier', 'sales']
     },
     {
       id: 'pettyCash',
